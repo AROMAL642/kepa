@@ -1,0 +1,41 @@
+.containerStyle {
+  max-width: 400px;
+  margin: 100px auto;
+  padding: 20px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  font-family: Arial, sans-serif;
+}
+
+.formStyle {
+  display: flex;
+  flex-direction: column;
+}
+
+.fieldStyle {
+  margin-bottom: 15px;
+}
+
+.inputStyle {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+.buttonStyle {
+  padding: 10px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.headingStyle {
+  text-align: center;
+  color: #6A64F1;
+  margin-bottom: 20px;
+}
