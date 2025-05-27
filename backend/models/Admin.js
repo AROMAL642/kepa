@@ -58,7 +58,7 @@ pen: {
   },
   verified: {
     type: String,
-    default: 'NO'
+    default: 'YES'
   }
 }, {
   timestamps: true

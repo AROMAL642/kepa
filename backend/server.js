@@ -16,7 +16,7 @@ app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
-// ✅ MongoDB connection without deprecated options
+//  MongoDB connection without deprecated options
 mongoose.connect('mongodb+srv://kepamotor:arya1234@cluster0.n6bhdzu.mongodb.net/kepa')
   .then(() => console.log('✅ MongoDB connected to kepa DB'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
@@ -66,6 +66,7 @@ app.post('/register', async (req, res) => {
 
 
 //login
+const Admin = require('./models/Admin');
 
 app.post('/login', async (req, res) => {
   const { email, password, role } = req.body;
@@ -79,27 +80,37 @@ app.post('/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ message: 'Invalid password' });
 
+    // Shared fields
+    const commonResponse = {
+      message: 'Login successful',
+      role,
+      name: user.name,
+      email: user.email,
+      pen: user.pen,
+      photo: user.photo || '',
+      signature: user.signature || ''
+    };
 
-  res.status(200).json({
-  message: 'Login successful',
-  role,
-  pen: user.pen,
-  generalNo: user.generalNo,
-  name: user.name, 
-  email: user.email,
-  phone: user.phone,
-  dob: user.dob,
-  licenseNo: user.licenseNo,
-  bloodGroup: user.bloodGroup,
-  gender: user.gender,
-  photo: user.photo || null,
-  signature: user.signature || null
-});
+    if (role === 'user') {
+      res.status(200).json({
+        ...commonResponse,
+        generalNo: user.generalNo,
+        phone: user.phone,
+        dob: user.dob,
+        licenseNo: user.licenseNo,
+        bloodGroup: user.bloodGroup,
+        gender: user.gender
+      });
+    } else {
+      // Admin login response
+      res.status(200).json(commonResponse);
+    }
 
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
+
 
 
 
