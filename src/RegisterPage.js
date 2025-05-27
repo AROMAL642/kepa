@@ -19,8 +19,8 @@ const RegisterPage = () => {
     confirmPassword: '',
   });
 
-  const [photo, setPhoto] = useState('');
-  const [signature, setSignature] = useState('');
+  const [photoFile, setPhotoFile] = useState(null);
+  const [signatureFile, setSignatureFile] = useState(null);
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -29,47 +29,51 @@ const RegisterPage = () => {
     }));
   };
 
-  const handleImageChange = async (e, key) => {
+  const handleImageChange = (e, key) => {
     const file = e.target.files[0];
     if (file) {
-      const base64 = await toBase64(file);
-      key === 'photo' ? setPhoto(base64) : setSignature(base64);
+      if (file.size > 2 * 1024 * 1024) {
+        alert('File size should be less than 2MB');
+        return;
+      }
+      key === 'photo' ? setPhotoFile(file) : setSignatureFile(file);
     }
-  };
-
-  const toBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result); // includes MIME
-      reader.onerror = (err) => reject(err);
-      reader.readAsDataURL(file);
-    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (formData.password !== formData.confirmPassword) {
       alert('Passwords do not match');
       return;
     }
 
+    const form = new FormData();
+    Object.entries(formData).forEach(([key, value]) => {
+      form.append(key, value);
+    });
+
+    form.append('photo', photoFile);
+    form.append('signature', signatureFile);
+
     try {
-      const res = await axios.post('http://localhost:5000/register', {
-        ...formData,
-        photo,
-        signature,
+      const res = await axios.post('http://localhost:5000/register', form, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
 
       alert(res.data.message);
       navigate('/');
     } catch (error) {
+      console.error('Registration error:', error);
       alert('Registration failed: ' + (error.response?.data?.message || error.message));
     }
   };
 
   return (
     <div className="containerStyle">
-      <form onSubmit={handleSubmit} className="formStyle">
+      <form onSubmit={handleSubmit} className="formStyle" encType="multipart/form-data">
         <h2 className="headingStyle">Register</h2>
 
         {[
@@ -88,13 +92,14 @@ const RegisterPage = () => {
               placeholder={placeholder}
               pattern={pattern}
               className="inputStyle"
+              required={name !== 'generalNo' && name !== 'licenseNo'}
             />
           </div>
         ))}
 
         <div className="fieldStyle">
+          <small>Date Of Birth (DOB)</small>
           <input type="date" name="dob" onChange={handleChange} required className="inputStyle" />
-          <small>Date Of Birth(DOB)</small>
         </div>
 
         <div className="fieldStyle">
@@ -121,6 +126,7 @@ const RegisterPage = () => {
         </div>
 
         <div className="fieldStyle">
+          <small>Upload Photo</small>
           <input
             type="file"
             accept="image/*"
@@ -128,10 +134,10 @@ const RegisterPage = () => {
             required
             className="inputStyle"
           />
-          <small>Upload Photo</small>
         </div>
 
         <div className="fieldStyle">
+          <small>Upload Signature</small>
           <input
             type="file"
             accept="image/*"
@@ -139,7 +145,6 @@ const RegisterPage = () => {
             required
             className="inputStyle"
           />
-          <small>Upload Signature</small>
         </div>
 
         <div className="fieldStyle">

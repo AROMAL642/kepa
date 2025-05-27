@@ -28,7 +28,7 @@ const LoginPage = () => {
         localStorage.setItem('userEmail', res.data.email);
         localStorage.setItem('userName', res.data.name);
         localStorage.setItem('userphone', res.data.phone);
-        localStorage.setItem('userdob', res.data.dob);
+        localStorage.setItem('userdob', new Date(res.data.dob).toISOString().split('T')[0]);
         localStorage.setItem('userlicenseNo', res.data.licenseNo);
         localStorage.setItem('userbloodGroup', res.data.bloodGroup);
         localStorage.setItem('usergender', res.data.gender);
