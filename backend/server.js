@@ -7,38 +7,36 @@ const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const app = express(); 
 
-
-
-
-
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
-//  MongoDB connection without deprecated options
+// MongoDB Connection
 mongoose.connect('mongodb+srv://kepamotor:arya1234@cluster0.n6bhdzu.mongodb.net/kepa')
   .then(() => console.log('✅ MongoDB connected to kepa DB'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
-// Multer storage config
+// Multer Setup
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
+  destination: (req, file, cb) => {
     const dir = './uploads';
     if (!fs.existsSync(dir)) fs.mkdirSync(dir);
     cb(null, dir);
   },
-  filename: function (req, file, cb) {
+  filename: (req, file, cb) => {
     const uniqueName = Date.now() + path.extname(file.originalname);
     cb(null, uniqueName);
   }
 });
 const upload = multer({ storage });
 
+// Models
 const User = require('./models/User');
+const Admin = require('./models/Admin');
+const MovementRegister = require('./models/MovementRegister');
 
-// Register Route
-
+// Register User
 app.post('/register', async (req, res) => {
   const {
     pen, generalNo, name, email, phone, licenseNo,
@@ -47,7 +45,6 @@ app.post('/register', async (req, res) => {
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const newUser = new User({
       pen, generalNo, name, email, phone, licenseNo,
       dob, gender, bloodGroup, password: hashedPassword,
@@ -62,26 +59,20 @@ app.post('/register', async (req, res) => {
   }
 });
 
-
-
-
-//login
-const Admin = require('./models/Admin');
-
+// Login Route for both User and Admin
 app.post('/login', async (req, res) => {
   const { email, password, role } = req.body;
   const collection = role === 'user' ? User : Admin;
 
   try {
     const user = await collection.findOne({ email });
-
     if (!user) return res.status(401).json({ message: 'Invalid email' });
-
+    
     const isMatch = await bcrypt.compare(password, user.password);
+
     if (!isMatch) return res.status(401).json({ message: 'Invalid password' });
 
-    // Shared fields
-    const commonResponse = {
+    const baseResponse = {
       message: 'Login successful',
       role,
       name: user.name,
@@ -93,7 +84,7 @@ app.post('/login', async (req, res) => {
 
     if (role === 'user') {
       res.status(200).json({
-        ...commonResponse,
+        ...baseResponse,
         generalNo: user.generalNo,
         phone: user.phone,
         dob: user.dob,
@@ -102,19 +93,14 @@ app.post('/login', async (req, res) => {
         gender: user.gender
       });
     } else {
-      // Admin login response
-      res.status(200).json(commonResponse);
+      res.status(200).json(baseResponse);
     }
-
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
 
-
-
-
-
+// Get user by email
 app.get('/api/user/:email', async (req, res) => {
   try {
     const user = await User.findOne({ email: req.params.email }).lean();
@@ -130,11 +116,23 @@ app.get('/api/user/:email', async (req, res) => {
   }
 });
 
+//Get admin by email (similar to user profile fetch)
+app.get('/api/admin/:email', async (req, res) => {
+  try {
+    const admin = await Admin.findOne({ email: req.params.email }).lean();
+    if (!admin) return res.status(404).json({ message: 'Admin not found' });
 
-//movement register
+    res.json({
+      ...admin,
+      photo: admin.photo?.toString('base64') || '',
+      signature: admin.signature?.toString('base64') || ''
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch admin data', error: err.message });
+  }
+});
 
-const MovementRegister = require('./models/MovementRegister');
-
+// Movement Register
 app.post('/api/movement', async (req, res) => {
   try {
     const {
@@ -166,12 +164,7 @@ app.post('/api/movement', async (req, res) => {
   }
 });
 
-
-
-
-
-
-// Server start
+// Start server
 const PORT = 5000;
 app.listen(PORT, () => {
   console.log(`🚀 സെർവർ ഓടുകയാണ്.....Server running on port ${PORT}`);

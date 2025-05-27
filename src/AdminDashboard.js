@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './css/dashboard.css';
+import './css/admindashboard.css';
 
 function AdminDashboard() {
   const [darkMode, setDarkMode] = useState(false);
@@ -25,7 +25,7 @@ function AdminDashboard() {
 
   const themeStyle = {
     background: darkMode ? '#121212' : '#fff',
-    color: darkMode ? '#f1f1f1' : '#000',
+    color: darkMode ? '#f1f1f1' : '#57c7db',
     borderColor: darkMode ? '#555' : '#ccc'
   };
 

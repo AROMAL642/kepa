@@ -6,7 +6,7 @@ pen: {
     type: String,
     unique: true,
     required: true
-  },
+  }, 
   generalNo: {
     type: String,
     unique: true,
@@ -28,7 +28,7 @@ pen: {
     required: true,
     match: [/^\d{10}$/, 'Phone number must be exactly 10 digits']
   },
-  licenseNo: {
+  licenceNo: {
     type: String,
   
   },
