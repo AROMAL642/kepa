@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom'; // 
 import './css/admindashboard.css';
 
 function AdminDashboard() {
   const [darkMode, setDarkMode] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
+  const navigate = useNavigate(); // ✅ For redirecting after logout
 
   const [adminData, setAdminData] = useState({
     name: '',
@@ -23,9 +25,14 @@ function AdminDashboard() {
     });
   }, []);
 
+  const handleLogout = () => {
+    localStorage.clear();           // Clear all data
+    navigate('/adminlogin');        
+  };
+
   const themeStyle = {
     background: darkMode ? '#121212' : '#fff',
-    color: darkMode ? '#f1f1f1' : '#57c7db',
+    color: darkMode ? '#f1f1f1' : '#000',
     borderColor: darkMode ? '#555' : '#ccc'
   };
 
@@ -40,8 +47,13 @@ function AdminDashboard() {
 
         <div className="sidebar-buttons">
           <button className="sidebar-btn" onClick={() => setActiveTab('profile')}>Profile</button>
-          {/* Add more buttons here for other sections like Users, Reports, etc. */}
+          <button className="sidebar-btn" onClick={() => setActiveTab('Movement')}>Movement Register</button>
+          <button className="sidebar-btn" onClick={() => setActiveTab('Repair')}>Repair Reports</button>
+          <button className="sidebar-btn" onClick={() => setActiveTab('Accident')}>Accident Details</button>
+          <button className="sidebar-btn" onClick={() => setActiveTab('VehicleDetails')}>Vehicle</button>
         </div>
+
+        <button className="logout-btn" onClick={handleLogout}>🚪 Logout</button>
       </div>
 
       <div className="main-content" style={themeStyle}>
@@ -83,6 +95,59 @@ function AdminDashboard() {
                 <p>Signature</p>
               </div>
             </div>
+          </div>
+        )}
+
+        {activeTab === 'Movement' && (
+          <div className="movement-section" style={{ width: '100%', maxWidth: '600px' }}>
+            <h2 style={{ marginBottom: '20px' }}>Search in Movement Register</h2>
+            <div className="search-bar" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <input
+                type="text"
+                placeholder="Enter vehicle number or officer name"
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  borderRadius: '5px',
+                  border: `1px solid ${themeStyle.borderColor}`,
+                  background: themeStyle.background,
+                  color: themeStyle.color
+                }}
+              />
+              <button
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#007bff',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '5px',
+                  cursor: 'pointer'
+                }}
+              >
+                Search
+              </button>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'VehicleDetails' && (
+          <div
+            className="vehicle-box"
+            style={{
+              width: '400px',
+              height: '600px',
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'left',
+              gap: '20px'
+            
+            }}
+          >
+            <button className="vehicle-btn">Search Vehicle Details</button>
+            <button className="vehicle-btn">Add/Remove Vehicle</button>
+            <button className="vehicle-btn">Expense Details</button>
+            <button className="vehicle-btn">View/Print Registers</button>
           </div>
         )}
       </div>

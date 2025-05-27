@@ -115,3 +115,34 @@ body {
   flex-direction: column;
   align-items: center;
 }
+.vehicle-btn {
+  width: 80%;
+  padding: 40px;
+  font-size: 16px;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  background-color: #4b8bcf;
+  color: white;
+  transition: background-color 0.3s ease;
+}
+
+.vehicle-btn:hover {
+  background-color: #007bff;
+}
+
+.logout-btn {
+  margin-top: 20px;
+  padding: 10px 15px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  background-color: #c82333;
+}
+
+
