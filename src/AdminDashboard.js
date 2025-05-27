@@ -143,7 +143,7 @@ function AdminDashboard() {
               gap: '20px'
             
             }}
-          >
+          > 
             <button className="vehicle-btn">Search Vehicle Details</button>
             <button className="vehicle-btn">Add/Remove Vehicle</button>
             <button className="vehicle-btn">Expense Details</button>

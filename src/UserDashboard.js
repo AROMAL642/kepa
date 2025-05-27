@@ -113,7 +113,9 @@ function UserDashboard() {
           {darkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
         </button>
 
-        <h2>WELCOME</h2>
+       
+        <h2>Welcome {localStorage.getItem('userName') || 'User'}!</h2>
+
 
         <div className="sidebar-buttons">
           <button className="sidebar-btn" onClick={() => setActiveTab('profile')}>Profile</button>
