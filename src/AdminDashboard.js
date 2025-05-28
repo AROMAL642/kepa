@@ -26,7 +26,7 @@ function AdminDashboard() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.clear();           // Clear all data
+    localStorage.clear();         
     navigate('/adminlogin');        
   };
 
@@ -137,15 +137,17 @@ function AdminDashboard() {
               width: '400px',
               height: '600px',
               display: 'flex',
-              flexDirection: 'row',
-              alignItems: 'center',
+              flexDirection: 'column',
+              alignItems: 'top',
               justifyContent: 'left',
               gap: '20px'
             
             }}
           >
             <button className="vehicle-btn">Search Vehicle Details</button>
-            <button className="vehicle-btn">Add/Remove Vehicle</button>
+            <button className="vehicle-btn" onClick={() => navigate('/admin/vehicle')}>
+            Add/Remove Vehicle
+            </button>
             <button className="vehicle-btn">Expense Details</button>
             <button className="vehicle-btn">View/Print Registers</button>
           </div>

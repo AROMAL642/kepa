@@ -5,6 +5,7 @@ import RegisterPage from './RegisterPage';
 import AdminDashboard from './AdminDashboard';
 import UserDashboard from './UserDashboard';
 import Requests from './Requests';
+import AddRemoveVehicleForm from './AddRemoveVehicleForm';
 import './App.css';
 
 
@@ -27,6 +28,7 @@ function App() {
         <Route path="/user" element={<UserDashboard />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/requests" element={<Requests />} />
+        <Route path="/admin/vehicles" element={<AddRemoveVehicleForm />} />
         <Route path="*" element={<Navigate to="/" />} />
     
     
