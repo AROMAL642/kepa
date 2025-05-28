@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom'; // 
+import { useNavigate } from 'react-router-dom';
 import './css/admindashboard.css';
+import AddRemoveVehicleForm from './AddRemoveVehicleForm';
+import ViewRequests from './ViewRequests';
 
 function AdminDashboard() {
   const [darkMode, setDarkMode] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
-  const navigate = useNavigate(); // ✅ For redirecting after logout
+  const [vehicleTab, setVehicleTab] = useState('main');
+  const navigate = useNavigate();
 
   const [adminData, setAdminData] = useState({
     name: '',
@@ -26,8 +29,8 @@ function AdminDashboard() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.clear();         
-    navigate('/adminlogin');        
+    localStorage.clear();
+    navigate('/adminlogin');
   };
 
   const themeStyle = {
@@ -50,7 +53,8 @@ function AdminDashboard() {
           <button className="sidebar-btn" onClick={() => setActiveTab('Movement')}>Movement Register</button>
           <button className="sidebar-btn" onClick={() => setActiveTab('Repair')}>Repair Reports</button>
           <button className="sidebar-btn" onClick={() => setActiveTab('Accident')}>Accident Details</button>
-          <button className="sidebar-btn" onClick={() => setActiveTab('VehicleDetails')}>Vehicle</button>
+          <button className="sidebar-btn" onClick={() => { setActiveTab('VehicleDetails'); setVehicleTab('main'); }}>Vehicle</button>
+          <button className="sidebar-btn" onClick={() => setActiveTab('Request')}>View Requests</button>
         </div>
 
         <button className="logout-btn" onClick={handleLogout}>🚪 Logout</button>
@@ -130,7 +134,7 @@ function AdminDashboard() {
           </div>
         )}
 
-        {activeTab === 'VehicleDetails' && (
+        {activeTab === 'VehicleDetails' && vehicleTab === 'main' && (
           <div
             className="vehicle-box"
             style={{
@@ -138,19 +142,29 @@ function AdminDashboard() {
               height: '600px',
               display: 'flex',
               flexDirection: 'column',
-              alignItems: 'top',
-              justifyContent: 'left',
+              justifyContent: 'flex-start',
               gap: '20px'
-            
             }}
-          > 
-            <button className="vehicle-btn">Search Vehicle Details</button>
-            <button className="vehicle-btn" onClick={() => navigate('/admin/vehicles')}>
-            Add/Remove Vehicle
+          >
+            <button className="vehicle-btn" onClick={() => setVehicleTab('addremove')}>
+              Add/Remove Vehicle
             </button>
+            <button className="vehicle-btn">Search Vehicle Details</button>
             <button className="vehicle-btn">Expense Details</button>
             <button className="vehicle-btn">View/Print Registers</button>
+            <button className="vehicle-btn">View/Assign Vehicle</button>
           </div>
+        )}
+
+        {activeTab === 'VehicleDetails' && vehicleTab === 'addremove' && (
+          <AddRemoveVehicleForm
+            onBack={() => setVehicleTab('main')}
+            themeStyle={themeStyle}
+          />
+        )}
+
+        {activeTab === 'Request' && (
+          <ViewRequests themeStyle={themeStyle} />
         )}
       </div>
     </div>

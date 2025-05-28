@@ -146,3 +146,68 @@ body {
 }
 
 
+
+
+.form-title {
+  text-align: center;
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.vehicle-form .form-group {
+  margin-bottom: 15px;
+}
+
+.vehicle-form .form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #444;
+}
+
+.vehicle-form .form-group input,
+.vehicle-form .form-group select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+}
+
+.form-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.form-buttons button {
+  flex: 1;
+  padding: 10px;
+  margin: 0 5px;
+  font-size: 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+  transition: background-color 0.3s;
+}
+
+.btn-add {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-add:hover {
+  background-color: #0056b3;
+}
+
+.btn-remove {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-remove:hover {
+  background-color: #a71d2a;
+}
+
+

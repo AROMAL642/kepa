@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
@@ -13,7 +15,7 @@ app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
 // MongoDB Connection
-mongoose.connect('mongodb+srv://kepamotor:arya1234@cluster0.n6bhdzu.mongodb.net/kepa')
+  mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB connected to kepa DB'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
@@ -35,6 +37,7 @@ const upload = multer({ storage });
 const User = require('./models/User');
 const Admin = require('./models/Admin');
 const MovementRegister = require('./models/MovementRegister');
+const Vehicle = require('./models/Vehicle');
 
 // Register User
 app.post('/register', async (req, res) => {
@@ -69,7 +72,6 @@ app.post('/login', async (req, res) => {
     if (!user) return res.status(401).json({ message: 'Invalid email' });
     
     const isMatch = await bcrypt.compare(password, user.password);
-
     if (!isMatch) return res.status(401).json({ message: 'Invalid password' });
 
     const baseResponse = {
@@ -100,7 +102,7 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// Get user by email
+// Get User by Email
 app.get('/api/user/:email', async (req, res) => {
   try {
     const user = await User.findOne({ email: req.params.email }).lean();
@@ -116,7 +118,7 @@ app.get('/api/user/:email', async (req, res) => {
   }
 });
 
-//Get admin by email (similar to user profile fetch)
+// Get Admin by Email
 app.get('/api/admin/:email', async (req, res) => {
   try {
     const admin = await Admin.findOne({ email: req.params.email }).lean();
@@ -164,8 +166,66 @@ app.post('/api/movement', async (req, res) => {
   }
 });
 
-// Start server
+// Add Vehicle
+app.post('/api/vehicles', async (req, res) => {
+  try {
+    const newVehicle = new Vehicle(req.body);
+    await newVehicle.save();
+    res.status(201).json({ message: 'Vehicle added successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Error saving vehicle', error: err.message });
+  }
+});
+
+//verify user
+
+// Fetch all unverified users
+app.get('/api/unverified-users', async (req, res) => {
+  try {
+    const unverifiedUsers = await User.find(
+  { verified: 'NO' },
+  { email: 1, name: 1, pen: 1, generalNo: 1 } // to reduce loading time
+);
+
+    res.status(200).json(unverifiedUsers);
+  } catch (err) {
+    console.error('Error fetching unverified users:', err);
+    res.status(500).json({ message: 'Error fetching unverified users', error: err.message });
+  }
+});
+
+
+// Verify a user by email
+app.put('/api/verify-user/:email', async (req, res) => {
+  try {
+    const email = req.params.email;
+    const user = await User.findOneAndUpdate({ email }, { verified: 'YES' }, { new: true });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    res.status(200).json({ message: 'User verified successfully', user });
+  } catch (err) {
+    console.error('Verification error:', err);
+    res.status(500).json({ message: 'Verification failed', error: err.message });
+  }
+});
+
+
+// for view users detai function in admin dashboard for verification
+app.get('/api/users/:id', async (req, res) => {
+  try {
+    const user = await Users.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching user' });
+  }
+});
+
+
+
+
+// Start server (only once)
 const PORT = 5000;
 app.listen(PORT, () => {
-  console.log(`🚀 സെർവർ ഓടുകയാണ്.....Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
