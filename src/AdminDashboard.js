@@ -145,7 +145,7 @@ function AdminDashboard() {
             }}
           >
             <button className="vehicle-btn">Search Vehicle Details</button>
-            <button className="vehicle-btn" onClick={() => navigate('/admin/vehicle')}>
+            <button className="vehicle-btn" onClick={() => navigate('/admin/vehicles')}>
             Add/Remove Vehicle
             </button>
             <button className="vehicle-btn">Expense Details</button>
