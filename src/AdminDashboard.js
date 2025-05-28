@@ -143,7 +143,7 @@ function AdminDashboard() {
               gap: '20px'
             
             }}
-          >
+          > 
             <button className="vehicle-btn">Search Vehicle Details</button>
             <button className="vehicle-btn" onClick={() => navigate('/admin/vehicles')}>
             Add/Remove Vehicle
