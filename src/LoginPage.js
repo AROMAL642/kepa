@@ -32,7 +32,7 @@ const LoginPage = () => {
         localStorage.setItem('userlicenseNo', res.data.licenseNo);
         localStorage.setItem('userbloodGroup', res.data.bloodGroup);
         localStorage.setItem('usergender', res.data.gender);
-        localStorage.setItem('userPhoto', res.data.photo);
+        localStorage.setItem('userPhoto', `http://localhost:5000/uploads/${res.data.photo}`);
         localStorage.setItem('userSignature', res.data.signature);
 
         navigate('/user');

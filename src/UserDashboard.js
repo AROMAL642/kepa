@@ -6,6 +6,8 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import { renderTimeViewClock } from '@mui/x-date-pickers/timeViewRenderers';
+import RepairRequestForm from './RepairRequestForm';
+
 
 function UserDashboard() {
   const [darkMode, setDarkMode] = useState(false);
@@ -21,7 +23,7 @@ function UserDashboard() {
     licenseNo: '',
     bloodGroup: '',
     gender: '',
-    profilePic: '',
+    photo: '',
     signature: '',
   });
 
@@ -49,7 +51,7 @@ function UserDashboard() {
       licenseNo: localStorage.getItem('userlicenseNo'),
       bloodGroup: localStorage.getItem('userbloodGroup'),
       gender: localStorage.getItem('usergender'),
-      profilePic: localStorage.getItem('userPhoto'),
+      photo: localStorage.getItem('userPhoto'),
       signature: localStorage.getItem('userSignature')
     });
   }, []);
@@ -79,7 +81,7 @@ function UserDashboard() {
           vehicleno: movementData.vehicleNo,
           startingkm: movementData.startingKm,
           startingdate: movementData.startDate,
-          startingtime: movementData.startTime.format('HH:mm'),
+          startingtime: movementData.startTime?.format?.('HH:mm') || movementData.startTime?.toISOString?.() || '',
           destination: movementData.destination,
           purpose: movementData.purpose,
           officerincharge: formData.name || '',
@@ -147,7 +149,7 @@ function UserDashboard() {
             <div className="form-right">
               <div className="upload-section">
                 <img
-                  src={formData.profilePic || 'https://via.placeholder.com/100'}
+                  src={formData.photo || 'https://via.placeholder.com/100'}
                   alt="Profile"
                   className="upload-icon"
                 />
@@ -164,6 +166,14 @@ function UserDashboard() {
             </div>
           </div>
         )}
+        
+
+        
+        {activeTab === 'repair' && (
+          <RepairRequestForm /> // 👈 Reuse your component here
+        )}
+
+
 
         {activeTab === 'movement' && (
           <form onSubmit={handleMovementSubmit}>

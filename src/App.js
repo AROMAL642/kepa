@@ -6,6 +6,11 @@ import AdminDashboard from './AdminDashboard';
 import UserDashboard from './UserDashboard';
 import Requests from './Requests';
 import './App.css';
+import RepairRequestForm from './RepairRequestForm';
+
+
+
+
 
 
 function App() {
@@ -28,7 +33,8 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/requests" element={<Requests />} />
         <Route path="*" element={<Navigate to="/" />} />
-    
+        <Route path="/repair" element={<RepairRequestForm />} />
+
     
       </Routes>
     </Router>
