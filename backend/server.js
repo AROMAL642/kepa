@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
@@ -5,61 +7,51 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
-const PDFDocument = require('pdfkit');
+
 const app = express(); 
-
-const RepairRequest = require('./models/RepairRequest');  // Adjust path as needed
-
-
-const repairRequestRoutes = require('./routes/repairRequestRoutes'); // adjust path if needed
-
-
-
-
-
-
-
-
-// other middleware and server start code
-
-
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use('/uploads', express.static('uploads'));
-app.use('/api/repair-request', repairRequestRoutes); // All routes in the file now use this prefix
-app.use('/api', repairRequestRoutes);
-
-
-
-// MongoDB Connection
-mongoose.connect('mongodb+srv://kepamotor:arya1234@cluster0.n6bhdzu.mongodb.net/kepa', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-.then(() => console.log('✅ MongoDB connected to kepa DB'))
-.catch(err => console.error('❌ MongoDB connection error:', err));
-
-// Multer Setup
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const dir = './uploads';
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir);
-    cb(null, dir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueName = `${Date.now()}-${file.originalname}`;
-    cb(null, uniqueName);
-  }
-});
-const upload = multer({ storage });
 
 // Models
 const User = require('./models/User');
 const Admin = require('./models/Admin');
 const MovementRegister = require('./models/MovementRegister');
+const Vehicle = require('./models/Vehicle');
+const RepairRequest = require('./models/RepairRequest');  // Adjust path as needed
 
-// ✅ Register User
+// Routes
+const repairRequestRoutes = require('./routes/repairRequestRoutes'); // adjust path if needed
+const repairAdminRoute = require('./routes/repairAdminRoute'); // adjust path if needed
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// MongoDB Connection
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log('✅ MongoDB connected to kepa DB'))
+  .catch(err => console.error('❌ MongoDB connection error:', err));
+
+// Multer Setup for file uploads (bill files)
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = path.join(__dirname, 'uploads');
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir);
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    // Save file with unique timestamp + original name
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+  }
+});
+const upload = multer({ storage });
+
+// Use imported routes
+app.use('/api/user', repairRequestRoutes);
+app.use('/api/admin', repairAdminRoute);
+
+// === User Registration ===
 app.post('/register', async (req, res) => {
   const {
     pen, generalNo, name, email, phone, licenseNo,
@@ -85,7 +77,7 @@ app.post('/register', async (req, res) => {
   }
 });
 
-// ✅ Login Route for User & Admin
+// === Login for User & Admin ===
 app.post('/login', async (req, res) => {
   const { email, password, role } = req.body;
   const collection = role === 'user' ? User : Admin;
@@ -125,7 +117,7 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// ✅ Get User by Email
+// === Get User by Email ===
 app.get('/api/user/:email', async (req, res) => {
   try {
     const user = await User.findOne({ email: req.params.email }).lean();
@@ -141,7 +133,7 @@ app.get('/api/user/:email', async (req, res) => {
   }
 });
 
-// ✅ Get Admin by Email
+// === Get Admin by Email ===
 app.get('/api/admin/:email', async (req, res) => {
   try {
     const admin = await Admin.findOne({ email: req.params.email }).lean();
@@ -157,7 +149,7 @@ app.get('/api/admin/:email', async (req, res) => {
   }
 });
 
-// ✅ Movement Register Entry
+// === Movement Register Entry ===
 app.post('/api/movement', async (req, res) => {
   try {
     const {
@@ -189,41 +181,90 @@ app.post('/api/movement', async (req, res) => {
   }
 });
 
-
-
-
-//submit a new repair request
-
-app.post('/api/repair-request', async (req, res) => {
+// === Add Vehicle ===
+app.post('/api/vehicles', async (req, res) => {
   try {
-    const { date, appNo, vehicleNo, subject, description } = req.body;
+    const newVehicle = new Vehicle(req.body);
+    await newVehicle.save();
+    res.status(201).json({ message: 'Vehicle added successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Error saving vehicle', error: err.message });
+  }
+});
 
-    // Check if already exists (optional)
-    const exists = await RepairRequest.findOne({ appNo });
-    if (exists) {
-      return res.status(409).json({ message: 'Application No already exists' });
-    }
+// === Fetch all unverified users ===
+app.get('/api/unverified-users', async (req, res) => {
+  try {
+    const unverifiedUsers = await User.find(
+      { verified: 'NO' },
+      { email: 1, name: 1, pen: 1, generalNo: 1 }
+    );
+    res.status(200).json(unverifiedUsers);
+  } catch (err) {
+    console.error('Error fetching unverified users:', err);
+    res.status(500).json({ message: 'Error fetching unverified users', error: err.message });
+  }
+});
+
+// === Verify a user by email ===
+app.put('/api/verify-user/:email', async (req, res) => {
+  try {
+    const email = req.params.email;
+    const user = await User.findOneAndUpdate({ email }, { verified: 'YES' }, { new: true });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    res.status(200).json({ message: 'User verified successfully', user });
+  } catch (err) {
+    console.error('Verification error:', err);
+    res.status(500).json({ message: 'Verification failed', error: err.message });
+  }
+});
+
+// === View user details by id ===
+app.get('/api/users/:id', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching user' });
+  }
+});
+
+// === Submit a new repair request with bill upload ===
+app.post('/api/repair-request', upload.single('bill'), async (req, res) => {
+  try {
+    const {
+      userName,
+      penNumber,
+      vehicleNumber,
+      subject,
+      description
+    } = req.body;
+
+    // Optional: Check if request already exists with same vehicleNumber or other unique field
 
     const newRequest = new RepairRequest({
-      date,
-      appNo,
-      vehicleNo,
+      userName,
+      penNumber,
+      vehicleNumber,
       subject,
       description,
-      verified: null,
-      issueDescription: '',
+      bill: req.file ? req.file.filename : null,
+      status: 'pending',
+      createdAt: new Date(),
       verificationAttempts: []
     });
 
     await newRequest.save();
-    res.status(201).json({ message: 'Repair request submitted successfully' });
+    res.status(201).json({ message: 'Repair request submitted successfully', data: newRequest });
   } catch (err) {
+    console.error('❌ Failed to submit repair request:', err);
     res.status(500).json({ message: 'Failed to submit repair request', error: err.message });
   }
 });
 
-//verify repair request
-
+// === Verify repair request ===
 app.post('/api/repair-request/verify', async (req, res) => {
   try {
     const { appNo, verified, issue } = req.body;
@@ -246,17 +287,14 @@ app.post('/api/repair-request/verify', async (req, res) => {
 
     await request.save();
 
-    res.status(200).json({ message: 'Verification updated successfully' });
+    res.json({ message: 'Verification status updated', data: request });
   } catch (err) {
-    res.status(500).json({ message: 'Failed to update verification', error: err.message });
+    res.status(500).json({ message: 'Failed to update verification status', error: err.message });
   }
 });
 
-
-
-
-// ✅ Server Start
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`🚀 സെർവർ ഓടുകയാണ്.....Server running on port ${PORT}`);
+  console.log(`🚀 Server is running on port ${PORT}`);
 });
+

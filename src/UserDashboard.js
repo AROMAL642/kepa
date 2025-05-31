@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import './css/dashboard.css';
-
+import './css/userdashboard.css';
+import { useNavigate } from 'react-router-dom'; 
 import dayjs from 'dayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -12,6 +12,7 @@ import RepairRequestForm from './RepairRequestForm';
 function UserDashboard() {
   const [darkMode, setDarkMode] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -55,6 +56,12 @@ function UserDashboard() {
       signature: localStorage.getItem('userSignature')
     });
   }, []);
+
+   const handleLogout = () => {
+    localStorage.clear();           // Clear all data
+    navigate('/userlogin');        // Redirect to login page
+  };
+
 
   const themeStyle = {
     background: darkMode ? '#121212' : '#fff',
@@ -108,7 +115,9 @@ function UserDashboard() {
           {darkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
         </button>
 
-        <h2>WELCOME</h2>
+       
+        <h2>Welcome {localStorage.getItem('userName') || 'User'}!</h2>
+
 
         <div className="sidebar-buttons">
           <button className="sidebar-btn" onClick={() => setActiveTab('profile')}>Profile</button>
@@ -122,6 +131,7 @@ function UserDashboard() {
             </button>
           ))}
         </div>
+        <button className="logout-btn" onClick={handleLogout}>🚪 Logout</button>
       </div>
 
       <div className="main-content" style={themeStyle}>

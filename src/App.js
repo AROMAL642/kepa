@@ -4,7 +4,9 @@ import LoginPage from './LoginPage';
 import RegisterPage from './RegisterPage';
 import AdminDashboard from './AdminDashboard';
 import UserDashboard from './UserDashboard';
-import Requests from './Requests';
+import ViewRequests from './ViewRequests';
+import UserDetails from './UserDetails';
+import AddRemoveVehicleForm from './AddRemoveVehicleForm';
 import './App.css';
 import RepairRequestForm from './RepairRequestForm';
 
@@ -31,7 +33,10 @@ function App() {
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/user" element={<UserDashboard />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/requests" element={<Requests />} />
+        <Route path="/viewrequests" element={<ViewRequests themeStyle={{ background: 'black', color: 'white' }} />} />
+        <Route path="/userdetails/:id" element={<UserDetails />} />
+
+        <Route path="/admin/vehicles" element={<AddRemoveVehicleForm />} />
         <Route path="*" element={<Navigate to="/" />} />
         <Route path="/repair" element={<RepairRequestForm />} />
 

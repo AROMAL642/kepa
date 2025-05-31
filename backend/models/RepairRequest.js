@@ -6,8 +6,13 @@ const RepairRequestSchema = new mongoose.Schema({
   vehicleNo: { type: String, required: true },
   subject: { type: String, required: true },
   description: { type: String, required: true, maxlength: 1000 }, // 100 words approx
+
+  // New bill field for storing uploaded filename/path
+  bill: { type: String, default: '' },
+
   verified: { type: Boolean, default: null }, // null = not verified yet, true = verified, false = not verified
   issueDescription: { type: String, default: '' },
+
   verificationAttempts: [{
     verified: Boolean,
     issueDescription: String,

@@ -115,3 +115,17 @@ body {
   flex-direction: column;
   align-items: center;
 }
+
+.logout-btn {
+  margin-top: 20px;
+  padding: 10px 15px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  background-color: #c82333;
+}

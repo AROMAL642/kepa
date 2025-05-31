@@ -12,61 +12,47 @@ function RepairRequestForm() {
   });
   const [verify, setVerify] = useState(null);
   const [issueDescription, setIssueDescription] = useState("");
+  const [file, setFile] = useState(null);
 
-  // Count words in description (max 100 words)
   const wordCount = form.description.trim().split(/\s+/).filter(Boolean).length;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    // Prevent typing beyond 100 words in description
     if (name === "description" && value.trim().split(/\s+/).length > 100) return;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Submit repair request data (without PDF)
+  const handleFileChange = (e) => {
+    const uploadedFile = e.target.files[0];
+    if (uploadedFile && (uploadedFile.type.includes("pdf") || uploadedFile.type.includes("image"))) {
+      setFile(uploadedFile);
+    } else {
+      alert("Please upload a valid PDF or image file.");
+      e.target.value = null;
+      setFile(null);
+    }
+  };
+
   const handleSubmit = async () => {
     try {
-      const submitData = { ...form, date: new Date(form.date).toISOString() };
-      await axios.post("http://localhost:5000/api/repair-request", submitData);
+      const formData = new FormData();
+      Object.entries(form).forEach(([key, value]) => {
+        formData.append(key, key === "date" ? new Date(value).toISOString() : value);
+      });
+      if (file) {
+        formData.append("file", file);
+      }
+
+      await axios.post("http://localhost:5000/api/repair-request", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
       alert("Repair request submitted");
     } catch (error) {
       alert("Error submitting request: " + error.message);
     }
   };
 
-  // Generate and download PDF
-  const generatePDF = async () => {
-    try {
-      const submitData = { ...form, date: new Date(form.date).toISOString() };
-      const res = await axios.post(
-        "http://localhost:5000/api/repair-request/pdf",
-        submitData,
-        {
-          responseType: "blob", // important for binary response (PDF)
-        }
-      );
-
-      if (res.status !== 200) {
-        throw new Error("Failed to generate PDF");
-      }
-
-      const blob = new Blob([res.data], { type: "application/pdf" });
-      const url = window.URL.createObjectURL(blob);
-
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", `RepairRequest_${form.appNo || "unknown"}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("PDF download error:", error);
-      alert("Error generating PDF. Check console and backend.");
-    }
-  };
-
-  // Submit verification status
   const handleVerifySubmit = async () => {
     try {
       await axios.post("http://localhost:5000/api/repair-request/verify", {
@@ -85,37 +71,10 @@ function RepairRequestForm() {
       <h2 className="text-2xl font-bold mb-4">Request for Repair</h2>
 
       <div className="grid gap-4">
-        <input
-          type="date"
-          name="date"
-          value={form.date}
-          onChange={handleChange}
-          className="input"
-        />
-        <input
-          type="text"
-          name="appNo"
-          placeholder="Application No"
-          value={form.appNo}
-          onChange={handleChange}
-          className="input"
-        />
-        <input
-          type="text"
-          name="vehicleNo"
-          placeholder="Vehicle No"
-          value={form.vehicleNo}
-          onChange={handleChange}
-          className="input"
-        />
-        <input
-          type="text"
-          name="subject"
-          placeholder="Subject"
-          value={form.subject}
-          onChange={handleChange}
-          className="input"
-        />
+        <input type="date" name="date" value={form.date} onChange={handleChange} className="input" />
+        <input type="text" name="appNo" placeholder="Application No" value={form.appNo} onChange={handleChange} className="input" />
+        <input type="text" name="vehicleNo" placeholder="Vehicle No" value={form.vehicleNo} onChange={handleChange} className="input" />
+        <input type="text" name="subject" placeholder="Subject" value={form.subject} onChange={handleChange} className="input" />
 
         <textarea
           name="description"
@@ -126,26 +85,22 @@ function RepairRequestForm() {
         />
         <p className="text-sm text-gray-500">{wordCount}/100 words</p>
 
-        <div className="flex gap-4">
-          <button onClick={handleSubmit} className="btn">
-            Submit
-          </button>
-          <button onClick={generatePDF} className="btn-secondary">
-            Generate PDF
-          </button>
-        </div>
+        <input type="file" accept="application/pdf,image/*" onChange={handleFileChange} className="input" />
+        {file && <p className="text-sm text-green-600">File selected: {file.name}</p>}
+
+        <button onClick={handleSubmit} className="btn">
+          Submit
+        </button>
       </div>
 
       <div className="mt-6 border-t pt-4">
         <label>Verify:</label>
         <div className="flex gap-4">
           <label>
-            <input type="radio" name="verify" onChange={() => setVerify(true)} />{" "}
-            Yes
+            <input type="radio" name="verify" onChange={() => setVerify(true)} /> Yes
           </label>
           <label>
-            <input type="radio" name="verify" onChange={() => setVerify(false)} />{" "}
-            No
+            <input type="radio" name="verify" onChange={() => setVerify(false)} /> No
           </label>
         </div>
 
@@ -157,6 +112,31 @@ function RepairRequestForm() {
             placeholder="What is still not fixed?"
           />
         )}
+        
+
+
+        {file && (
+  <div className="mt-4">
+    <p className="text-sm text-green-600">File selected: {file.name}</p>
+    <p className="text-sm text-blue-600 underline">
+      Preview:
+    </p>
+    {file.type.includes("pdf") ? (
+      <iframe
+        src={URL.createObjectURL(file)}
+        width="100%"
+        height="400px"
+        title="PDF Preview"
+      />
+    ) : (
+      <img
+        src={URL.createObjectURL(file)}
+        alt="Preview"
+        className="max-w-full max-h-96 rounded border"
+      />
+    )}
+  </div>
+)}
 
         <button onClick={handleVerifySubmit} className="btn mt-2">
           Submit
@@ -167,4 +147,5 @@ function RepairRequestForm() {
 }
 
 export default RepairRequestForm;
+
 
