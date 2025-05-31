@@ -7,19 +7,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
-
 const app = express(); 
-
-// Models
-const User = require('./models/User');
-const Admin = require('./models/Admin');
-const MovementRegister = require('./models/MovementRegister');
-const Vehicle = require('./models/Vehicle');
-const RepairRequest = require('./models/RepairRequest');  // Adjust path as needed
-
-// Routes
-const repairRequestRoutes = require('./routes/repairRequestRoutes'); // adjust path if needed
-const repairAdminRoute = require('./routes/repairAdminRoute'); // adjust path if needed
 
 // Middleware
 app.use(cors());
@@ -66,32 +54,37 @@ app.post('/register', async (req, res) => {
     const newUser = new User({
       pen, generalNo, name, email, phone, licenseNo,
       dob, gender, bloodGroup, password: hashedPassword,
-      photo, signature
+      photo, signature,
+      verified: 'NO' // default
     });
 
     await newUser.save();
-    res.status(201).json({ message: 'User registered successfully.' });
+    res.status(201).json({ message: 'Registration Request Sent Successfully. Wait for Approval.' });
   } catch (err) {
     console.error('❌ Error saving user:', err);
     res.status(500).json({ message: 'Registration failed', error: err.message });
   }
 });
 
-// === Login for User & Admin ===
+// Login Route for both User and Admin
 app.post('/login', async (req, res) => {
-  const { email, password, role } = req.body;
-  const collection = role === 'user' ? User : Admin;
+  const { pen, password } = req.body;
 
   try {
-    const user = await collection.findOne({ email });
-    if (!user) return res.status(401).json({ message: 'Invalid email' });
-    
+    // Check if user or admin exists with this pen
+    const user = await User.findOne({ pen });
+    if (!user) return res.status(401).json({ message: 'Invalid PEN number' });
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ message: 'Invalid password' });
 
+    if (user.role === 'user' && user.verified !== 'YES') {
+      return res.status(403).json({ message: 'User not verified. Please wait for approval.' });
+    }
+
     const baseResponse = {
       message: 'Login successful',
-      role,
+      role: user.role,
       name: user.name,
       email: user.email,
       pen: user.pen,
@@ -99,7 +92,7 @@ app.post('/login', async (req, res) => {
       signature: user.signature || ''
     };
 
-    if (role === 'user') {
+    if (user.role === 'user') {
       res.status(200).json({
         ...baseResponse,
         generalNo: user.generalNo,
@@ -116,6 +109,8 @@ app.post('/login', async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
+
+
 
 // === Get User by Email ===
 app.get('/api/user/:email', async (req, res) => {
@@ -192,13 +187,16 @@ app.post('/api/vehicles', async (req, res) => {
   }
 });
 
-// === Fetch all unverified users ===
+//verify user
+
+// Fetch all unverified users
 app.get('/api/unverified-users', async (req, res) => {
   try {
     const unverifiedUsers = await User.find(
-      { verified: 'NO' },
-      { email: 1, name: 1, pen: 1, generalNo: 1 }
-    );
+  { verified: 'NO' },
+  { email: 1, name: 1, pen: 1, generalNo: 1 } // to reduce loading time
+);
+
     res.status(200).json(unverifiedUsers);
   } catch (err) {
     console.error('Error fetching unverified users:', err);
@@ -206,7 +204,8 @@ app.get('/api/unverified-users', async (req, res) => {
   }
 });
 
-// === Verify a user by email ===
+
+// Verify a user by email
 app.put('/api/verify-user/:email', async (req, res) => {
   try {
     const email = req.params.email;
@@ -220,7 +219,8 @@ app.put('/api/verify-user/:email', async (req, res) => {
   }
 });
 
-// === View user details by id ===
+
+// for view users detai function in admin dashboard for verification
 app.get('/api/users/:id', async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -231,69 +231,11 @@ app.get('/api/users/:id', async (req, res) => {
   }
 });
 
-// === Submit a new repair request with bill upload ===
-app.post('/api/repair-request', upload.single('bill'), async (req, res) => {
-  try {
-    const {
-      userName,
-      penNumber,
-      vehicleNumber,
-      subject,
-      description
-    } = req.body;
 
-    // Optional: Check if request already exists with same vehicleNumber or other unique field
 
-    const newRequest = new RepairRequest({
-      userName,
-      penNumber,
-      vehicleNumber,
-      subject,
-      description,
-      bill: req.file ? req.file.filename : null,
-      status: 'pending',
-      createdAt: new Date(),
-      verificationAttempts: []
-    });
 
-    await newRequest.save();
-    res.status(201).json({ message: 'Repair request submitted successfully', data: newRequest });
-  } catch (err) {
-    console.error('❌ Failed to submit repair request:', err);
-    res.status(500).json({ message: 'Failed to submit repair request', error: err.message });
-  }
-});
-
-// === Verify repair request ===
-app.post('/api/repair-request/verify', async (req, res) => {
-  try {
-    const { appNo, verified, issue } = req.body;
-
-    const request = await RepairRequest.findOne({ appNo });
-    if (!request) {
-      return res.status(404).json({ message: 'Repair request not found' });
-    }
-
-    // Push verification attempt to history
-    request.verificationAttempts.push({
-      verified,
-      issueDescription: verified === false ? issue : '',
-      date: new Date()
-    });
-
-    // Update current verification status and issue description
-    request.verified = verified;
-    request.issueDescription = verified === false ? issue : '';
-
-    await request.save();
-
-    res.json({ message: 'Verification status updated', data: request });
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to update verification status', error: err.message });
-  }
-});
-
-const PORT = process.env.PORT || 5000;
+// Start server (only once)
+const PORT = 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
 });

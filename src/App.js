@@ -20,7 +20,7 @@ function App() {
     <div className="App">
    
       <header className="App-header">
-      <img src="/images/kepa_logo.png" alt="Logo" />
+      <img className='App-logo' src="/images/kepa_logo.png" alt="Logo" />
 
       <h1>Kerala Police Academy</h1>
       <h3>Motor Transport Wing</h3>

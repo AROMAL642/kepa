@@ -3,16 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import './css/admindashboard.css';
 import AddRemoveVehicleForm from './AddRemoveVehicleForm';
 import ViewRequests from './ViewRequests';
-import AdminRepairSection from "./AdminRepairSection";
-
-
-
-
 
 function AdminDashboard() {
   const [darkMode, setDarkMode] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
   const [vehicleTab, setVehicleTab] = useState('main');
+  const [pendingCount, setPendingCount] = useState(0);
+  const [loadingVerifiedUsers, setLoadingVerifiedUsers] = useState(false);
+  const [verifiedUsers, setVerifiedUsers] = useState([]);
   const navigate = useNavigate();
    
   const [adminData, setAdminData] = useState({
@@ -31,7 +29,37 @@ function AdminDashboard() {
       photo: localStorage.getItem('adminPhoto') || '',
       signature: localStorage.getItem('adminSignature') || ''
     });
+    fetchPendingCount();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'userdetails') {
+      fetchVerifiedUsers();
+    }
+  }, [activeTab]);
+
+  const fetchPendingCount = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/unverified-users');
+      const data = await res.json();
+      setPendingCount(data.length);
+    } catch (error) {
+      console.error('Error fetching pending requests count:', error);
+    }
+  };
+
+  const fetchVerifiedUsers = async () => {
+    setLoadingVerifiedUsers(true);
+    try {
+      const res = await fetch('http://localhost:5000/api/verified-users');
+      const data = await res.json();
+      setVerifiedUsers(data);
+    } catch (error) {
+      console.error('Error fetching verified users:', error);
+    } finally {
+      setLoadingVerifiedUsers(false);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.clear();
@@ -61,7 +89,14 @@ function AdminDashboard() {
           <button className="sidebar-btn" onClick={() => setActiveTab('Repair')}>Repair Reports</button>
           <button className="sidebar-btn" onClick={() => setActiveTab('Accident')}>Accident Details</button>
           <button className="sidebar-btn" onClick={() => { setActiveTab('VehicleDetails'); setVehicleTab('main'); }}>Vehicle</button>
-          <button className="sidebar-btn" onClick={() => setActiveTab('Request')}>View Requests</button>
+
+          <button className="sidebar-btn notification-btn" onClick={() => setActiveTab('Request')}>
+            <FaBell style={{ color: 'red', marginRight: '5px' }} />
+            View Requests
+            {pendingCount > 0 && <span className="notification-badge">{pendingCount}</span>}
+          </button>
+
+          <button className="sidebar-btn" onClick={() => setActiveTab('userdetails')}>Users Details</button>
         </div>
 
         <button className="logout-btn" onClick={handleLogout}>🚪 Logout</button>
@@ -71,91 +106,67 @@ function AdminDashboard() {
         {activeTab === 'profile' && (
           <div className="form-section">
             <div className="form-left">
-              {[
-                { label: 'Name', name: 'name' },
-                { label: 'Email', name: 'email' },
-                { label: 'PEN', name: 'pen' },
-              ].map(field => (
-                <div className="form-group" key={field.name}>
-                  <label>{field.label}</label>
-                  <input
-                    type="text"
-                    value={adminData[field.name] || ''}
-                    readOnly
-                    style={themeStyle}
-                  />
+              {['name', 'email', 'pen'].map((field) => (
+                <div className="form-group" key={field}>
+                  <label>{field.charAt(0).toUpperCase() + field.slice(1)}</label>
+                  <input type="text" value={adminData[field]} readOnly style={themeStyle} />
                 </div>
               ))}
             </div>
-
             <div className="form-right">
               <div className="upload-section">
-                <img
-                  src={adminData.photo || 'https://via.placeholder.com/100'}
-                  alt="Profile"
-                  className="upload-icon"
-                />
+                <img src={adminData.photo || 'https://via.placeholder.com/100'} alt="Profile" className="upload-icon" />
                 <p>Profile Photo</p>
               </div>
               <div className="upload-section">
-                <img
-                  src={adminData.signature || 'https://via.placeholder.com/100'}
-                  alt="Signature"
-                  className="upload-icon"
-                />
+                <img src={adminData.signature || 'https://via.placeholder.com/100'} alt="Signature" className="upload-icon" />
                 <p>Signature</p>
               </div>
             </div>
           </div>
         )}
 
-        {activeTab === 'Movement' && (
-          <div className="movement-section" style={{ width: '100%', maxWidth: '600px' }}>
-            <h2 style={{ marginBottom: '20px' }}>Search in Movement Register</h2>
-            <div className="search-bar" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-              <input
-                type="text"
-                placeholder="Enter vehicle number or officer name"
-                style={{
-                  flex: 1,
-                  padding: '10px',
-                  borderRadius: '5px',
-                  border: `1px solid ${themeStyle.borderColor}`,
-                  background: themeStyle.background,
-                  color: themeStyle.color
-                }}
-              />
-              <button
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: '#007bff',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '5px',
-                  cursor: 'pointer'
-                }}
-              >
-                Search
-              </button>
-            </div>
+        {activeTab === 'userdetails' && (
+          <div>
+            <h2 style={{ marginBottom: '10px' }}>Verified Users</h2>
+            {loadingVerifiedUsers ? (
+              <div className="loading-spinner">Loading users...</div>
+            ) : (
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>PEN</th>
+                    <th>General No</th>
+                    <th>Mobile Number</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {verifiedUsers.length > 0 ? (
+                    verifiedUsers.map((user, index) => (
+                      <tr key={index}>
+                        <td>{user.name}</td>
+                        <td>{user.pen}</td>
+                        <td>{user.generalno}</td>
+                        <td>{user.mobileno}</td>
+                        <td><button>View Full Profile</button></td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="5">No verified users found.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            )}
           </div>
         )}
 
         {activeTab === 'VehicleDetails' && vehicleTab === 'main' && (
-          <div
-            className="vehicle-box"
-            style={{
-              width: '400px',
-              height: '600px',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'flex-start',
-              gap: '20px'
-            }}
-          >
-            <button className="vehicle-btn" onClick={() => setVehicleTab('addremove')}>
-              Add/Remove Vehicle
-            </button>
+          <div className="vehicle-box" style={{ width: '400px', height: '600px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <button className="vehicle-btn" onClick={() => setVehicleTab('addremove')}>Add/Remove Vehicle</button>
             <button className="vehicle-btn">Search Vehicle Details</button>
             <button className="vehicle-btn">Expense Details</button>
             <button className="vehicle-btn">View/Print Registers</button>
@@ -164,23 +175,12 @@ function AdminDashboard() {
         )}
 
         {activeTab === 'VehicleDetails' && vehicleTab === 'addremove' && (
-          <AddRemoveVehicleForm
-            onBack={() => setVehicleTab('main')}
-            themeStyle={themeStyle}
-          />
+          <AddRemoveVehicleForm onBack={() => setVehicleTab('main')} themeStyle={themeStyle} />
         )}
 
         {activeTab === 'Request' && (
           <ViewRequests themeStyle={themeStyle} />
         )}
-
-       {activeTab === 'Repair' && (
-          <AdminRepairSection />
-)}
-
-  
-
-
       </div>
     </div>
   );

@@ -8,8 +8,7 @@ const userSchema = new mongoose.Schema({
   },
   generalNo: {
     type: String,
-    unique: true,
- 
+    unique: true
   },
   name: {
     type: String,
@@ -18,7 +17,6 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     unique: true,
-
     match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email']
   },
   phone: {
@@ -27,10 +25,7 @@ const userSchema = new mongoose.Schema({
     required: true,
     match: [/^\d{10}$/, 'Phone number must be exactly 10 digits']
   },
-  licenseNo: {
-    type: String,
-  
-  },
+  licenseNo: String,
   dob: {
     type: Date,
     required: true
@@ -45,12 +40,8 @@ const userSchema = new mongoose.Schema({
     enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],
     required: true
   },
-  photo: {
-    type: String
-  },
-  signature:{
-    type: String
-  },
+  photo: String,
+  signature: String,
   password: {
     type: String,
     required: true
@@ -58,6 +49,11 @@ const userSchema = new mongoose.Schema({
   verified: {
     type: String,
     default: 'NO'
+  },
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user'
   }
 }, {
   timestamps: true
