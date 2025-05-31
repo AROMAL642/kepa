@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import './css/form.css'; // This includes your styles
+import './css/form.css';
 
 const LoginPage = () => {
-  const [email, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [role, setRole] = useState('user');
   const navigate = useNavigate();
+  const [pen, setPen] = useState('');
+  const [password, setPassword] = useState('');
 
   const handleLogin = async (e) => {
     e.preventDefault();
+
     try {
-      const res = await axios.post('http://localhost:5000/login', { email, password, role });
+      const res = await axios.post('http://localhost:5000/login', { pen, password });
 
       if (res.data.role === 'admin') {
         localStorage.setItem('adminEmail', res.data.email);
@@ -20,7 +20,6 @@ const LoginPage = () => {
         localStorage.setItem('adminPen', res.data.pen);
         localStorage.setItem('adminPhoto', res.data.photo);
         localStorage.setItem('adminSignature', res.data.signature);
-
         navigate('/admin');
       } else if (res.data.role === 'user') {
         localStorage.setItem('userPen', res.data.pen);
@@ -34,10 +33,8 @@ const LoginPage = () => {
         localStorage.setItem('usergender', res.data.gender);
         localStorage.setItem('userPhoto', res.data.photo);
         localStorage.setItem('userSignature', res.data.signature);
-
         navigate('/user');
       }
-
     } catch (error) {
       const msg = error.response?.data?.message || 'Network or server error';
       alert('Login failed: ' + msg);
@@ -46,55 +43,56 @@ const LoginPage = () => {
 
   return (
     <div className="containerStyle">
+      <h2 className="headingStyle">Login</h2>
       <form onSubmit={handleLogin} className="formStyle">
-        <h2 className="headingStyle">Login</h2>
-
         <div className="fieldStyle">
-          <label>Email</label>
+          <label htmlFor="pen">PEN Number</label>
           <input
             type="text"
-            value={email}
-            placeholder="Email"
-            onChange={(e) => setUsername(e.target.value)}
+            id="pen"
+            value={pen}
+            onChange={(e) => setPen(e.target.value)}
             required
             className="inputStyle"
+            placeholder="Enter your PEN number"
           />
         </div>
-
         <div className="fieldStyle">
-          <label>Password</label>
+          <label htmlFor="password">Password</label>
           <input
             type="password"
+            id="password"
             value={password}
-            placeholder="Password"
             onChange={(e) => setPassword(e.target.value)}
             required
             className="inputStyle"
+            placeholder="Enter your password"
           />
         </div>
-
-        <div className="fieldStyle">
-          <label>Login as</label>
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            className="inputStyle"
-          >
-            <option value="user">Login as User</option>
-            <option value="admin">Login as Admin</option>
-          </select>
-        </div>
-
-        <button type="submit" className="buttonStyle">Login</button>
-
-        <p style={{ marginTop: 10 }}>
-          Don't have an account? <Link to="/register">Register here</Link>
-        </p>
-
-        <p style={{ marginTop: 20 }}>
-          Forgot Password! <Link to="/ResetPassword">Rest Password</Link>
-        </p>
+        <button type="submit" className="buttonStyle">
+          Login
+        </button>
       </form>
+
+      <div style={{ textAlign: 'center', marginTop: '15px' }}>
+        <p>
+          New user?{' '}
+          <span
+            onClick={() => navigate('/register')}
+            style={{ color: '#007bff', cursor: 'pointer', textDecoration: 'underline' }}
+          >
+            Register here
+          </span>
+        </p>
+        <p>
+          <span
+            onClick={() => navigate('/forgot-password')}
+            style={{ color: '#007bff', cursor: 'pointer', textDecoration: 'underline' }}
+          >
+            Forgot Password?
+          </span>
+        </p>
+      </div>
     </div>
   );
 };
