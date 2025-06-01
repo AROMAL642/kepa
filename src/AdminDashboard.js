@@ -4,6 +4,14 @@ import './css/admindashboard.css';
 import AddRemoveVehicleForm from './AddRemoveVehicleForm';
 import ViewRequests from './ViewRequests';
 import { FaBell } from 'react-icons/fa';
+import SearchVehicleDetails from './admindashboardcomponents/SearchVehicleDetails';
+import './css/SearchVehicleDetails.css';
+import ViewAssignVehicle from './admindashboardcomponents/ViewAssignVehicle';
+import './css/AssignVehicle.css';
+
+
+
+
 
 function AdminDashboard() {
   const [darkMode, setDarkMode] = useState(false);
@@ -95,7 +103,7 @@ function AdminDashboard() {
             {pendingCount > 0 && <span className="notification-badge">{pendingCount}</span>}
           </button>
 
-          <button className="sidebar-btn" onClick={() => setActiveTab('userdetails')}>Users Details</button>
+          <button className="sidebar-btn" onClick={() => setActiveTab('VerifiedUsersTable')}>Users Details</button>
         </div>
 
         <button className="logout-btn" onClick={handleLogout}>🚪 Logout</button>
@@ -166,10 +174,12 @@ function AdminDashboard() {
         {activeTab === 'VehicleDetails' && vehicleTab === 'main' && (
           <div className="vehicle-box" style={{ width: '400px', height: '600px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <button className="vehicle-btn" onClick={() => setVehicleTab('addremove')}>Add/Remove Vehicle</button>
-            <button className="vehicle-btn">Search Vehicle Details</button>
+            <button className="vehicle-btn" onClick={() => setVehicleTab('search')}>Search Vehicle Details</button>
+
             <button className="vehicle-btn">Expense Details</button>
             <button className="vehicle-btn">View/Print Registers</button>
-            <button className="vehicle-btn">View/Assign Vehicle</button>
+            <button className="vehicle-btn" onClick={() => setVehicleTab('viewassign')}>View/Assign Vehicle</button>
+
           </div>
         )}
 
@@ -178,6 +188,16 @@ function AdminDashboard() {
         )}
 
         {activeTab === 'Request' && <ViewRequests themeStyle={themeStyle} />}
+
+        {activeTab === 'VehicleDetails' && vehicleTab === 'search' && (
+         <SearchVehicleDetails onBack={() => setVehicleTab('main')} themeStyle={themeStyle} />
+        )}
+
+        {activeTab === 'VehicleDetails' && vehicleTab === 'viewassign' && (
+       <ViewAssignVehicle onBack={() => setVehicleTab('main')} themeStyle={themeStyle} />
+        )}
+
+
       </div>
     </div>
   );

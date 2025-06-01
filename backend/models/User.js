@@ -25,7 +25,9 @@ const userSchema = new mongoose.Schema({
     required: true,
     match: [/^\d{10}$/, 'Phone number must be exactly 10 digits']
   },
+
   licenseNo: String,
+  
   dob: {
     type: Date,
     required: true

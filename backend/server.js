@@ -35,8 +35,7 @@ const upload = multer({ storage });
 
 // Models
 const User = require('./models/User');
-const Admin = require('./models/Admin');
-const MovementRegister = require('./models/MovementRegister');
+const MovementRegister = require('./models/Movement');
 const Vehicle = require('./models/Vehicle');
 
 // Register User
@@ -142,49 +141,26 @@ app.get('/api/admin/:email', async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch admin data', error: err.message });
   }
 });
+//movement register
+const movementRoutes = require('./routes/movementRoutes');
+app.use('/api/movement', movementRoutes);
 
-// Movement Register
-app.post('/api/movement', async (req, res) => {
-  try {
-    const {
-      vehicleno,
-      startingkm,
-      startingtime,
-      destination,
-      purpose,
-      officerincharge = '',
-      closingkm = '',
-      closingtime = ''
-    } = req.body;
+// Add or remove Vehicle
+const vehicleRoutes = require('./routes/addremovevehicleRoutes');
+app.use('/api/vehicles', vehicleRoutes);
 
-    const newEntry = new MovementRegister({
-      vehicleno,
-      startingkm,
-      startingtime,
-      destination,
-      purpose,
-      officerincharge,
-      closingkm,
-      closingtime
-    });
+//search vehcle
 
-    await newEntry.save();
-    res.status(201).json({ message: 'Movement data saved successfully.' });
-  } catch (err) {
-    res.status(500).json({ message: 'Error saving movement data', error: err.message });
-  }
-});
+const searchVehicleRoute = require('./routes/searchVehicle');
+app.use('/searchvehicle', searchVehicleRoute);
 
-// Add Vehicle
-app.post('/api/vehicles', async (req, res) => {
-  try {
-    const newVehicle = new Vehicle(req.body);
-    await newVehicle.save();
-    res.status(201).json({ message: 'Vehicle added successfully' });
-  } catch (err) {
-    res.status(500).json({ message: 'Error saving vehicle', error: err.message });
-  }
-});
+
+//assign vehicle
+const assignVehicleRoutes = require('./routes/assignVehicleRoutes');
+app.use('/api/assignvehicle', assignVehicleRoutes);
+
+
+
 
 
 // Fetch all unverified users with role = 'user'
@@ -233,7 +209,7 @@ app.get('/api/verified-users', async (req, res) => {
   try {
     const verifiedUsers = await User.find(
       { verified: 'YES', role: 'user' },
-      { name: 1, pen: 1, generalNo: 1, phone: 1, email: 1 } // projection
+      { name: 1, pen: 1, generalNo: 1, phone: 1 } // projection includes generalNo and phone
     );
     res.status(200).json(verifiedUsers);
   } catch (err) {
@@ -241,6 +217,7 @@ app.get('/api/verified-users', async (req, res) => {
     res.status(500).json({ message: 'Error fetching verified users', error: err.message });
   }
 });
+
 
 
 
