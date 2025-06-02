@@ -10,20 +10,28 @@ function AddRemoveVehicleForm() {
     status: 'Active',
     arrivedDate: new Date().toISOString().split('T')[0],
     kmpl: '',
-    currentDriver: ''
+    currentDriver: '',
   });
 
-  const handleChange = (e) => {
-    setVehicle({ ...vehicle, [e.target.name]: e.target.value });
-  };
+const handleChange = (e) => {
+  const { name, value } = e.target;
+  const newValue = name === 'number' ? value.toUpperCase() : value;
+  setVehicle({ ...vehicle, [name]: newValue });
+};
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(vehicle); // Debugging: check data before sending
+
+    const formattedVehicle = {
+      ...vehicle,
+      number: vehicle.number.toUpperCase(), // Ensure uppercase before sending
+    };
+
     try {
-      await axios.post('http://localhost:5000/api/vehicles', vehicle);
+      await axios.post('http://localhost:5000/api/vehicles', formattedVehicle);
       alert('Vehicle added successfully');
-      // Clear form
+
       setVehicle({
         number: '',
         model: '',
@@ -32,11 +40,16 @@ function AddRemoveVehicleForm() {
         status: 'Active',
         arrivedDate: new Date().toISOString().split('T')[0],
         kmpl: '',
-        currentDriver: ''
+        currentDriver: '',
       });
     } catch (error) {
       console.error(error);
-      alert('Failed to add vehicle: ' + (error.response?.data?.error?.message || error.message));
+      const errorMsg = error.response?.data?.error;
+      if (errorMsg === 'Vehicle number already exists') {
+        alert('Vehicle number already exists!');
+      } else {
+        alert('Failed to add vehicle: ' + (errorMsg || error.message));
+      }
     }
   };
 
@@ -49,9 +62,9 @@ function AddRemoveVehicleForm() {
           <input
             type="text"
             name="number"
-            placeholder="e.g., KL01AA1234"
-            pattern="[A-Z]{2}[0-9]{2}[A-Z]{2}[0-9]{4}"
-            title="Format: KL01AA1234"
+            placeholder="e.g., KL01AA1234 or KL01A0123"
+            pattern="[A-Z]{2}[0-9]{2}[A-Z]{1,2}[0-9]{4}"
+            title="Format: KL08BP0111 or KL08B0111"
             value={vehicle.number}
             onChange={handleChange}
             required
@@ -83,7 +96,7 @@ function AddRemoveVehicleForm() {
 
         <div className="form-group">
           <label>Fuel Type</label>
-          <select name="fuelType" value={vehicle.fuelType} onChange={handleChange}>
+          <select name="fuelType" value={vehicle.fuelType} onChange={handleChange} required>
             <option value="">Select Fuel Type</option>
             <option value="petrol">Petrol</option>
             <option value="diesel">Diesel</option>
@@ -124,8 +137,6 @@ function AddRemoveVehicleForm() {
             min="0"
           />
         </div>
-
-    
 
         <div className="form-buttons">
           <button type="submit" className="btn-add">Add Vehicle</button>

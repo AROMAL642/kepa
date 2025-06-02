@@ -146,8 +146,9 @@ const movementRoutes = require('./routes/movementRoutes');
 app.use('/api/movement', movementRoutes);
 
 // Add or remove Vehicle
-const vehicleRoutes = require('./routes/addremovevehicleRoutes');
-app.use('/api/vehicles', vehicleRoutes);
+
+const addRemoveVehicleRoutes = require('./routes/addremovevehicleRoutes');
+app.use('/api/vehicles', addRemoveVehicleRoutes);
 
 //search vehcle
 

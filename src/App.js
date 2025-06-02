@@ -6,7 +6,8 @@ import AdminDashboard from './AdminDashboard';
 import UserDashboard from './UserDashboard';
 import ViewRequests from './ViewRequests';
 import UserDetails from './UserDetails';
-import AddRemoveVehicleForm from './AddRemoveVehicleForm';
+import AddRemoveVehicleForm from './admindashboardcomponents/AddRemoveVehicleForm';
+
 import './App.css';
 
 
