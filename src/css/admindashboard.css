@@ -398,4 +398,75 @@ body {
 }
 
 
+.dashboard {
+  margin-top: 64px; /* Height of the AppBar (default MUI) */
+}
+
+
+.drawer-toggle-btn {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  font-size: 24px;
+  z-index: 1001;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #333;
+}
+
+.dashboard {
+  display: flex;
+  transition: margin-left 0.3s ease;
+}
+
+.drawer {
+  width: 250px;
+  background-color: #f4f4f4;
+  padding: 20px;
+  height: 100vh;
+  position: fixed;
+  left: -250px;
+  top: 0;
+  z-index: 1000;
+  transition: left 0.3s ease;
+  overflow-y: auto;
+}
+
+.drawer.open {
+  left: 0;
+}
+
+.drawer-open .main-content {
+  margin-left: 250px;
+}
+
+.main-content {
+  flex: 1;
+  padding: 20px;
+  transition: margin-left 0.3s ease;
+}
+
+
+.drawer {
+  width: 240px;
+  transition: transform 0.3s ease;
+  position: fixed;
+  left: 0;
+  top: 64px; /* height of the AppBar */
+  height: calc(100% - 64px);
+  background-color: #333;
+  color: white;
+  overflow-y: auto;
+  z-index: 1200;
+}
+
+.drawer.open {
+  transform: translateX(0);
+}
+
+.drawer:not(.open) {
+  transform: translateX(-100%);
+}
+
 
