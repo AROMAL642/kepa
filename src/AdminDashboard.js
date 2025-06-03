@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './css/admindashboard.css';
-import AddRemoveVehicleForm from './AddRemoveVehicleForm';
+import AddRemoveVehicleForm from './admindashboardcomponents/AddRemoveVehicleForm';
 import ViewRequests from './ViewRequests';
 import { FaBell } from 'react-icons/fa';
 import SearchVehicleDetails from './admindashboardcomponents/SearchVehicleDetails';

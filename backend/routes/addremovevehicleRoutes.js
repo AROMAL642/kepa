@@ -1,27 +1,22 @@
-// routes/searchVehicle.js
 const express = require('express');
 const router = express.Router();
-const Vehicle = require('../models/Vehicle'); // Ensure correct model filename
+const Vehicle = require('../models/Vehicle'); // lowercase filename as per your structure
 
-router.get('/', async (req, res) => {
+router.post('/', async (req, res) => {
   try {
-    const { vehicleno } = req.query;
+    const { number } = req.body;
 
-    if (!vehicleno) {
-      return res.status(400).json({ error: 'Vehicle number is required' });
+    const existingVehicle = await Vehicle.findOne({ number: number.toUpperCase() });
+    if (existingVehicle) {
+      return res.status(400).json({ error: 'Vehicle number already exists' });
     }
 
-    // Match based on the field `number`, not `vehicleno`
-    const vehicle = await Vehicle.findOne({ number: vehicleno });
-
-    if (!vehicle) {
-      return res.status(404).json({ error: 'Vehicle not found' });
-    }
-
-    res.status(200).json(vehicle);
+    const newVehicle = new Vehicle({ ...req.body, number: number.toUpperCase() });
+    await newVehicle.save();
+    res.status(201).json({ message: 'Vehicle added successfully' });
   } catch (error) {
-    console.error('Error searching vehicle:', error);
-    res.status(500).json({ error: 'Server error' });
+    console.error('Error adding vehicle:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
