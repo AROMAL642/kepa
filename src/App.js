@@ -7,7 +7,11 @@ import UserDashboard from './UserDashboard';
 import ViewRequests from './ViewRequests';
 import UserDetails from './UserDetails';
 import AddRemoveVehicleForm from './AddRemoveVehicleForm';
+import SearchVehicleDetails from './userdashboardcomponents/SearchVehicleDetails';
 import './App.css';
+
+
+
 
 
 function App() {
@@ -30,8 +34,9 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/viewrequests" element={<ViewRequests themeStyle={{ background: 'black', color: 'white' }} />} />
         <Route path="/userdetails/:id" element={<UserDetails />} />
-
         <Route path="/admin/vehicles" element={<AddRemoveVehicleForm />} />
+        
+        <Route path="/searchvehicle" element={<SearchVehicleDetails />} />
   
         <Route path="*" element={<Navigate to="/" />} />
     

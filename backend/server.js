@@ -159,6 +159,10 @@ app.use('/searchvehicle', searchVehicleRoute);
 const assignVehicleRoutes = require('./routes/assignVehicleRoutes');
 app.use('/api/assignvehicle', assignVehicleRoutes);
 
+//fuel register by user
+const fuelRoutes = require('./routes/fuelregisterRoutes');
+app.use('/api', fuelRoutes);
+
 
 
 

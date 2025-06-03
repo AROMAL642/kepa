@@ -134,3 +134,76 @@ body {
 
 
 
+/* Existing Drawer Style (confirm you have this) */
+.drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 250px;
+  background-color: #1f1f1f;
+  color: white;
+  overflow-y: auto;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease-in-out;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.drawer.open {
+  transform: translateX(0);
+}
+
+/* Button to open drawer */
+.drawer-toggle-btn {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  font-size: 1.8rem;
+  z-index: 1100;
+  background-color: transparent;
+  border: none;
+  color: #000;
+  cursor: pointer;
+}
+
+/* Main dashboard layout */
+.dashboard {
+  display: flex;
+  flex-direction: row;
+  transition: padding-left 0.3s ease;
+  min-height: 100vh;
+}
+
+.dashboard.drawer-open .main-content {
+  margin-left: 250px; /* Matches drawer width */
+}
+
+
+/* Main content area */
+.main-content {
+  flex: 1;
+  padding: 2rem;
+  transition: margin-left 0.3s ease;
+}
+
+/* Button styling (confirm you have this already) */
+.sidebar-btn,
+.logout-btn,
+.toggle-btn {
+  display: block;
+  width: 100%;
+  padding: 0.75rem;
+  margin-top: 0.5rem;
+  background-color: #333;
+  border: none;
+  color: white;
+  cursor: pointer;
+  text-align: left;
+}
+
+.sidebar-btn:hover,
+.logout-btn:hover,
+.toggle-btn:hover {
+  background-color: #444;
+}
