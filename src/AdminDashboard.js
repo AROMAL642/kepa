@@ -91,7 +91,7 @@ function AdminDashboard() {
           <button className="sidebar-btn" onClick={() => { setActiveTab('VehicleDetails'); setVehicleTab('main'); }}>Vehicle</button>
 
           <button className="sidebar-btn notification-btn" onClick={() => setActiveTab('Request')}>
-            <FaBell style={{ color: 'red', marginRight: '5px' }} />
+           
             View Requests
             {pendingCount > 0 && <span className="notification-badge">{pendingCount}</span>}
           </button>

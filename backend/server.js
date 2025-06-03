@@ -8,11 +8,20 @@ const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const app = express(); 
+const repairRequestRoutes = require('./routes/repairRequestRoutes');
+
+
+
+
 
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+const UPLOADS_DIR = path.join(__dirname, 'uploads');
+app.use('/uploads', express.static(UPLOADS_DIR));
+//app.use('/api/repair-request', repairRequestRoutes);
+app.use('/api/repair-request', require('./routes/repairRequestRoutes'));
+
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)
@@ -36,8 +45,11 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // Use imported routes
-app.use('/api/user', repairRequestRoutes);
-app.use('/api/admin', repairAdminRoute);
+// Models
+const User = require('./models/User');
+const Admin = require('./models/Admin');
+const MovementRegister = require('./models/MovementRegister');
+const Vehicle = require('./models/Vehicle');
 
 // === User Registration ===
 app.post('/register', async (req, res) => {
@@ -187,7 +199,7 @@ app.post('/api/vehicles', async (req, res) => {
   }
 });
 
-//verify user
+
 
 // Fetch all unverified users
 app.get('/api/unverified-users', async (req, res) => {
@@ -220,7 +232,7 @@ app.put('/api/verify-user/:email', async (req, res) => {
 });
 
 
-// for view users detai function in admin dashboard for verification
+// view specific user details
 app.get('/api/users/:id', async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -232,6 +244,19 @@ app.get('/api/users/:id', async (req, res) => {
 });
 
 
+// Fetch all verified users with role = 'user'
+app.get('/api/verified-users', async (req, res) => {
+  try {
+    const verifiedUsers = await User.find(
+      { verified: 'YES', role: 'user' },
+      { name: 1, pen: 1, generalNo: 1, phone: 1, email: 1 } // projection
+    );
+    res.status(200).json(verifiedUsers);
+  } catch (err) {
+    console.error('Error fetching verified users:', err);
+    res.status(500).json({ message: 'Error fetching verified users', error: err.message });
+  }
+});
 
 
 // Start server (only once)

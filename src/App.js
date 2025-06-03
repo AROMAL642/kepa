@@ -39,6 +39,7 @@ function App() {
         <Route path="/admin/vehicles" element={<AddRemoveVehicleForm />} />
         <Route path="*" element={<Navigate to="/" />} />
         <Route path="/repair" element={<RepairRequestForm />} />
+         
 
     
       </Routes>

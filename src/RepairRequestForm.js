@@ -1,151 +1,144 @@
-import { useState } from "react";
-import axios from "axios";
+// frontend/components/RequestRepairForm.js
+
+import React, { useState } from 'react';
+import axios from 'axios';
 import './App.css';
 
-function RepairRequestForm() {
-  const [form, setForm] = useState({
-    date: "",
-    appNo: "",
-    vehicleNo: "",
-    subject: "",
-    description: "",
+const RequestRepairForm = () => {
+  const [formData, setFormData] = useState({
+    appNo: '',
+    vehicleNo: '',
+    subject: '',
+    description: '',
+    bill: null,
   });
-  const [verify, setVerify] = useState(null);
-  const [issueDescription, setIssueDescription] = useState("");
-  const [file, setFile] = useState(null);
 
-  const wordCount = form.description.trim().split(/\s+/).filter(Boolean).length;
+  const [status, setStatus] = useState('');
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    if (name === "description" && value.trim().split(/\s+/).length > 100) return;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleFileChange = (e) => {
-    const uploadedFile = e.target.files[0];
-    if (uploadedFile && (uploadedFile.type.includes("pdf") || uploadedFile.type.includes("image"))) {
-      setFile(uploadedFile);
+    const { name, value, files } = e.target;
+    if (name === 'bill') {
+      setFormData({ ...formData, bill: files[0] });
     } else {
-      alert("Please upload a valid PDF or image file.");
-      e.target.value = null;
-      setFile(null);
+      setFormData({ ...formData, [name]: value });
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setStatus('Submitting...');
+
+
+    const backendUrl = 'http://localhost:5000';
     try {
-      const formData = new FormData();
-      Object.entries(form).forEach(([key, value]) => {
-        formData.append(key, key === "date" ? new Date(value).toISOString() : value);
-      });
-      if (file) {
-        formData.append("file", file);
-      }
+      // Step 1: Submit the repair request
+      
 
-      await axios.post("http://localhost:5000/api/repair-request", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+      const repairRes = await axios.post(`${backendUrl}/api/repair-request`, {
+        appNo: formData.appNo,
+        vehicleNo: formData.vehicleNo,
+        subject: formData.subject,
+        description: formData.description,
       });
 
-      alert("Repair request submitted");
-    } catch (error) {
-      alert("Error submitting request: " + error.message);
-    }
-  };
+      const requestId = repairRes.data.requestId;
 
-  const handleVerifySubmit = async () => {
-    try {
-      await axios.post("http://localhost:5000/api/repair-request/verify", {
-        appNo: form.appNo,
-        verified: verify,
-        issue: verify === false ? issueDescription : null,
+      // Step 2: Upload the bill if present
+      if (formData.bill) {
+  // 🔐 Check file size before uploading (e.g., 10MB limit)
+         const maxSize = 1 * 1024 * 1024; // 10MB
+         if (formData.bill.size > maxSize) {
+            setStatus('❌ File is too large. Please upload a file smaller than 1MB.');
+            return;
+         }
+
+  const billData = new FormData();
+  billData.append('bill', formData.bill);
+
+  await axios.post(`${backendUrl}/api/repair-request/${requestId}/upload-bill`, billData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+}
+
+
+      setStatus('Request submitted successfully ✅');
+      setFormData({
+        appNo: '',
+        vehicleNo: '',
+        subject: '',
+        description: '',
+        bill: null,
       });
-      alert("Verification submitted");
-    } catch (error) {
-      alert("Error submitting verification: " + error.message);
+    } catch (err) {
+      console.error('Full error:', err);
+      const errorMsg = err.response?.data?.message || err.message || 'Unknown error';
+      setStatus(`❌ Submission failed: ${errorMsg}`);
     }
   };
 
   return (
-    <div className="p-6 max-w-3xl mx-auto bg-white shadow-md rounded">
-      <h2 className="text-2xl font-bold mb-4">Request for Repair</h2>
+  <form onSubmit={handleSubmit} className="p-6 max-w-3xl bg-white shadow-md rounded">
+    <h2 className="text-2xl">Submit Repair Request</h2>
 
-      <div className="grid gap-4">
-        <input type="date" name="date" value={form.date} onChange={handleChange} className="input" />
-        <input type="text" name="appNo" placeholder="Application No" value={form.appNo} onChange={handleChange} className="input" />
-        <input type="text" name="vehicleNo" placeholder="Vehicle No" value={form.vehicleNo} onChange={handleChange} className="input" />
-        <input type="text" name="subject" placeholder="Subject" value={form.subject} onChange={handleChange} className="input" />
+    <input
+      type="text"
+      name="appNo"
+      value={formData.appNo}
+      onChange={handleChange}
+      placeholder="Application No"
+      required
+      className="input mt-2"
+    />
 
-        <textarea
-          name="description"
-          value={form.description}
-          onChange={handleChange}
-          className="input"
-          placeholder="Description (max 100 words)"
-        />
-        <p className="text-sm text-gray-500">{wordCount}/100 words</p>
+    <input
+      type="text"
+      name="vehicleNo"
+      value={formData.vehicleNo}
+      onChange={handleChange}
+      placeholder="Vehicle No"
+      required
+      className="input mt-2"
+    />
 
-        <input type="file" accept="application/pdf,image/*" onChange={handleFileChange} className="input" />
-        {file && <p className="text-sm text-green-600">File selected: {file.name}</p>}
+    <input
+      type="text"
+      name="subject"
+      value={formData.subject}
+      onChange={handleChange}
+      placeholder="Subject"
+      required
+      className="input mt-2"
+    />
 
-        <button onClick={handleSubmit} className="btn">
-          Submit
-        </button>
-      </div>
+    <textarea
+      name="description"
+      value={formData.description}
+      onChange={handleChange}
+      placeholder="Description"
+      required
+      className="input mt-2"
+    />
 
-      <div className="mt-6 border-t pt-4">
-        <label>Verify:</label>
-        <div className="flex gap-4">
-          <label>
-            <input type="radio" name="verify" onChange={() => setVerify(true)} /> Yes
-          </label>
-          <label>
-            <input type="radio" name="verify" onChange={() => setVerify(false)} /> No
-          </label>
-        </div>
+    <label className="mt-4 block">Upload Bill </label>
+    <input
+      type="file"
+      name="bill"
+      onChange={handleChange}
+      accept=".pdf,.jpg,.jpeg,.png"
+      className="mt-2"
+    />
 
-        {verify === false && (
-          <textarea
-            value={issueDescription}
-            onChange={(e) => setIssueDescription(e.target.value)}
-            className="input mt-2"
-            placeholder="What is still not fixed?"
-          />
-        )}
-        
+    <button type="submit" className="btn mt-6">
+      Submit Request
+    </button>
 
+    {status && <p className="mt-4 text-sm text-gray-500">{status}</p>}
+  </form>
+);
 
-        {file && (
-  <div className="mt-4">
-    <p className="text-sm text-green-600">File selected: {file.name}</p>
-    <p className="text-sm text-blue-600 underline">
-      Preview:
-    </p>
-    {file.type.includes("pdf") ? (
-      <iframe
-        src={URL.createObjectURL(file)}
-        width="100%"
-        height="400px"
-        title="PDF Preview"
-      />
-    ) : (
-      <img
-        src={URL.createObjectURL(file)}
-        alt="Preview"
-        className="max-w-full max-h-96 rounded border"
-      />
-    )}
-  </div>
-)}
+};
 
-        <button onClick={handleVerifySubmit} className="btn mt-2">
-          Submit
-        </button>
-      </div>
-    </div>
-  );
-}
+export default RequestRepairForm;
 
-export default RepairRequestForm;
 
 

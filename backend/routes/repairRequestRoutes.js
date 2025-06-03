@@ -1,70 +1,85 @@
 const express = require('express');
 const router = express.Router();
-const PDFDocument = require('pdfkit');
+const multer = require('multer');           // ✅ Import multer
+const path = require('path');               // ✅ Import path
+const fs = require('fs');                   // ✅ Import fs
+const RepairRequest = require('../models/RepairRequest');
 
-router.post('/pdf', async (req, res) => {
+
+// 1. Submit new repair request
+router.post('/', async (req, res) => {
   try {
-    const { date, appNo, vehicleNo, subject, description } = req.body;
+    console.log('Incoming request:', req.body); // ✅ LOG
 
-    const doc = new PDFDocument({ margin: 50 }); // add some margin for neatness
-    let buffers = [];
+    const { appNo, vehicleNo, subject, description } = req.body;
 
-    doc.on('data', buffers.push.bind(buffers));
-    doc.on('end', () => {
-      const pdfData = Buffer.concat(buffers);
-      res
-        .writeHead(200, {
-          'Content-Type': 'application/pdf',
-          'Content-Disposition': `attachment; filename=RepairRequest_${appNo}.pdf`,
-          'Content-Length': pdfData.length,
-        })
-        .end(pdfData);
+    if (!appNo || !vehicleNo || !subject || !description) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    const newRequest = new RepairRequest({
+      appNo,
+      vehicleNo,
+      subject,
+      description,
+      date: new Date(), // ✅ important if date is required
     });
 
-    // Title
-    doc.fontSize(18).text('Repair Request Form', { align: 'center' });
-    doc.moveDown(2);
+    const savedRequest = await newRequest.save();
+    console.log('Saved request:', savedRequest); // ✅ LOG
 
-    // Use fixed x position for labels and values for aligned columns
-    const labelX = 50;
-    const valueX = 180;
-    let y = doc.y;
+    res.status(201).json({ message: 'Repair request submitted', requestId: savedRequest._id });
+  } catch (err) {
+    console.error('Error saving request:', err); // ✅ LOG
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
 
-    // Date
-    doc.fontSize(12).text('Date:', labelX, y);
-    doc.text(new Date(date).toLocaleDateString(), valueX, y);
 
-    y += 20;
-    doc.text('Application No:', labelX, y);
-    doc.text(appNo, valueX, y);
+// 2. Multer setup for file upload
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = path.join(__dirname, '../uploads');
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir);
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueName = `${Date.now()}-${file.originalname}`;
+    cb(null, uniqueName);
+  }
+});
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // ✅ Max 10MB
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|pdf/;
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowedTypes.test(ext)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only PDF, JPG, and PNG files are allowed'));
+    }
+  }
+});
 
-    y += 20;
-    doc.text('Vehicle No:', labelX, y);
-    doc.text(vehicleNo, valueX, y);
+// 3. Upload bill for a repair request
+router.post('/:id/upload-bill', upload.single('bill'), async (req, res) => {
+  try {
+    const requestId = req.params.id;
+    const billFile = req.file?.filename;
 
-    y += 20;
-    doc.text('Subject:', labelX, y);
-    doc.text(subject, valueX, y);
+    const updated = await RepairRequest.findByIdAndUpdate(
+      requestId,
+      { bill: billFile },
+      { new: true }
+    );
 
-    y += 40;
-    doc.fontSize(14).text('Description:', labelX, y, { underline: true });
-    y += 25;
+    if (!updated) return res.status(404).json({ message: 'Repair request not found' });
 
-    // Description - wrap text within page width minus margins
-    doc.fontSize(12).text(description, {
-      align: 'left',
-      indent: 20,
-      lineGap: 4,
-      width: doc.page.width - doc.options.margin * 2,
-      height: 300,
-      ellipsis: true,
-    });
-
-    doc.end();
-
+    res.status(200).json({ message: 'Bill uploaded successfully', bill: billFile });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'PDF generation failed' });
+    res.status(500).json({ message: 'Failed to upload bill', error: err.message });
   }
 });
 
