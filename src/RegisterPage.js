@@ -30,12 +30,20 @@ const RegisterPage = () => {
   };
 
   const handleImageChange = async (e, key) => {
-    const file = e.target.files[0];
-    if (file) {
-      const base64 = await toBase64(file);
-      key === 'photo' ? setPhoto(base64) : setSignature(base64);
+  const file = e.target.files[0];
+  const maxSize = 1024 * 1024; // 1MB in bytes
+
+  if (file) {
+    if (file.size > maxSize) {
+      alert('File size should be less than 1MB');
+      return;
     }
-  };
+
+    const base64 = await toBase64(file);
+    key === 'photo' ? setPhoto(base64) : setSignature(base64);
+  }
+};
+
 
   const toBase64 = (file) => {
     return new Promise((resolve, reject) => {

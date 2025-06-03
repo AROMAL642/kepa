@@ -68,12 +68,14 @@ router.get('/vehicle/search', async (req, res) => {
 // PATCH /api/vehicles/assign
 router.patch('/assign', async (req, res) => {
   const { vehicleNumber, pen } = req.body;
+
   try {
     const updatedVehicle = await Vehicle.findOneAndUpdate(
       { number: vehicleNumber },
       { currentDriver: pen },
       { new: true }
     );
+
     if (!updatedVehicle) return res.status(404).json({ error: 'Vehicle not found' });
 
     res.json({ message: 'Vehicle assigned successfully', vehicle: updatedVehicle });

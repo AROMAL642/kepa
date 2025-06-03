@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import './css/admindashboard.css';
 import AddRemoveVehicleForm from './admindashboardcomponents/AddRemoveVehicleForm';
 import ViewRequests from './ViewRequests';
-import { FaBell } from 'react-icons/fa';
+
 import SearchVehicleDetails from './admindashboardcomponents/SearchVehicleDetails';
 import './css/SearchVehicleDetails.css';
 import ViewAssignVehicle from './admindashboardcomponents/ViewAssignVehicle';
@@ -21,7 +21,7 @@ function AdminDashboard() {
   const [loadingVerifiedUsers, setLoadingVerifiedUsers] = useState(false);
   const [verifiedUsers, setVerifiedUsers] = useState([]);
   const navigate = useNavigate();
-
+   
   const [adminData, setAdminData] = useState({
     name: '',
     email: '',
@@ -75,6 +75,8 @@ function AdminDashboard() {
     navigate('/adminlogin');
   };
 
+   
+
   const themeStyle = {
     background: darkMode ? '#121212' : '#fff',
     color: darkMode ? '#f1f1f1' : '#000',
@@ -98,7 +100,7 @@ function AdminDashboard() {
           <button className="sidebar-btn" onClick={() => { setActiveTab('VehicleDetails'); setVehicleTab('main'); }}>Vehicle</button>
 
           <button className="sidebar-btn notification-btn" onClick={() => setActiveTab('Request')}>
-            <FaBell style={{ color: 'red', marginRight: '5px' }} />
+           
             View Requests
             {pendingCount > 0 && <span className="notification-badge">{pendingCount}</span>}
           </button>
@@ -189,15 +191,13 @@ function AdminDashboard() {
 
         {activeTab === 'Request' && <ViewRequests themeStyle={themeStyle} />}
 
-        {activeTab === 'VehicleDetails' && vehicleTab === 'search' && (
+         {activeTab === 'VehicleDetails' && vehicleTab === 'search' && (
          <SearchVehicleDetails onBack={() => setVehicleTab('main')} themeStyle={themeStyle} />
         )}
 
         {activeTab === 'VehicleDetails' && vehicleTab === 'viewassign' && (
        <ViewAssignVehicle onBack={() => setVehicleTab('main')} themeStyle={themeStyle} />
         )}
-
-
       </div>
     </div>
   );

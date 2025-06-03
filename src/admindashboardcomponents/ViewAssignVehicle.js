@@ -57,11 +57,14 @@ function AssignVehicle({ themeStyle, onBack }) {
 
   const handleConfirmAssign = async (vehicleNumber, userPen) => {
     try {
-      const res = await fetch('http://localhost:5000/api/vehicles/assign', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ vehicleNumber: vehicleNumber.toUpperCase(), pen: userPen }),
-      });
+    
+      const res = await fetch('http://localhost:5000/api/assignvehicle/assign', {
+  method: 'PATCH',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ vehicleNumber: vehicleNumber.toUpperCase(), pen: userPen }),
+});
+
+
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Assignment failed');
@@ -70,10 +73,15 @@ function AssignVehicle({ themeStyle, onBack }) {
       handleSearch(); // Refresh user data
       setActiveAssignUserPen(null); // Close vehicle search UI
     } catch (error) {
-      console.error(error);
-      alert('Error assigning vehicle: ' + error.message);
+         console.error('Assign error:', error);
+         alert('Error assigning vehicle: ' + error.message);
     }
   };
+
+
+
+
+
 
   return (
     <div className="assign-vehicle-container" style={themeStyle}>
