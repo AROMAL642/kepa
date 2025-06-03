@@ -16,7 +16,7 @@ const repairRequestRoutes = require('./routes/repairRequestRoutes');
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 app.use('/uploads', express.static(UPLOADS_DIR));
 //app.use('/api/repair-request', repairRequestRoutes);
@@ -47,11 +47,11 @@ const upload = multer({ storage });
 // Use imported routes
 // Models
 const User = require('./models/User');
-const Admin = require('./models/Admin');
-const MovementRegister = require('./models/MovementRegister');
+
+const MovementRegister = require('./models/Movement');
 const Vehicle = require('./models/Vehicle');
 
-// === User Registration ===
+// User Registration 
 app.post('/register', async (req, res) => {
   const {
     pen, generalNo, name, email, phone, licenseNo,
@@ -59,8 +59,7 @@ app.post('/register', async (req, res) => {
   } = req.body;
 
   try {
-    const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(409).json({ message: 'User already exists' });
+   
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new User({
@@ -124,7 +123,7 @@ app.post('/login', async (req, res) => {
 
 
 
-// === Get User by Email ===
+//  Get User by Email 
 app.get('/api/user/:email', async (req, res) => {
   try {
     const user = await User.findOne({ email: req.params.email }).lean();
@@ -140,7 +139,7 @@ app.get('/api/user/:email', async (req, res) => {
   }
 });
 
-// === Get Admin by Email ===
+// Get Admin by Email 
 app.get('/api/admin/:email', async (req, res) => {
   try {
     const admin = await Admin.findOne({ email: req.params.email }).lean();
@@ -156,48 +155,33 @@ app.get('/api/admin/:email', async (req, res) => {
   }
 });
 
-// === Movement Register Entry ===
-app.post('/api/movement', async (req, res) => {
-  try {
-    const {
-      vehicleno,
-      startingkm,
-      startingtime,
-      destination,
-      purpose,
-      officerincharge = '',
-      closingkm = '',
-      closingtime = ''
-    } = req.body;
+//  Movement Register Entry 
 
-    const newEntry = new MovementRegister({
-      vehicleno,
-      startingkm,
-      startingtime,
-      destination,
-      purpose,
-      officerincharge,
-      closingkm,
-      closingtime
-    });
+const movementRoutes = require('./routes/movementRoutes');
+app.use('/api/movement', movementRoutes);
 
-    await newEntry.save();
-    res.status(201).json({ message: 'Movement data saved successfully.' });
-  } catch (err) {
-    res.status(500).json({ message: 'Error saving movement data', error: err.message });
-  }
-});
+// Add or remove Vehicle
 
-// === Add Vehicle ===
-app.post('/api/vehicles', async (req, res) => {
-  try {
-    const newVehicle = new Vehicle(req.body);
-    await newVehicle.save();
-    res.status(201).json({ message: 'Vehicle added successfully' });
-  } catch (err) {
-    res.status(500).json({ message: 'Error saving vehicle', error: err.message });
-  }
-});
+const addRemoveVehicleRoutes = require('./routes/addremovevehicleRoutes');
+app.use('/api/vehicles', addRemoveVehicleRoutes);
+
+//search vehcle
+
+const searchVehicleRoute = require('./routes/searchVehicle');
+app.use('/searchvehicle', searchVehicleRoute);
+
+
+//assign vehicle
+const assignVehicleRoutes = require('./routes/assignVehicleRoutes');
+app.use('/api/assignvehicle', assignVehicleRoutes);
+
+//fuel register by user
+const fuelRoutes = require('./routes/fuelregisterRoutes');
+app.use('/api', fuelRoutes);
+
+
+
+
 
 
 
@@ -249,7 +233,7 @@ app.get('/api/verified-users', async (req, res) => {
   try {
     const verifiedUsers = await User.find(
       { verified: 'YES', role: 'user' },
-      { name: 1, pen: 1, generalNo: 1, phone: 1, email: 1 } // projection
+      { name: 1, pen: 1, generalNo: 1, phone: 1} // projection
     );
     res.status(200).json(verifiedUsers);
   } catch (err) {
@@ -257,6 +241,7 @@ app.get('/api/verified-users', async (req, res) => {
     res.status(500).json({ message: 'Error fetching verified users', error: err.message });
   }
 });
+
 
 
 // Start server (only once)

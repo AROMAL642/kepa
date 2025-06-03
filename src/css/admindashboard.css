@@ -147,6 +147,16 @@ body {
 
 
 
+.back-btn {
+  margin-top: 20px;
+  padding: 5px 10px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
 
 .form-title {
   text-align: center;

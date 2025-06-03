@@ -6,39 +6,65 @@ function AddRemoveVehicleForm() {
     number: '',
     model: '',
     type: 'car',
-    status: 'active',
+    fuelType: '',
+    status: 'Active',
     arrivedDate: new Date().toISOString().split('T')[0],
     kmpl: '',
+    currentDriver: '',
   });
 
-  const handleChange = (e) => {
-    setVehicle({ ...vehicle, [e.target.name]: e.target.value });
-  };
+const handleChange = (e) => {
+  const { name, value } = e.target;
+  const newValue = name === 'number' ? value.toUpperCase() : value;
+  setVehicle({ ...vehicle, [name]: newValue });
+};
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const formattedVehicle = {
+      ...vehicle,
+      number: vehicle.number.toUpperCase(), // Ensure uppercase before sending
+    };
+
     try {
-      await axios.post('http://localhost:5000/api/vehicles', vehicle);
+      await axios.post('http://localhost:5000/api/vehicles', formattedVehicle);
       alert('Vehicle added successfully');
+
+      setVehicle({
+        number: '',
+        model: '',
+        type: 'car',
+        fuelType: '',
+        status: 'Active',
+        arrivedDate: new Date().toISOString().split('T')[0],
+        kmpl: '',
+        currentDriver: '',
+      });
     } catch (error) {
       console.error(error);
-      alert('Failed to add vehicle');
+      const errorMsg = error.response?.data?.error;
+      if (errorMsg === 'Vehicle number already exists') {
+        alert('Vehicle number already exists!');
+      } else {
+        alert('Failed to add vehicle: ' + (errorMsg || error.message));
+      }
     }
   };
 
   return (
     <div className="vehicle-form-container">
       <h2 className="form-title">Add or Remove Vehicle</h2>
-
       <form className="vehicle-form" onSubmit={handleSubmit}>
         <div className="form-group">
           <label>Vehicle Number</label>
           <input
             type="text"
             name="number"
-            placeholder="e.g., KL-10-AA-1234"
-            pattern="[A-Z]{2}-\d{2}-[A-Z]{2}-\d{4}"
-            title="Format: XX-00-XX-0000"
+            placeholder="e.g., KL01AA1234 or KL01A0123"
+            pattern="[A-Z]{2}[0-9]{2}[A-Z]{1,2}[0-9]{4}"
+            title="Format: KL08BP0111 or KL08B0111"
             value={vehicle.number}
             onChange={handleChange}
             required
@@ -53,17 +79,38 @@ function AddRemoveVehicleForm() {
             placeholder="Enter model"
             value={vehicle.model}
             onChange={handleChange}
+            required
           />
         </div>
 
         <div className="form-group">
           <label>Vehicle Type</label>
-          <select name="type" value={vehicle.type} onChange={handleChange}>
+          <select name="type" value={vehicle.type} onChange={handleChange} required>
             <option value="car">Car</option>
             <option value="bike">Bike</option>
             <option value="jeep">Jeep</option>
             <option value="minivan">Mini Van</option>
             <option value="bus">Bus</option>
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label>Fuel Type</label>
+          <select name="fuelType" value={vehicle.fuelType} onChange={handleChange} required>
+            <option value="">Select Fuel Type</option>
+            <option value="petrol">Petrol</option>
+            <option value="diesel">Diesel</option>
+            <option value="electric">Electric</option>
+            <option value="hybrid">Hybrid</option>
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label>Status</label>
+          <select name="status" value={vehicle.status} onChange={handleChange}>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+            <option value="Under Maintenance">Under Maintenance</option>
           </select>
         </div>
 
@@ -74,6 +121,7 @@ function AddRemoveVehicleForm() {
             name="arrivedDate"
             value={vehicle.arrivedDate}
             onChange={handleChange}
+            required
           />
         </div>
 
@@ -85,9 +133,10 @@ function AddRemoveVehicleForm() {
             placeholder="Kilometers per liter"
             value={vehicle.kmpl}
             onChange={handleChange}
+            required
+            min="0"
           />
         </div>
-
 
         <div className="form-buttons">
           <button type="submit" className="btn-add">Add Vehicle</button>
