@@ -1,26 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-
-
-
-
-
-function MovementRegister() {
+function MovementForm() {
   const [formData, setFormData] = useState({
     vehicleno: '',
-    startingkm: '',
-    startingdate: '',
+    pen: '',
+    tripdate: '',
     startingtime: '',
+    startingkm: '',
     destination: '',
-    purpose: '',
-    pen: '' 
+    purpose: ''
   });
 
-  // Get user info from localStorage on component mount
+  // Pre-fill PEN from localStorage and trip date
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user"));
-    console.log('User from localStorage:', user); 
+    const user = JSON.parse(localStorage.getItem('user'));
     const pen = user?.pen || '';
 
     const today = new Date();
@@ -29,107 +23,64 @@ function MovementRegister() {
     const yyyy = today.getFullYear();
     const formattedDate = `${dd}-${mm}-${yyyy}`;
 
-    setFormData(prevData => ({
-      ...prevData,
-      pen,
-      startingdate: formattedDate
+    setFormData(prev => ({
+      ...prev,
+      pen: pen,
+      tripdate: formattedDate
     }));
   }, []);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  try {
-    // Add console.log to verify the formData before sending
-    console.log('Submitting form data:', formData);
-    
-    const response = await axios.post('http://localhost:5000/api/movement', formData);
-    alert(response.data.message || 'Movement saved successfully');
-  } catch (error) {
-    console.error('Error submitting movement:', error);
-    alert(error.response?.data?.message || 'Failed to save movement data.');
-  }
-};
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const response = await axios.post('http://localhost:5000/api/movement/start', {
+        vehicleno: formData.vehicleno,
+        startingkm: formData.startingkm,
+        startingdate: formData.tripdate,
+        startingtime: formData.startingtime,
+        destination: formData.destination,
+        purpose: formData.purpose,
+        pen: formData.pen
+      });
+
+      alert('Movement entry saved');
+      console.log(response.data);
+      setFormData({
+        vehicleno: '',
+        pen: formData.pen,
+        tripdate: formData.tripdate,
+        startingtime: '',
+        startingkm: '',
+        destination: '',
+        purpose: ''
+      });
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.message || 'Error saving movement');
+    }
+  };
 
   return (
-    <div className="movement-container">
-      <h2>Movement Form</h2>
-      <form onSubmit={handleSubmit} className="movement-form">
-        <div className="form-group">
-          <label>Vehicle Number</label>
-          <input
-            type="text"
-            name="vehicleno"
-            value={formData.vehicleno}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Starting KM</label>
-          <input
-            type="text"
-            name="startingkm"
-            value={formData.startingkm}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Starting Date</label>
-          <input
-            type="text"
-            name="startingdate"
-            value={formData.startingdate}
-            readOnly
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Starting Time</label>
-          <input
-            type="time"
-            name="startingtime"
-            value={formData.startingtime}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Destination</label>
-          <input
-            type="text"
-            name="destination"
-            value={formData.destination}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Purpose</label>
-          <input
-            type="text"
-            name="purpose"
-            value={formData.purpose}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        {/* Hidden PEN input (not editable, but sent to backend) */}
-        <input type="hidden" name="pen" value={formData.pen} />
-
-        <button type="submit" className="submit-btn">Submit Movement</button>
+    <div style={{ padding: '20px', maxWidth: '400px' }}>
+      <h3>Start Vehicle Movement</h3>
+      <form onSubmit={handleSubmit}>
+        <input type="text" name="vehicleno" placeholder="Vehicle Number" value={formData.vehicleno} onChange={handleChange} required /><br /><br />
+        <input type="text" name="pen" placeholder="PEN Number"  /><br /><br />
+        <input type="text" name="tripdate" value={formData.tripdate} readOnly /><br /><br />
+        <input type="time" name="startingtime" value={formData.startingtime} onChange={handleChange} required /><br /><br />
+        <input type="number" name="startingkm" placeholder="Starting KM" value={formData.startingkm} onChange={handleChange} required /><br /><br />
+        <input type="text" name="destination" placeholder="Destination" value={formData.destination} onChange={handleChange} required /><br /><br />
+        <input type="text" name="purpose" placeholder="Purpose" value={formData.purpose} onChange={handleChange} required /><br /><br />
+        <button type="submit">Submit</button>
       </form>
     </div>
   );
 }
 
-export default MovementRegister;
+export default MovementForm;
