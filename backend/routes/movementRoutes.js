@@ -13,7 +13,7 @@ router.post('/start', async (req, res) => {
     purpose,
     pen
   } = req.body;
-
+  console.log("Received data:", req.body); 
   if (!vehicleno || !startingkm || !startingdate || !startingtime || !destination || !purpose || !pen) {
     return res.status(400).json({ message: 'All required fields must be filled.' });
   }

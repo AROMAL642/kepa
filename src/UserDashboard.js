@@ -30,22 +30,27 @@ function UserDashboard() {
     signature: '',
   });
 
+  
   useEffect(() => {
+  const user = JSON.parse(localStorage.getItem('user'));
+  if (user) {
     setFormData({
-      name: localStorage.getItem('userName'),
-      pen: localStorage.getItem('userPen'),
-      generalNo: localStorage.getItem('userGeneralNo'),
-      email: localStorage.getItem('userEmail'),
-      mobile: localStorage.getItem('userphone'),
-
-      dob: localStorage.getItem('userdob'),
-      licenseNo: localStorage.getItem('userlicenseNo'),
-      bloodGroup: localStorage.getItem('userbloodGroup'),
-      gender: localStorage.getItem('usergender'),
-      profilePic: localStorage.getItem('userPhoto'),
-      signature: localStorage.getItem('userSignature')
+      name: user.name,
+      pen: user.pen,
+      generalNo: user.generalNo,
+      email: user.email,
+      mobile: user.phone,
+      dob: user.dob,
+      licenseNo: user.licenseNo,
+      bloodGroup: user.bloodGroup,
+      gender: user.gender,
+      profilePic: user.photo,
+      signature: user.signature
     });
-  }, []);
+  }
+}, []);
+
+
 
   const handleLogout = () => {
     localStorage.clear();

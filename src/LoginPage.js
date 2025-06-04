@@ -27,18 +27,26 @@ const LoginPage = () => {
         localStorage.setItem('adminSignature', res.data.signature);
         navigate('/admin');
       } else if (res.data.role === 'user') {
-        localStorage.setItem('userPen', res.data.pen);
-        localStorage.setItem('userGeneralNo', res.data.generalNo);
-        localStorage.setItem('userEmail', res.data.email);
-        localStorage.setItem('userName', res.data.name);
-        localStorage.setItem('userphone', res.data.phone);
-        localStorage.setItem('userdob', res.data.dob);
-        localStorage.setItem('userlicenseNo', res.data.licenseNo);
-        localStorage.setItem('userbloodGroup', res.data.bloodGroup);
-        localStorage.setItem('usergender', res.data.gender);
-        
-        localStorage.setItem('userPhoto', res.data.photo);
-        localStorage.setItem('userSignature', res.data.signature);
+       
+
+        const user = {
+  name: res.data.name,
+  pen: res.data.pen,
+  generalNo: res.data.generalNo,
+  email: res.data.email,
+  phone: res.data.phone,
+  dob: res.data.dob,
+  licenseNo: res.data.licenseNo,
+  bloodGroup: res.data.bloodGroup,
+  gender: res.data.gender,
+  photo: res.data.photo,
+  signature: res.data.signature
+};
+
+localStorage.setItem('user', JSON.stringify(user));
+
+
+
         navigate('/user');
       }
     } catch (error) {
