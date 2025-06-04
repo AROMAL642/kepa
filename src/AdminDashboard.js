@@ -8,6 +8,7 @@ import SearchVehicleDetails from './admindashboardcomponents/SearchVehicleDetail
 import './css/SearchVehicleDetails.css';
 import ViewAssignVehicle from './admindashboardcomponents/ViewAssignVehicle';
 import './css/AssignVehicle.css';
+import FuelAdmin from './admindashboardcomponents/FuelAdmin';
 
 
 
@@ -92,6 +93,7 @@ function AdminDashboard() {
 
         <div className="sidebar-buttons">
           <button className="sidebar-btn" onClick={() => setActiveTab('profile')}>Profile</button>
+          <button className="sidebar-btn" onClick={() => setActiveTab('Fuel')}>Fuel</button>
           <button className="sidebar-btn" onClick={() => setActiveTab('Movement')}>Movement Register</button>
           <button className="sidebar-btn" onClick={() => setActiveTab('Repair')}>Repair Reports</button>
           <button className="sidebar-btn" onClick={() => setActiveTab('Accident')}>Accident Details</button>
@@ -197,6 +199,10 @@ function AdminDashboard() {
        <ViewAssignVehicle onBack={() => setVehicleTab('main')} themeStyle={themeStyle} />
         )}
 
+       {activeTab === 'Fuel' && (
+       <FuelAdmin themeStyle={themeStyle} onBack={() => setActiveTab('main')} />
+        )}
+ 
 
       </div>
     </div>
