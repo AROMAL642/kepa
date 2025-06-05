@@ -45,4 +45,50 @@ router.get('/search', async (req, res) => {
   }
 });
 
+
+
+
+// Change this route path to avoid conflict
+router.get('/vehicle/search', async (req, res) => {
+  const query = req.query.q;
+  try {
+    const vehicles = await Vehicle.find({ number: { $regex: query, $options: 'i' } });
+    res.json(vehicles);
+  } catch (error) {
+    console.error('Search vehicle error:', error);
+    res.status(500).json({ error: 'Vehicle search failed' });
+  }
+});
+
+
+
+
+
+
+// PATCH /api/vehicles/assign
+router.patch('/assign', async (req, res) => {
+  const { vehicleNumber, pen } = req.body;
+
+  try {
+    const updatedVehicle = await Vehicle.findOneAndUpdate(
+      { number: vehicleNumber },
+      { currentDriver: pen },
+      { new: true }
+    );
+
+    if (!updatedVehicle) return res.status(404).json({ error: 'Vehicle not found' });
+
+    res.json({ message: 'Vehicle assigned successfully', vehicle: updatedVehicle });
+  } catch (error) {
+    console.error('Assign error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
+
+
+
+
+
 module.exports = router;

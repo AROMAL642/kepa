@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const fuelSchema = new mongoose.Schema({
   firmName: { type: String, required: true },
   vehicleNo: { type: String, required: true },
+  pen: { type: String, required: true },
   presentKm: { type: Number, required: true },
   quantity: { type: Number, required: true },
   amount: { type: Number, required: true },

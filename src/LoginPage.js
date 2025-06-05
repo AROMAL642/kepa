@@ -31,11 +31,12 @@ const LoginPage = () => {
         localStorage.setItem('userGeneralNo', res.data.generalNo);
         localStorage.setItem('userEmail', res.data.email);
         localStorage.setItem('userName', res.data.name);
-        localStorage.setItem('userPhone', res.data.phone);
-        localStorage.setItem('userDob', res.data.dob);
-        localStorage.setItem('userLicenseNo', res.data.licenseNo);
-        localStorage.setItem('userBloodGroup', res.data.bloodGroup);
-        localStorage.setItem('userGender', res.data.gender);
+        localStorage.setItem('userphone', res.data.phone);
+        localStorage.setItem('userdob', res.data.dob);
+        localStorage.setItem('userlicenseNo', res.data.licenseNo);
+        localStorage.setItem('userbloodGroup', res.data.bloodGroup);
+        localStorage.setItem('usergender', res.data.gender);
+        
         localStorage.setItem('userPhoto', res.data.photo);
         localStorage.setItem('userSignature', res.data.signature);
         navigate('/user');

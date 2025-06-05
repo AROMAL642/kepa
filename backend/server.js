@@ -7,38 +7,51 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
-const app = express();
+const app = express(); 
+const repairRequestRoutes = require('./routes/repairRequestRoutes');
+
+
+
+
 
 // Middleware
 app.use(cors());
-app.use(express.json());
-app.use('/uploads', express.static('uploads'));
+app.use(express.json({ limit: '10mb' }));
+const UPLOADS_DIR = path.join(__dirname, 'uploads');
+app.use('/uploads', express.static(UPLOADS_DIR));
+//app.use('/api/repair-request', repairRequestRoutes);
+app.use('/api/repair-request', require('./routes/repairRequestRoutes'));
+
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB connected to kepa DB'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
-// Multer Setup
+// Multer Setup for file uploads (bill files)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const dir = './uploads';
+    const dir = path.join(__dirname, 'uploads');
     if (!fs.existsSync(dir)) fs.mkdirSync(dir);
     cb(null, dir);
   },
   filename: (req, file, cb) => {
-    const uniqueName = Date.now() + path.extname(file.originalname);
-    cb(null, uniqueName);
+    // Save file with unique timestamp + original name
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
   }
 });
 const upload = multer({ storage });
 
+// Use imported routes
 // Models
 const User = require('./models/User');
+
 const MovementRegister = require('./models/Movement');
 const Vehicle = require('./models/Vehicle');
 
-// Register User
+// User Registration 
 app.post('/register', async (req, res) => {
   const {
     pen, generalNo, name, email, phone, licenseNo,
@@ -46,6 +59,8 @@ app.post('/register', async (req, res) => {
   } = req.body;
 
   try {
+   
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new User({
       pen, generalNo, name, email, phone, licenseNo,
@@ -63,8 +78,6 @@ app.post('/register', async (req, res) => {
 });
 
 // Login Route for both User and Admin
-
-
 app.post('/login', async (req, res) => {
   const { pen, password } = req.body;
 
@@ -110,7 +123,7 @@ app.post('/login', async (req, res) => {
 
 
 
-// Get User by Email
+//  Get User by Email 
 app.get('/api/user/:email', async (req, res) => {
   try {
     const user = await User.findOne({ email: req.params.email }).lean();
@@ -126,7 +139,7 @@ app.get('/api/user/:email', async (req, res) => {
   }
 });
 
-// Get Admin by Email
+// Get Admin by Email 
 app.get('/api/admin/:email', async (req, res) => {
   try {
     const admin = await Admin.findOne({ email: req.params.email }).lean();
@@ -141,7 +154,9 @@ app.get('/api/admin/:email', async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch admin data', error: err.message });
   }
 });
-//movement register
+
+//  Movement Register Entry 
+
 const movementRoutes = require('./routes/movementRoutes');
 app.use('/api/movement', movementRoutes);
 
@@ -168,19 +183,23 @@ app.use('/api', fuelRoutes);
 
 
 
-// Fetch all unverified users with role = 'user'
+
+
+// Fetch all unverified users
 app.get('/api/unverified-users', async (req, res) => {
   try {
     const unverifiedUsers = await User.find(
-      { verified: 'NO', role: 'user' },
-      { email: 1, name: 1, pen: 1, generalNo: 1 }
-    );
+  { verified: 'NO' },
+  { email: 1, name: 1, pen: 1, generalNo: 1 } // to reduce loading time
+);
+
     res.status(200).json(unverifiedUsers);
   } catch (err) {
     console.error('Error fetching unverified users:', err);
     res.status(500).json({ message: 'Error fetching unverified users', error: err.message });
   }
 });
+
 
 // Verify a user by email
 app.put('/api/verify-user/:email', async (req, res) => {
@@ -196,7 +215,8 @@ app.put('/api/verify-user/:email', async (req, res) => {
   }
 });
 
-// View specific user details
+
+// view specific user details
 app.get('/api/users/:id', async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -208,13 +228,12 @@ app.get('/api/users/:id', async (req, res) => {
 });
 
 
-
 // Fetch all verified users with role = 'user'
 app.get('/api/verified-users', async (req, res) => {
   try {
     const verifiedUsers = await User.find(
       { verified: 'YES', role: 'user' },
-      { name: 1, pen: 1, generalNo: 1, phone: 1 } // projection includes generalNo and phone
+      { name: 1, pen: 1, generalNo: 1, phone: 1} // projection
     );
     res.status(200).json(verifiedUsers);
   } catch (err) {
@@ -225,10 +244,9 @@ app.get('/api/verified-users', async (req, res) => {
 
 
 
-
-
-// Start server
+// Start server (only once)
 const PORT = 5000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🚀 Server is running on port ${PORT}`);
 });
+

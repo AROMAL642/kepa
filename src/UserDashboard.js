@@ -6,6 +6,9 @@ import { useNavigate } from 'react-router-dom';
 import './css/movement.css';
 import './css/SearchVehicleDetails.css';
 import FuelRegister from './userdashboardcomponents/FuelRegister';
+import RepairRequestForm from './RepairRequestForm';
+
+
 
 function UserDashboard() {
   const [darkMode, setDarkMode] = useState(false);
@@ -23,7 +26,7 @@ function UserDashboard() {
     licenseNo: '',
     bloodGroup: '',
     gender: '',
-    profilePic: '',
+    photo: '',
     signature: '',
   });
 
@@ -33,13 +36,14 @@ function UserDashboard() {
       pen: localStorage.getItem('userPen'),
       generalNo: localStorage.getItem('userGeneralNo'),
       email: localStorage.getItem('userEmail'),
-      mobile: localStorage.getItem('userPhone'),
-      dob: localStorage.getItem('userDob'),
-      licenseNo: localStorage.getItem('userLicenseNo'),
-      bloodGroup: localStorage.getItem('userBloodGroup'),
-      gender: localStorage.getItem('userGender'),
+      mobile: localStorage.getItem('userphone'),
+
+      dob: localStorage.getItem('userdob'),
+      licenseNo: localStorage.getItem('userlicenseNo'),
+      bloodGroup: localStorage.getItem('userbloodGroup'),
+      gender: localStorage.getItem('usergender'),
       profilePic: localStorage.getItem('userPhoto'),
-      signature: localStorage.getItem('userSignature'),
+      signature: localStorage.getItem('userSignature')
     });
   }, []);
 
@@ -51,8 +55,11 @@ function UserDashboard() {
   const themeStyle = {
     background: darkMode ? '#121212' : '#fff',
     color: darkMode ? '#f1f1f1' : '#000',
-    borderColor: darkMode ? '#555' : '#ccc',
+    borderColor: darkMode ? '#555' : '#ccc'
+
   };
+
+  
 
   return (
     <>
@@ -109,26 +116,27 @@ function UserDashboard() {
                 ))}
               </div>
 
-              <div className="form-right">
-                <div className="upload-section">
-                  <img
-                    src={formData.profilePic || 'https://via.placeholder.com/100'}
-                    alt="Profile"
-                    className="upload-icon"
-                  />
-                  <p>Profile Photo</p>
-                </div>
-                <div className="upload-section">
-                  <img
-                    src={formData.signature || 'https://via.placeholder.com/100'}
-                    alt="Signature"
-                    className="upload-icon"
-                  />
-                  <p>Signature</p>
-                </div>
+            <div className="form-right">
+              <div className="upload-section">
+                <img
+                  src={formData.profilePic || 'https://via.placeholder.com/100'}
+                  alt="Profile"
+
+                  className="upload-icon"
+                />
+                <p>Profile Photo</p>
+              </div>
+              <div className="upload-section">
+                <img
+                  src={formData.signature || 'https://via.placeholder.com/100'}
+                  alt="Signature"
+                  className="upload-icon"
+                />
+                <p>Signature</p>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
           {/* Movement Tab */}
           {activeTab === 'movement' && (
@@ -145,7 +153,16 @@ function UserDashboard() {
           )}
 
           {activeTab === 'fuel' && 
-          <FuelRegister darkMode={darkMode} />}
+             <FuelRegister darkMode={darkMode} pen={formData.pen} />
+          }
+
+          {/* Repair Tab */}
+          {activeTab === 'repair' && (
+            <div className="repair-request-section">
+              <RepairRequestForm darkMode={darkMode} />
+            </div>
+          )}
+
 
 
         </div>
