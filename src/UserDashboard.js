@@ -15,6 +15,8 @@ function UserDashboard() {
   const [activeTab, setActiveTab] = useState('profile');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const navigate = useNavigate();
+  const [editMode, setEditMode] = useState(false);
+
 
   const [formData, setFormData] = useState({
     name: '',
@@ -100,48 +102,94 @@ function UserDashboard() {
         {/* Main Content Area */}
         <div className="main-content" style={themeStyle}>
           {/* Profile Tab */}
-          {activeTab === 'profile' && (
-            <div className="form-section">
-              <div className="form-left">
-                {[
-                  { label: 'Name', name: 'name' },
-                  { label: 'PEN number', name: 'pen' },
-                  { label: 'General Number', name: 'generalNo' },
-                  { label: 'Email', name: 'email' },
-                  { label: 'Mobile Number', name: 'mobile' },
-                  { label: 'DOB', name: 'dob' },
-                  { label: 'Licence Number', name: 'licenseNo' },
-                  { label: 'Blood Group', name: 'bloodGroup' },
-                  { label: 'Gender', name: 'gender' },
-                ].map(field => (
-                  <div className="form-group" key={field.name}>
-                    <label>{field.label}</label>
-                    <input type="text" value={formData[field.name] || ''} readOnly style={themeStyle} />
-                  </div>
-                ))}
-              </div>
+         
+            {activeTab === 'profile' && (
+  <div className="form-section">
+    <div className="form-left">
+      {[
+        { label: 'Name', name: 'name', readOnly: true },
+        { label: 'PEN number', name: 'pen', readOnly: true },
+        { label: 'General Number', name: 'generalNo', readOnly: true },
+        { label: 'Email', name: 'email' },
+        { label: 'Mobile Number', name: 'mobile' },
+        { label: 'DOB', name: 'dob', readOnly: true },
+        { label: 'Licence Number', name: 'licenseNo' },
+        { label: 'Blood Group', name: 'bloodGroup', readOnly: true },
+        { label: 'Gender', name: 'gender', readOnly: true },
+      ].map(field => (
+        <div className="form-group" key={field.name}>
+          <label>{field.label}</label>
+          <input
+            type="text"
+            name={field.name}
+            value={formData[field.name] || ''}
+            readOnly={!editMode || field.readOnly}
+            onChange={e =>
+              setFormData(prev => ({ ...prev, [field.name]: e.target.value }))
+            }
+            style={themeStyle}
+          />
+        </div>
+      ))}
 
-            <div className="form-right">
-              <div className="upload-section">
-                <img
-                  src={formData.profilePic || 'https://via.placeholder.com/100'}
-                  alt="Profile"
+      {/* Toggle/Edit Buttons */}
+      {!editMode ? (
+        <button className="submit-btn" onClick={() => setEditMode(true)}>Edit Profile</button>
+      ) : (
+        <>
+          <button
+            className="save-btn"
+            onClick={async () => {
+              try {
+                const response = await fetch('http://localhost:5000/api/users/update', {
+                  method: 'PUT',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(formData),
+                });
 
-                  className="upload-icon"
-                />
-                <p>Profile Photo</p>
-              </div>
-              <div className="upload-section">
-                <img
-                  src={formData.signature || 'https://via.placeholder.com/100'}
-                  alt="Signature"
-                  className="upload-icon"
-                />
-                <p>Signature</p>
-              </div>
-            </div>
-          </div>
-        )}
+                const data = await response.json();
+                if (response.ok) {
+                  alert('Profile updated successfully');
+                  localStorage.setItem('user', JSON.stringify(data.updatedUser));
+                  setEditMode(false);
+                } else {
+                  alert(data.message || 'Update failed');
+                }
+              } catch (error) {
+                alert('An error occurred while updating');
+                console.error(error);
+              }
+            }}
+          >
+            Save Changes
+          </button>
+          <button className="cancel-btn" onClick={() => setEditMode(false)}>Cancel</button>
+        </>
+      )}
+    </div>
+
+    <div className="form-right">
+      <div className="upload-section">
+        <img
+          src={formData.profilePic || 'https://via.placeholder.com/100'}
+          alt="Profile"
+          className="upload-icon"
+        />
+        <p>Profile Photo</p>
+      </div>
+      <div className="upload-section">
+        <img
+          src={formData.signature || 'https://via.placeholder.com/100'}
+          alt="Signature"
+          className="upload-icon"
+        />
+        <p>Signature</p>
+      </div>
+    </div>
+  </div>
+)}
 
           {/* Movement Tab */}
           {activeTab === 'movement' && (

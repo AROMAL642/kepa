@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-
 function MovementForm() {
   const [formData, setFormData] = useState({
     vehicleno: '',
@@ -13,7 +12,7 @@ function MovementForm() {
     purpose: ''
   });
 
-  const [movementId, setMovementId] = useState(null); // to store movement ID after first submission
+  const [movementId, setMovementId] = useState(null);
   const [showSecondForm, setShowSecondForm] = useState(false);
   const [endData, setEndData] = useState({
     endingtime: '',
@@ -21,26 +20,53 @@ function MovementForm() {
     officerincharge: ''
   });
 
+  
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem('user'));
-    const pen = user?.pen || '';
+  const user = JSON.parse(localStorage.getItem('user'));
+  const pen = user?.pen || '';
 
-    const today = new Date();
-    const dd = String(today.getDate()).padStart(2, '0');
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const yyyy = today.getFullYear();
-    const formattedDate = `${dd}-${mm}-${yyyy}`;
+  const today = new Date();
+  const dd = String(today.getDate()).padStart(2, '0');
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const yyyy = today.getFullYear();
+  const formattedDate = `${dd}-${mm}-${yyyy}`;
 
-    setFormData(prev => ({
-      ...prev,
-      pen: pen,
-      tripdate: formattedDate
-    }));
-  }, []);
+  setFormData(prev => ({
+    ...prev,
+    pen: pen,
+    tripdate: formattedDate
+  }));
+
+  // 🔍 Check if there's an active movement for this user
+  if (user?.vehicleno) {
+    const vehicleno = user.vehicleno.toUpperCase();
+    axios
+      .get(`http://localhost:5000/api/movement/active/${vehicleno}/${pen}`)
+      .then(res => {
+        if (res.data.active) {
+          setShowSecondForm(true);
+          setFormData(prev => ({
+            ...prev,
+            vehicleno: vehicleno,
+            startingkm: res.data.movement.startingkm,
+            startingtime: res.data.movement.startingtime,
+            destination: res.data.movement.destination,
+            purpose: res.data.movement.purpose
+          }));
+        }
+      })
+      .catch(err => {
+        console.error('Error checking active movement:', err);
+      });
+  }
+}, []);
+
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const formattedValue = name === 'vehicleno' ? value.toUpperCase() : value;
+    setFormData(prev => ({ ...prev, [name]: formattedValue }));
   };
 
   const handleEndChange = (e) => {
@@ -50,6 +76,13 @@ function MovementForm() {
 
   const handleSubmitStart = async (e) => {
     e.preventDefault();
+
+    const vehicleFormat = /^KL\d{2}[A-Z]{1,2}\d{4}$/;
+    if (!vehicleFormat.test(formData.vehicleno)) {
+      alert('Enter a valid vehicle number in format e.g., KL01AA1234 or KL01A0123');
+      return;
+    }
+
     try {
       const response = await axios.post('http://localhost:5000/api/movement/start', {
         vehicleno: formData.vehicleno,
@@ -62,7 +95,7 @@ function MovementForm() {
       });
 
       alert('Starting movement entry saved');
-      setMovementId(response.data._id); // Store the movement ID
+      setMovementId(response.data._id);
       setShowSecondForm(true);
     } catch (error) {
       console.error(error);
@@ -83,7 +116,6 @@ function MovementForm() {
       setShowSecondForm(false);
       setMovementId(null);
 
-      // Reset all form states
       setFormData({
         vehicleno: '',
         pen: formData.pen,
@@ -93,6 +125,7 @@ function MovementForm() {
         destination: '',
         purpose: ''
       });
+
       setEndData({
         endingtime: '',
         endingkm: '',
@@ -109,25 +142,25 @@ function MovementForm() {
       <h3 className="form-heading">Start Vehicle Movement</h3>
       <form onSubmit={handleSubmitStart} className="movement-form">
         <div className="form-group">
-          <input type="text" name="vehicleno" placeholder="Vehicle Number" value={formData.vehicleno} onChange={handleChange} required />
+          <input type="text" name="vehicleno" placeholder="Vehicle Number" value={formData.vehicleno} onChange={handleChange} required disabled={showSecondForm} />
         </div>
         <div className="form-group">
           <input type="text" name="pen" placeholder="PEN Number" value={formData.pen} readOnly />
         </div>
         <div className="form-group">
-          <input type="text" name="tripdate" value={formData.tripdate} readOnly />
+          <input type="text" name="tripdate" value={formData.tripdate} readOnly disabled={showSecondForm} />
         </div>
         <div className="form-group">
-          <input type="time" name="startingtime" value={formData.startingtime} onChange={handleChange} required />
+          <input type="time" name="startingtime" value={formData.startingtime} onChange={handleChange} required disabled={showSecondForm} />
         </div>
         <div className="form-group">
-          <input type="number" name="startingkm" placeholder="Starting KM" value={formData.startingkm} onChange={handleChange} required />
+          <input type="number" name="startingkm" placeholder="Starting KM" value={formData.startingkm} onChange={handleChange} required disabled={showSecondForm} />
         </div>
         <div className="form-group">
-          <input type="text" name="destination" placeholder="Destination" value={formData.destination} onChange={handleChange} required />
+          <input type="text" name="destination" placeholder="Destination" value={formData.destination} onChange={handleChange} required disabled={showSecondForm} />
         </div>
         <div className="form-group">
-          <input type="text" name="purpose" placeholder="Purpose" value={formData.purpose} onChange={handleChange} required />
+          <input type="text" name="purpose" placeholder="Purpose" value={formData.purpose} onChange={handleChange} required disabled={showSecondForm} />
         </div>
         <button type="submit" className="submit-btn">Submit Start</button>
       </form>

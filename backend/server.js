@@ -155,6 +155,10 @@ app.get('/api/admin/:email', async (req, res) => {
   }
 });
 
+//edit user profile
+const userRoutes = require('./routes/Edituser');
+app.use('/api/users', userRoutes); 
+
 //  Movement Register Entry 
 
 const movementRoutes = require('./routes/movementRoutes');
