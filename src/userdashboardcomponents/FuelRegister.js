@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 
 
-function FuelRegister({ darkMode }) {
+function FuelRegister({ darkMode, pen }) {
   const themeStyle = {
     background: darkMode ? '#121212' : '#fff',
     color: darkMode ? '#f1f1f1' : '#000',
@@ -11,6 +11,7 @@ function FuelRegister({ darkMode }) {
 
   const [fuelForm, setFuelForm] = useState({
     vehicleNo: '',
+    pen: pen || '',
     firmName: '',
     presentKm: '',
     quantity: '',
@@ -22,6 +23,9 @@ function FuelRegister({ darkMode }) {
     fullTank: '',
     file: null
   });
+
+
+  
 
   const handleFuelChange = async (e) => {
     const { name, value, type, files } = e.target;
@@ -83,8 +87,10 @@ function FuelRegister({ darkMode }) {
     <div className="containerStyle" style={themeStyle}>
       <h2 className="headingStyle">Fuel Entry Form</h2>
       <form className="formStyle" onSubmit={handleFuelSubmit}>
+        
         {[
           { label: 'Vehicle Number', name: 'vehicleNo' },
+          
           { label: 'Firm Name', name: 'firmName' },
           { label: 'Present km', name: 'presentKm', type: 'number' },
           { label: 'Quantity of Fuel', name: 'quantity', type: 'number' },
@@ -106,7 +112,23 @@ function FuelRegister({ darkMode }) {
             />
           </div>
         ))}
+        <div className="fieldStyle">
+  <label>PEN</label>
+  <input
+    className="inputStyle"
+    name="pen"
+    type="text"
+    value={fuelForm.pen}
+    readOnly
+    style={{
+      ...themeStyle,
+      backgroundColor: '#e0e0e0',
+      cursor: 'not-allowed'
+    }}
+  />
+</div>
 
+        
         <div className="fieldStyle">
           <label>Full Tank:</label>
           <label style={{ marginLeft: '10px' }}>

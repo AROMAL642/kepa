@@ -10,13 +10,15 @@ const upload = multer({ storage });
 // POST route to save fuel entry
 router.post('/fuel', upload.single('file'), async (req, res) => {
   const {
-    vehicleNo, firmName, presentKm, quantity,
-    amount, previousKm, kmpl, date, billNo, fullTank
-  } = req.body;
+  vehicleNo, pen, firmName, presentKm, quantity,
+  amount, previousKm, kmpl, date, billNo, fullTank
+} = req.body;
+
 
   try {
     const newFuelEntry = new FuelRegister({
       vehicleNo,
+      pen,
       firmName,
       presentKm,
       quantity,
@@ -39,6 +41,9 @@ router.post('/fuel', upload.single('file'), async (req, res) => {
   }
 });
 
+
+
+
 // GET route to fetch latest previousKm for a given vehicleNo
 router.get('/fuel/previousKm/:vehicleNo', async (req, res) => {
   const { vehicleNo } = req.params;
@@ -55,6 +60,12 @@ router.get('/fuel/previousKm/:vehicleNo', async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: 'Error fetching previousKm', error });
   }
+});
+
+
+router.get('/fuel', async (req, res) => {
+  const fuelEntries = await FuelRegister.find().sort({ date: -1 });
+  res.json(fuelEntries);
 });
 
 module.exports = router;

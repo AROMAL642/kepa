@@ -9,7 +9,8 @@ import './css/SearchVehicleDetails.css';
 import ViewAssignVehicle from './admindashboardcomponents/ViewAssignVehicle';
 import './css/AssignVehicle.css';
 import SkeletonChildren from './admindashboardcomponents/SkeletonUI'; 
-
+import FuelAdmin from './admindashboardcomponents/FuelAdmin';
+import './css/fueladmin.css';
 
 function AdminDashboard() {
   const [darkMode, setDarkMode] = useState(false);
@@ -117,6 +118,7 @@ function AdminDashboard() {
 
           <div className="sidebar-buttons">
             <button className="sidebar-btn" onClick={() => setActiveTab('profile')}>Profile</button>
+            <button className="sidebar-btn" onClick={() => setActiveTab('Fuel')}>Fuel</button>
             <button className="sidebar-btn" onClick={() => setActiveTab('Movement')}>Movement Register</button>
             <button className="sidebar-btn" onClick={() => setActiveTab('Repair')}>Repair Reports</button>
             <button className="sidebar-btn" onClick={() => setActiveTab('Accident')}>Accident Details</button>
@@ -156,6 +158,11 @@ function AdminDashboard() {
                 </div>
               </div>
             </div>
+          )}
+
+
+          {activeTab === 'Fuel' && (
+            <FuelAdmin themeStyle={themeStyle} />
           )}
 
           {activeTab === 'userdetails' && (

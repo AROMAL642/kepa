@@ -206,7 +206,8 @@ function UserDashboard() {
           )}
 
           {activeTab === 'fuel' && 
-          <FuelRegister darkMode={darkMode} />}
+             <FuelRegister darkMode={darkMode} pen={formData.pen} />
+          }
 
           {/* Repair Tab */}
           {activeTab === 'repair' && (
