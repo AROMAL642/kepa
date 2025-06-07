@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+
 import ResponsiveAppBar from './admindashboardcomponents/ResponsiveAppBar';
 import './css/admindashboard.css';
 import AddRemoveVehicleForm from './admindashboardcomponents/AddRemoveVehicleForm';
@@ -11,6 +11,9 @@ import './css/AssignVehicle.css';
 import SkeletonChildren from './admindashboardcomponents/SkeletonUI'; 
 import FuelAdmin from './admindashboardcomponents/FuelAdmin';
 import './css/fueladmin.css';
+import VerifiedUsersTable from './admindashboardcomponents/VerifiedUsersTable';
+import './css/verifieduserstable.css';
+import MovementAdmin from './admindashboardcomponents/MovementAdmin';
 
 function AdminDashboard() {
   const [darkMode, setDarkMode] = useState(false);
@@ -20,8 +23,8 @@ function AdminDashboard() {
   const [loadingVerifiedUsers, setLoadingVerifiedUsers] = useState(false);
   const [verifiedUsers, setVerifiedUsers] = useState([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [loading, setLoading] = useState(true); // Loading state for Skeleton
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+
 
   const [adminData, setAdminData] = useState({
     name: '',
@@ -29,10 +32,10 @@ function AdminDashboard() {
     pen: '',
     photo: '',
     signature: '',
+    role: '' // Added role field
   });
 
   useEffect(() => {
-    // Show skeleton for 2 seconds
     const timer = setTimeout(() => {
       setLoading(false);
     }, 800);
@@ -45,7 +48,8 @@ function AdminDashboard() {
       email: localStorage.getItem('adminEmail') || '',
       pen: localStorage.getItem('adminPen') || '',
       photo: localStorage.getItem('adminPhoto') || '',
-      signature: localStorage.getItem('adminSignature') || ''
+      signature: localStorage.getItem('adminSignature') || '',
+      role: localStorage.getItem('adminRole') || '' // Added role
     });
     fetchPendingCount();
   }, []);
@@ -79,17 +83,13 @@ function AdminDashboard() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate('/adminlogin');
-  };
+ 
 
   const themeStyle = {
     background: darkMode ? '#121212' : '#fff',
     color: darkMode ? '#f1f1f1' : '#000',
     borderColor: darkMode ? '#555' : '#ccc'
   };
-
 
   if (loading) {
     return (
@@ -101,7 +101,11 @@ function AdminDashboard() {
 
   return (
     <div>
-      <ResponsiveAppBar photo={adminData.photo} name={adminData.name} />
+      <ResponsiveAppBar 
+        photo={adminData.photo} 
+        name={adminData.name} 
+        role={adminData.role} // Pass role to the AppBar
+      />
 
       <button className="drawer-toggle-btn" onClick={() => setIsDrawerOpen(!isDrawerOpen)}>
         ☰
@@ -115,24 +119,73 @@ function AdminDashboard() {
           </button>
 
           <h2>ADMIN PANEL</h2>
+          {adminData.role && (
+            <div className="role-badge" style={{ 
+              background: '#4CAF50', 
+              color: 'white', 
+              padding: '5px 10px', 
+              borderRadius: '20px',
+              marginBottom: '15px',
+              fontSize: '0.9rem'
+            }}>
+              {adminData.role}
+            </div>
+          )}
 
           <div className="sidebar-buttons">
-            <button className="sidebar-btn" onClick={() => setActiveTab('profile')}>Profile</button>
-            <button className="sidebar-btn" onClick={() => setActiveTab('Fuel')}>Fuel</button>
-            <button className="sidebar-btn" onClick={() => setActiveTab('Movement')}>Movement Register</button>
-            <button className="sidebar-btn" onClick={() => setActiveTab('Repair')}>Repair Reports</button>
-            <button className="sidebar-btn" onClick={() => setActiveTab('Accident')}>Accident Details</button>
-            <button className="sidebar-btn" onClick={() => { setActiveTab('VehicleDetails'); setVehicleTab('main'); }}>Vehicle</button>
+            <button 
+              className={`sidebar-btn ${activeTab === 'profile' ? 'active' : ''}`} 
+              onClick={() => setActiveTab('profile')}
+            >
+              Profile
+            </button>
+            <button 
+              className={`sidebar-btn ${activeTab === 'Fuel' ? 'active' : ''}`} 
+              onClick={() => setActiveTab('Fuel')}
+            >
+              Fuel
+            </button>
+            <button 
+              className={`sidebar-btn ${activeTab === 'Movement' ? 'active' : ''}`} 
+              onClick={() => setActiveTab('Movement')}
+            >
+              Movement Register
+            </button>
+            <button 
+              className={`sidebar-btn ${activeTab === 'Repair' ? 'active' : ''}`} 
+              onClick={() => setActiveTab('Repair')}
+            >
+              Repair Reports
+            </button>
+            <button 
+              className={`sidebar-btn ${activeTab === 'Accident' ? 'active' : ''}`} 
+              onClick={() => setActiveTab('Accident')}
+            >
+              Accident Details
+            </button>
+            <button 
+              className={`sidebar-btn ${activeTab === 'VehicleDetails' ? 'active' : ''}`} 
+              onClick={() => { setActiveTab('VehicleDetails'); setVehicleTab('main'); }}
+            >
+              Vehicle
+            </button>
 
-            <button className="sidebar-btn notification-btn" onClick={() => setActiveTab('Request')}>
+            <button 
+              className={`sidebar-btn notification-btn ${activeTab === 'Request' ? 'active' : ''}`} 
+              onClick={() => setActiveTab('Request')}
+            >
               Non Verified Users
               {pendingCount > 0 && <span className="notification-badge">{pendingCount}</span>}
             </button>
 
-            <button className="sidebar-btn" onClick={() => setActiveTab('userdetails')}>Users Details</button>
+            <button 
+              className={`sidebar-btn ${activeTab === 'VerifiedUsersTable' ? 'active' : ''}`} 
+              onClick={() => setActiveTab('VerifiedUsersTable')}
+            >
+              Users Details
+            </button>
           </div>
 
-          <button className="logout-btn" onClick={handleLogout}>🚪 Logout</button>
         </div>
 
         {/* Main Content */}
@@ -140,10 +193,16 @@ function AdminDashboard() {
           {activeTab === 'profile' && (
             <div className="form-section">
               <div className="form-left">
-                {['name', 'email', 'pen'].map((field) => (
+                {['name', 'email', 'pen', 'role'].map((field) => ( // Added 'role' to the fields
                   <div className="form-group" key={field}>
                     <label>{field.charAt(0).toUpperCase() + field.slice(1)}</label>
-                    <input type="text" value={adminData[field]} readOnly style={themeStyle} />
+                    <input 
+                      type="text" 
+                      value={adminData[field]} 
+                      readOnly 
+                      style={themeStyle} 
+                      className={field === 'role' ? 'role-field' : ''}
+                    />
                   </div>
                 ))}
               </div>
@@ -160,9 +219,12 @@ function AdminDashboard() {
             </div>
           )}
 
-
           {activeTab === 'Fuel' && (
             <FuelAdmin themeStyle={themeStyle} />
+          )}
+
+          {activeTab === 'VerifiedUsersTable' && (
+            <VerifiedUsersTable themeStyle={themeStyle} />
           )}
 
           {activeTab === 'userdetails' && (
@@ -225,6 +287,8 @@ function AdminDashboard() {
 
           {activeTab === 'VehicleDetails' && vehicleTab === 'viewassign' && (
             <ViewAssignVehicle onBack={() => setVehicleTab('main')} themeStyle={themeStyle} />
+          )}
+          {activeTab === 'Movement' && (<MovementAdmin themeStyle={themeStyle} />
           )}
         </div>
       </div>

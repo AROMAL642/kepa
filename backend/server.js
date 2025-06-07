@@ -77,19 +77,20 @@ app.post('/register', async (req, res) => {
   }
 });
 
-// Login Route for both User and Admin
+
+// Login Route for User, Admin, and Fuel Section
+// Login Route for User, Admin, and Fuel Section
 app.post('/login', async (req, res) => {
   const { pen, password } = req.body;
 
   try {
-    // Check if user or admin exists with this pen
     const user = await User.findOne({ pen });
     if (!user) return res.status(401).json({ message: 'Invalid PEN number' });
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ message: 'Invalid password' });
 
-    if (user.role === 'user' && user.verified !== 'YES') {
+    if (user.role !== 'admin' && user.verified !== 'YES') {
       return res.status(403).json({ message: 'User not verified. Please wait for approval.' });
     }
 
@@ -104,7 +105,7 @@ app.post('/login', async (req, res) => {
     };
 
     if (user.role === 'user') {
-      res.status(200).json({
+      return res.status(200).json({
         ...baseResponse,
         generalNo: user.generalNo,
         phone: user.phone,
@@ -113,14 +114,22 @@ app.post('/login', async (req, res) => {
         bloodGroup: user.bloodGroup,
         gender: user.gender
       });
+    } else if (user.role === 'fuel') {
+      return res.status(200).json({
+        ...baseResponse,
+        phone: user.phone,
+        dob: user.dob,
+        licenseNo: user.licenseNo,
+        bloodGroup: user.bloodGroup,
+        gender: user.gender
+      });
     } else {
-      res.status(200).json(baseResponse);
+      return res.status(200).json(baseResponse); // admin
     }
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
-
 
 
 //  Get User by Email 
@@ -164,6 +173,8 @@ app.use('/api/users', userRoutes);
 const movementRoutes = require('./routes/movementRoutes');
 app.use('/api/movement', movementRoutes);
 
+app.use('/api/movements', movementRoutes);
+
 // Add or remove Vehicle
 
 const addRemoveVehicleRoutes = require('./routes/addremovevehicleRoutes');
@@ -180,12 +191,23 @@ const assignVehicleRoutes = require('./routes/assignVehicleRoutes');
 app.use('/api/assignvehicle', assignVehicleRoutes);
 
 //fuel register by user
-const fuelRoutes = require('./routes/fuelregisterRoutes');
-app.use('/api', fuelRoutes);
+
+
+const fuelRoutes = require('./routes/fuelregisterRoutes'); 
+app.use('/api/fuel', fuelRoutes); 
 
 
 
+// vehicle number validation
+const vehicleRoutes = require('./routes/vehicleRoutes');
+app.use('/api/vehicles', vehicleRoutes);
 
+
+
+//fetch all verified users
+
+const userDetailsRoutes = require('./routes/userDetailsRoutes');
+app.use('/api/user-details', userDetailsRoutes);
 
 
 
@@ -232,19 +254,7 @@ app.get('/api/users/:id', async (req, res) => {
 });
 
 
-// Fetch all verified users with role = 'user'
-app.get('/api/verified-users', async (req, res) => {
-  try {
-    const verifiedUsers = await User.find(
-      { verified: 'YES', role: 'user' },
-      { name: 1, pen: 1, generalNo: 1, phone: 1} // projection
-    );
-    res.status(200).json(verifiedUsers);
-  } catch (err) {
-    console.error('Error fetching verified users:', err);
-    res.status(500).json({ message: 'Error fetching verified users', error: err.message });
-  }
-});
+
 
 
 

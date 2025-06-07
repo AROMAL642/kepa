@@ -12,56 +12,38 @@ function MovementForm() {
     purpose: ''
   });
 
-  const [movementId, setMovementId] = useState(null);
-  const [showSecondForm, setShowSecondForm] = useState(false);
   const [endData, setEndData] = useState({
     endingtime: '',
     endingkm: '',
-    officerincharge: ''
+    officerincharge: '',
+    tripenddate: '',
+    endingdate: ''
   });
 
-  
+  const [step, setStep] = useState('vehicleno');
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
-  const user = JSON.parse(localStorage.getItem('user'));
-  const pen = user?.pen || '';
+    const user = JSON.parse(localStorage.getItem('user'));
+    const pen = user?.pen || '';
 
-  const today = new Date();
-  const dd = String(today.getDate()).padStart(2, '0');
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const yyyy = today.getFullYear();
-  const formattedDate = `${dd}-${mm}-${yyyy}`;
+    const today = new Date();
+    const dd = String(today.getDate()).padStart(2, '0');
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const yyyy = today.getFullYear();
+    const formattedDate = `${dd}-${mm}-${yyyy}`;
 
-  setFormData(prev => ({
-    ...prev,
-    pen: pen,
-    tripdate: formattedDate
-  }));
+    setFormData(prev => ({
+      ...prev,
+      pen: pen,
+      tripdate: formattedDate
+    }));
 
-  // 🔍 Check if there's an active movement for this user
-  if (user?.vehicleno) {
-    const vehicleno = user.vehicleno.toUpperCase();
-    axios
-      .get(`http://localhost:5000/api/movement/active/${vehicleno}/${pen}`)
-      .then(res => {
-        if (res.data.active) {
-          setShowSecondForm(true);
-          setFormData(prev => ({
-            ...prev,
-            vehicleno: vehicleno,
-            startingkm: res.data.movement.startingkm,
-            startingtime: res.data.movement.startingtime,
-            destination: res.data.movement.destination,
-            purpose: res.data.movement.purpose
-          }));
-        }
-      })
-      .catch(err => {
-        console.error('Error checking active movement:', err);
-      });
-  }
-}, []);
-
-
+    setEndData(prev => ({
+      ...prev,
+      tripenddate: formattedDate
+    }));
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -74,17 +56,47 @@ function MovementForm() {
     setEndData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmitStart = async (e) => {
-    e.preventDefault();
-
-    const vehicleFormat = /^KL\d{2}[A-Z]{1,2}\d{4}$/;
-    if (!vehicleFormat.test(formData.vehicleno)) {
-      alert('Enter a valid vehicle number in format e.g., KL01AA1234 or KL01A0123');
+  const handleContinue = async () => {
+    if (!formData.vehicleno) {
+      alert("Please enter a vehicle number");
       return;
     }
 
+    const vehicleFormat = /^KL\d{2}[A-Z]{1,2}\d{4}$/;
+    if (!vehicleFormat.test(formData.vehicleno)) {
+      alert('Enter a valid vehicle number (e.g., KL01AA1234)');
+      return;
+    }
+
+    setLoading(true);
+
     try {
-      const response = await axios.post('http://localhost:5000/api/movement/start', {
+      const res = await axios.get(`http://localhost:5000/api/movement/active/${formData.vehicleno}/${formData.pen}`);
+      if (res.data.active) {
+        setStep('end');
+        setFormData(prev => ({
+          ...prev,
+          startingkm: res.data.movement.startingkm,
+          startingtime: res.data.movement.startingtime,
+          destination: res.data.movement.destination,
+          purpose: res.data.movement.purpose
+        }));
+      } else {
+        setStep('start');
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error checking vehicle status");
+    }
+
+    setLoading(false);
+  };
+
+  const handleSubmitStart = async (e) => {
+    e.preventDefault();
+
+    try {
+      await axios.post('http://localhost:5000/api/movement/start', {
         vehicleno: formData.vehicleno,
         startingkm: formData.startingkm,
         startingdate: formData.tripdate,
@@ -94,80 +106,123 @@ function MovementForm() {
         pen: formData.pen
       });
 
-      alert('Starting movement entry saved');
-      setMovementId(response.data._id);
-      setShowSecondForm(true);
-    } catch (error) {
-      console.error(error);
-      alert(error.response?.data?.message || 'Error saving movement');
+      alert("Movement started");
+      setStep('end');
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || "Error starting movement");
     }
   };
 
   const handleSubmitEnd = async (e) => {
     e.preventDefault();
+
     try {
       await axios.put(`http://localhost:5000/api/movement/end/${formData.vehicleno}`, {
         endingtime: endData.endingtime,
         endingkm: endData.endingkm,
-        officerincharge: endData.officerincharge
+        officerincharge: endData.officerincharge,
+        tripenddate: endData.tripenddate,
+        endingdate: endData.endingdate
       });
 
-      alert('Movement completed');
-      setShowSecondForm(false);
-      setMovementId(null);
+      alert("Movement completed");
 
-      setFormData({
+      // Reset form
+      setFormData(prev => ({
         vehicleno: '',
-        pen: formData.pen,
-        tripdate: formData.tripdate,
+        pen: prev.pen,
+        tripdate: prev.tripdate,
         startingtime: '',
         startingkm: '',
         destination: '',
         purpose: ''
-      });
+      }));
 
       setEndData({
         endingtime: '',
         endingkm: '',
-        officerincharge: ''
+        officerincharge: '',
+        tripenddate: formData.tripdate
       });
-    } catch (error) {
-      console.error(error);
-      alert(error.response?.data?.message || 'Error updating movement');
+
+      setStep('vehicleno');
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || "Error ending movement");
     }
   };
 
   return (
     <div className="movement-form-container">
-      <h3 className="form-heading">Start Vehicle Movement</h3>
-      <form onSubmit={handleSubmitStart} className="movement-form">
-        <div className="form-group">
-          <input type="text" name="vehicleno" placeholder="Vehicle Number" value={formData.vehicleno} onChange={handleChange} required disabled={showSecondForm} />
-        </div>
-        <div className="form-group">
-          <input type="text" name="pen" placeholder="PEN Number" value={formData.pen} readOnly />
-        </div>
-        <div className="form-group">
-          <input type="text" name="tripdate" value={formData.tripdate} readOnly disabled={showSecondForm} />
-        </div>
-        <div className="form-group">
-          <input type="time" name="startingtime" value={formData.startingtime} onChange={handleChange} required disabled={showSecondForm} />
-        </div>
-        <div className="form-group">
-          <input type="number" name="startingkm" placeholder="Starting KM" value={formData.startingkm} onChange={handleChange} required disabled={showSecondForm} />
-        </div>
-        <div className="form-group">
-          <input type="text" name="destination" placeholder="Destination" value={formData.destination} onChange={handleChange} required disabled={showSecondForm} />
-        </div>
-        <div className="form-group">
-          <input type="text" name="purpose" placeholder="Purpose" value={formData.purpose} onChange={handleChange} required disabled={showSecondForm} />
-        </div>
-        <button type="submit" className="submit-btn">Submit Start</button>
-      </form>
+      <h3 className="form-heading">Vehicle Movement Form</h3>
 
-      {showSecondForm && (
+      {step === 'vehicleno' && (
+        <div className="movement-form">
+          <div className="form-group">
+            <input
+              type="text"
+              name="vehicleno"
+              placeholder="Vehicle Number"
+              value={formData.vehicleno}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <button onClick={handleContinue} disabled={loading} className="submit-btn">
+            {loading ? "Checking..." : "Continue"}
+          </button>
+        </div>
+      )}
+
+      {step === 'start' && (
+        <form onSubmit={handleSubmitStart} className="movement-form">
+          <div className="form-group">
+            <input type="text" name="pen" value={formData.pen} readOnly />
+          </div>
+          <div className="form-group">
+
+
+            <input
+              type="date"
+              name="tripdate"
+              placeholder="Trip Start Date (dd-mm-yyyy)"
+              value={formData.tripdate}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <input type="time" name="startingtime" value={formData.startingtime} onChange={handleChange} required />
+          </div>
+          <div className="form-group">
+            <input type="number" name="startingkm" placeholder="Starting KM" value={formData.startingkm} onChange={handleChange} required />
+          </div>
+          <div className="form-group">
+            <input type="text" name="destination" placeholder="Destination" value={formData.destination} onChange={handleChange} required />
+          </div>
+          <div className="form-group">
+            <input type="text" name="purpose" placeholder="Purpose" value={formData.purpose} onChange={handleChange} required />
+          </div>
+          <button type="submit" className="submit-btn">Submit Start</button>
+        </form>
+      )}
+
+      {step === 'end' && (
         <form onSubmit={handleSubmitEnd} className="movement-form" style={{ marginTop: '40px' }}>
+
           <h3 className="form-heading">End Vehicle Movement</h3>
+          <div className="form-group">
+  <input
+    type="date"
+    name="endingdate"
+    placeholder="Ending Date (DD-MM-YYYY)"
+    value={endData.endingdate}
+    onChange={handleEndChange}
+    required
+  />
+</div>
+
           <div className="form-group">
             <input type="time" name="endingtime" placeholder="Ending Time" value={endData.endingtime} onChange={handleEndChange} required />
           </div>

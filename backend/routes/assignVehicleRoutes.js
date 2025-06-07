@@ -48,7 +48,7 @@ router.get('/search', async (req, res) => {
 
 
 
-// Change this route path to avoid conflict
+
 router.get('/vehicle/search', async (req, res) => {
   const query = req.query.q;
   try {
@@ -84,11 +84,6 @@ router.patch('/assign', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
-
-
-
-
 
 
 module.exports = router;

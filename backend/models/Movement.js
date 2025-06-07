@@ -8,13 +8,13 @@ const movementEntrySchema = new mongoose.Schema({
   destination: { type: String, required: true },
   purpose: { type: String, required: true },
   pen: { type: String, required: true },
-  officerincharge: { type: String }, //
+  officerincharge: { type: String },
   endingkm: { type: Number },
   endingdate: { type: String },
   endingtime: { type: String },
-  status: { type: String, default: 'Active' }, 
+  status: { type: String, default: 'Active' },
   createdAt: { type: Date, default: Date.now }
-}, { _id: false });
+}); 
 
 // Main schema: one document per vehicle
 const vehicleMovementSchema = new mongoose.Schema({

@@ -9,51 +9,60 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
 
   const handleLogin = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    try {
-      const res = await axios.post('http://localhost:5000/login', { pen, password });
+  try {
+    const res = await axios.post('http://localhost:5000/login', { pen, password });
 
-      if (res.data.role === 'admin') {
-        localStorage.setItem('adminPen', res.data.pen);
-        localStorage.setItem('adminEmail', res.data.email);
-        localStorage.setItem('adminName', res.data.name);
-        localStorage.setItem('adminPhone', res.data.phone);
-        localStorage.setItem('adminDob', res.data.dob);
-        localStorage.setItem('adminLicenseNo', res.data.licenseNo);
-        localStorage.setItem('adminBloodGroup', res.data.bloodGroup);
-        localStorage.setItem('adminGender', res.data.gender);
-        localStorage.setItem('adminPhoto', res.data.photo);
-        localStorage.setItem('adminSignature', res.data.signature);
-        navigate('/admin');
-      } else if (res.data.role === 'user') {
-       
+    if (res.data.role === 'admin') {
+      localStorage.setItem('adminPen', res.data.pen);
+      localStorage.setItem('adminEmail', res.data.email);
+      localStorage.setItem('adminName', res.data.name);
+      localStorage.setItem('adminPhone', res.data.phone);
+      localStorage.setItem('adminDob', res.data.dob);
+      localStorage.setItem('adminLicenseNo', res.data.licenseNo);
+      localStorage.setItem('adminBloodGroup', res.data.bloodGroup);
+      localStorage.setItem('adminGender', res.data.gender);
+      localStorage.setItem('adminPhoto', res.data.photo);
+      localStorage.setItem('adminSignature', res.data.signature);
+      localStorage.setItem('adminRole', res.data.role);
+      navigate('/admin');
+    } else if (res.data.role === 'user') {
+      const user = {
+        name: res.data.name,
+        pen: res.data.pen,
+        generalNo: res.data.generalNo,
+        email: res.data.email,
+        phone: res.data.phone,
+        dob: res.data.dob,
+        licenseNo: res.data.licenseNo,
+        bloodGroup: res.data.bloodGroup,
+        gender: res.data.gender,
+        photo: res.data.photo,
+        signature: res.data.signature
+      };
+      localStorage.setItem('user', JSON.stringify(user));
+      navigate('/user');
+  } else if (res.data.role === 'fuel') {
+  localStorage.setItem('fuelPen', res.data.pen);
+  localStorage.setItem('fuelEmail', res.data.email);
+  localStorage.setItem('fuelName', res.data.name);
+  localStorage.setItem('fuelPhone', res.data.phone);
+  localStorage.setItem('fuelDob', res.data.dob);
+  localStorage.setItem('fuelLicenseNo', res.data.licenseNo);
+  localStorage.setItem('fuelBloodGroup', res.data.bloodGroup);
+  localStorage.setItem('fuelGender', res.data.gender);
+  localStorage.setItem('fuelPhoto', res.data.photo);
+  localStorage.setItem('fuelSignature', res.data.signature);
+  localStorage.setItem('fuelRole', res.data.role);
+  navigate('/fuel');
+}
 
-        const user = {
-  name: res.data.name,
-  pen: res.data.pen,
-  generalNo: res.data.generalNo,
-  email: res.data.email,
-  phone: res.data.phone,
-  dob: res.data.dob,
-  licenseNo: res.data.licenseNo,
-  bloodGroup: res.data.bloodGroup,
-  gender: res.data.gender,
-  photo: res.data.photo,
-  signature: res.data.signature
+  } catch (error) {
+    const msg = error.response?.data?.message || 'Network or server error';
+    alert('Login failed: ' + msg);
+  }
 };
-
-localStorage.setItem('user', JSON.stringify(user));
-
-
-
-        navigate('/user');
-      }
-    } catch (error) {
-      const msg = error.response?.data?.message || 'Network or server error';
-      alert('Login failed: ' + msg);
-    }
-  };
 
   return (
     <div className="containerStyle">

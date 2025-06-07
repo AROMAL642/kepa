@@ -10,12 +10,7 @@ import AddRemoveVehicleForm from './admindashboardcomponents/AddRemoveVehicleFor
 import SearchVehicleDetails from './userdashboardcomponents/SearchVehicleDetails';
 import './App.css';
 import RepairRequestForm from './RepairRequestForm';
-
-
-
-
-
-
+import FuelSectionDashboard from './FuelSectionDashboard';
 
 
 
@@ -45,6 +40,9 @@ function App() {
   
         <Route path="*" element={<Navigate to="/" />} />
         <Route path="/repair" element={<RepairRequestForm />} />
+
+        <Route path="/fuel" element={<FuelSectionDashboard />} />
+
          
 
     

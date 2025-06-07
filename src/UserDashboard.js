@@ -28,6 +28,7 @@ function UserDashboard() {
     licenseNo: '',
     bloodGroup: '',
     gender: '',
+    role: '',
     photo: '',
     signature: '',
   });
