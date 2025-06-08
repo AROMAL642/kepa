@@ -14,20 +14,27 @@ const LoginPage = () => {
   try {
     const res = await axios.post('http://localhost:5000/login', { pen, password });
 
-    if (res.data.role === 'admin') {
-      localStorage.setItem('adminPen', res.data.pen);
-      localStorage.setItem('adminEmail', res.data.email);
-      localStorage.setItem('adminName', res.data.name);
-      localStorage.setItem('adminPhone', res.data.phone);
-      localStorage.setItem('adminDob', res.data.dob);
-      localStorage.setItem('adminLicenseNo', res.data.licenseNo);
-      localStorage.setItem('adminBloodGroup', res.data.bloodGroup);
-      localStorage.setItem('adminGender', res.data.gender);
-      localStorage.setItem('adminPhoto', res.data.photo);
-      localStorage.setItem('adminSignature', res.data.signature);
-      localStorage.setItem('adminRole', res.data.role);
-      navigate('/admin');
-    } else if (res.data.role === 'user') {
+  if (res.data.role === 'admin') {
+  const admin = {
+    pen: res.data.pen,
+    email: res.data.email,
+    name: res.data.name,
+    phone: res.data.phone,
+    dob: res.data.dob,
+    licenseNo: res.data.licenseNo,
+    bloodGroup: res.data.bloodGroup,
+    gender: res.data.gender,
+    photo: res.data.photo || '',
+    signature: res.data.signature || '',
+    role: res.data.role,
+    generalNo: res.data.generalNo || ''
+  };
+  localStorage.setItem('adminData', JSON.stringify(admin));
+  navigate('/admin');
+}
+
+
+     else if (res.data.role === 'user') {
       const user = {
         name: res.data.name,
         pen: res.data.pen,

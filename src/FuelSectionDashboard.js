@@ -4,16 +4,18 @@ import SkeletonChildren from './admindashboardcomponents/SkeletonUI';
 import FuelAdmin from './fuelsectiondashboardcomponents/FuelAdmin';
 import FuelPendingRequest from './fuelsectiondashboardcomponents/fuelpendingrequest';
 import SearchVehicleDetails from './admindashboardcomponents/SearchVehicleDetails';
-import VerifiedUsersTable from './fuelsectiondashboardcomponents/VerifiedUsersTable'; // ✅ make sure this path is correct
+import VerifiedUsersTable from './fuelsectiondashboardcomponents/VerifiedUsersTable';
 
 import './css/admindashboard.css';
 import './css/fueladmin.css';
 
 function FuelDashboard() {
   const [darkMode, setDarkMode] = useState(false);
+  const [editMode, setEditMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('pending');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
   const [fuelData, setFuelData] = useState({
     name: '',
     email: '',
@@ -41,7 +43,7 @@ function FuelDashboard() {
       email: localStorage.getItem('fuelEmail') || '',
       pen: localStorage.getItem('fuelPen') || '',
       mobile: localStorage.getItem('fuelPhone') || '',
-      dob: localStorage.getItem('fuelDob') || '',
+      dob: (localStorage.getItem('fuelDob') || '').substring(0, 10),
       licenseNo: localStorage.getItem('fuelLicenseNo') || '',
       bloodGroup: localStorage.getItem('fuelBloodGroup') || '',
       gender: localStorage.getItem('fuelGender') || '',
@@ -99,36 +101,11 @@ function FuelDashboard() {
           )}
 
           <div className="sidebar-buttons">
-            <button 
-              className={`sidebar-btn ${activeTab === 'fuel' ? 'active' : ''}`} 
-              onClick={() => setActiveTab('fuel')}
-            >
-              Fuel Entry Review
-            </button>
-            <button 
-              className={`sidebar-btn ${activeTab === 'profile' ? 'active' : ''}`} 
-              onClick={() => setActiveTab('profile')}
-            >
-              Profile
-            </button>
-            <button 
-              className={`sidebar-btn ${activeTab === 'pending' ? 'active' : ''}`} 
-              onClick={() => setActiveTab('pending')}
-            >
-              View Pending Requests
-            </button>
-            <button 
-              className={`sidebar-btn ${activeTab === 'vehicle' ? 'active' : ''}`} 
-              onClick={() => setActiveTab('vehicle')}
-            >
-              Vehicle Details
-            </button>
-            <button 
-              className={`sidebar-btn ${activeTab === 'users' ? 'active' : ''}`} 
-              onClick={() => setActiveTab('users')}
-            >
-              Users Details
-            </button>
+            <button className={`sidebar-btn ${activeTab === 'fuel' ? 'active' : ''}`} onClick={() => setActiveTab('fuel')}>Fuel Entry Review</button>
+            <button className={`sidebar-btn ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>Profile</button>
+            <button className={`sidebar-btn ${activeTab === 'pending' ? 'active' : ''}`} onClick={() => setActiveTab('pending')}>View Pending Requests</button>
+            <button className={`sidebar-btn ${activeTab === 'vehicle' ? 'active' : ''}`} onClick={() => setActiveTab('vehicle')}>Vehicle Details</button>
+            <button className={`sidebar-btn ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>Users Details</button>
           </div>
         </div>
 
@@ -141,25 +118,87 @@ function FuelDashboard() {
               <div className="form-left">
                 {[
                   { label: 'Name', name: 'name' },
-                  { label: 'PEN Number', name: 'pen' },
+                  { label: 'PEN Number', name: 'pen', readOnly: true },
                   { label: 'Email', name: 'email' },
                   { label: 'Mobile Number', name: 'mobile' },
-                  { label: 'Date of Birth', name: 'dob' },
+                  { label: 'Date of Birth', name: 'dob', type: 'date' },
                   { label: 'License Number', name: 'licenseNo' },
-                  { label: 'Blood Group', name: 'bloodGroup' },
-                  { label: 'Gender', name: 'gender' },
-                  { label: 'Role', name: 'role' }
+                  { label: 'Blood Group', name: 'bloodGroup', readOnly: true },
+                  { label: 'Gender', name: 'gender', readOnly: true },
+                  { label: 'Role', name: 'role', readOnly: true }
                 ].map(field => (
                   <div className="form-group" key={field.name}>
                     <label>{field.label}</label>
-                    <input
-                      type="text"
-                      value={fuelData[field.name] || ''}
-                      readOnly
-                      style={themeStyle}
-                    />
+                    {editMode && field.name === 'dob' ? (
+                      <input
+                        type="date"
+                        name="dob"
+                        value={fuelData.dob}
+                        onChange={(e) =>
+                          setFuelData((prev) => ({ ...prev, dob: e.target.value }))
+                        }
+                        style={themeStyle}
+                      />
+                    ) : (
+                      <input
+                        type={field.type || 'text'}
+                        name={field.name}
+                        value={fuelData[field.name] || ''}
+                        readOnly={!editMode || field.readOnly}
+                        onChange={(e) =>
+                          setFuelData((prev) => ({ ...prev, [field.name]: e.target.value }))
+                        }
+                        style={themeStyle}
+                      />
+                    )}
                   </div>
                 ))}
+
+                {!editMode ? (
+                  <button className="submit-btn" onClick={() => setEditMode(true)}>Edit Profile</button>
+                ) : (
+                  <>
+                    <button
+                      className="save-btn"
+                      onClick={async () => {
+                        try {
+                          const response = await fetch('http://localhost:5000/api/users/update', {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(fuelData),
+                          });
+
+                          const data = await response.json();
+                          if (response.ok) {
+                            // Save to localStorage
+                            localStorage.setItem('fuelName', data.updatedUser.name || '');
+                            localStorage.setItem('fuelPen', data.updatedUser.pen || '');
+                            localStorage.setItem('fuelEmail', data.updatedUser.email || '');
+                            localStorage.setItem('fuelPhone', data.updatedUser.phone || '');
+                            localStorage.setItem('fuelDob', (data.updatedUser.dob || '').substring(0, 10));
+                            localStorage.setItem('fuelLicenseNo', data.updatedUser.licenseNo || '');
+                            localStorage.setItem('fuelBloodGroup', data.updatedUser.bloodGroup || '');
+                            localStorage.setItem('fuelGender', data.updatedUser.gender || '');
+                            localStorage.setItem('fuelPhoto', data.updatedUser.photo || '');
+                            localStorage.setItem('fuelSignature', data.updatedUser.signature || '');
+                            localStorage.setItem('fuelRole', data.updatedUser.role || '');
+
+                            alert('Profile updated successfully');
+                            setEditMode(false);
+                          } else {
+                            alert(data.message || 'Update failed');
+                          }
+                        } catch (error) {
+                          alert('An error occurred while updating');
+                          console.error(error);
+                        }
+                      }}
+                    >
+                      Save Changes
+                    </button>
+                    <button className="cancel-btn" onClick={() => setEditMode(false)}>Cancel</button>
+                  </>
+                )}
               </div>
 
               <div className="form-right">
@@ -197,12 +236,10 @@ function FuelDashboard() {
           )}
 
           {activeTab === 'users' && (
-  <div style={{ padding: '20px' }}>
-    <VerifiedUsersTable themeStyle={themeStyle} />
-  </div>
-)}
-
-      
+            <div style={{ padding: '20px' }}>
+              <VerifiedUsersTable themeStyle={themeStyle} />
+            </div>
+          )}
         </div>
       </div>
     </div>

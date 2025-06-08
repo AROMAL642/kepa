@@ -1,11 +1,9 @@
-// routes/user.js
 const express = require('express');
 const router = express.Router();
-const User = require('../models/User'); // Adjust path if needed
+const User = require('../models/User');
 
-// Update user profile
 router.put('/update', async (req, res) => {
-  const { pen, email, mobile, licenseNo } = req.body;
+  const { pen, name, dob, email, mobile, licenseNo, photo } = req.body;
 
   if (!pen) return res.status(400).json({ message: 'PEN is required for update' });
 
@@ -14,10 +12,13 @@ router.put('/update', async (req, res) => {
       { pen },
       {
         $set: {
-          email: email,
+          name,
+          dob,
+          email,
           phone: mobile,
-          licenseNo: licenseNo,
-        },
+          licenseNo,
+          photo
+        }
       },
       { new: true }
     );

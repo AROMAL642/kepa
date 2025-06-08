@@ -58,25 +58,48 @@ const FuelAdmin = ({ darkMode }) => {
     { field: 'billNo', headerName: 'Bill No', flex: 1 },
     { field: 'fullTankText', headerName: 'Full Tank', flex: 1 },
     {
-      field: 'status',
-      headerName: 'Status',
-      flex: 1,
-      sortable: false,
-      filterable: false,
-      renderCell: (params) => {
-        const statusColor =
-          params.value === 'Approved'
-            ? 'success'
-            : params.value === 'Rejected'
-            ? 'error'
-            : 'warning';
-        return (
-          <Box sx={{ pointerEvents: 'none' }}>
-            <Chip label={params.value} color={statusColor} variant="outlined" />
-          </Box>
-        );
-      }
-    },
+  field: 'status',
+  headerName: 'Status',
+  flex: 1,
+  sortable: false,
+  filterable: false,
+  renderCell: (params) => {
+    let chipColor;
+    let chipVariant = 'outlined';
+    
+    switch(params.value) {
+      case 'Approved':
+        chipColor = 'success'; // Green
+        chipVariant = 'filled';
+        break;
+      case 'Rejected':
+        chipColor = 'error'; // Red
+        chipVariant = 'filled';
+        break;
+      case 'Pending':
+      default:
+        chipColor = 'warning'; // Orange
+        break;
+    }
+    
+    return (
+      <Box sx={{ pointerEvents: 'none' }}>
+        <Chip 
+          label={params.value} 
+          color={chipColor} 
+          variant={chipVariant}
+          sx={{
+            fontWeight: 'bold',
+            ...(params.value === 'Pending' && {
+              backgroundColor: 'rgba(255, 152, 0, 0.1)', // Light orange background
+              borderColor: 'orange' // Orange border
+            })
+          }}
+        />
+      </Box>
+    );
+  }
+},
     {
       field: 'actions',
       headerName: 'Details',

@@ -22,5 +22,26 @@ router.get('/numbers', async (req, res) => {
     });
   }
 });
+//Vlidate Vehicle number
+
+router.get('/check/:vehicleno', async (req, res) => {
+  try {
+    const vehicleNo = req.params.vehicleno.toUpperCase(); // normalize input
+    const vehicle = await Vehicle.findOne({ number: vehicleNo });
+
+    if (vehicle) {
+      res.json({ exists: true });
+    } else {
+      res.json({ exists: false });
+    }
+  } catch (err) {
+    console.error('Error checking vehicle:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+module.exports = router;
+
+
 
 module.exports = router;

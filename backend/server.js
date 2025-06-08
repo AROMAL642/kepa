@@ -209,6 +209,16 @@ app.use('/api/vehicles', vehicleRoutes);
 const userDetailsRoutes = require('./routes/userDetailsRoutes');
 app.use('/api/user-details', userDetailsRoutes);
 
+//Accident Report
+const accidentRoutes = require('./routes/accidentreportRoutes');
+app.use('/api/accidents', accidentRoutes);
+
+//eye test report
+
+
+const eyeTestRoutes = require('./routes/eyeTestRoutes');
+app.use('/api/eyetests', eyeTestRoutes);
+
 
 
 // Fetch all unverified users
