@@ -1,26 +1,39 @@
 require('dotenv').config();
 
+
 const express = require('express');
+const app = express();
 const cors = require('cors');
 const mongoose = require('mongoose');
-const multer = require('multer');
 const path = require('path');
+const multer = require('multer');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
-const app = express(); 
+
+
+
+// ✅ Only declare these once
 const repairRequestRoutes = require('./routes/repairRequestRoutes');
+const repairAdminRoutes = require('./routes/repairAdminRoutes');
 
 
 
+app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+
+// Use routes with prefixes
+app.use('/api/user-repair', repairRequestRoutes);     // e.g., /api/user/repair/submit
+app.use('/api/admin-repair', repairAdminRoutes);   // e.g., /api/admin/repairs
 
 // Middleware
 app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '1mb' }));
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 app.use('/uploads', express.static(UPLOADS_DIR));
 //app.use('/api/repair-request', repairRequestRoutes);
-app.use('/api/repair-request', require('./routes/repairRequestRoutes'));
+
+
 
 
 // MongoDB Connection
@@ -123,6 +136,25 @@ app.post('/login', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 //  Get User by Email 
 app.get('/api/user/:email', async (req, res) => {
   try {
@@ -154,6 +186,36 @@ app.get('/api/admin/:email', async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch admin data', error: err.message });
   }
 });
+
+// get mtiadmin by email
+
+app.get('/api/mtiadmin/:email', async (req, res) => {
+  try {
+    const admin = await Admin.findOne({ email: req.params.email }).lean();
+    if (!admin) return res.status(404).json({ message: 'Admin not found' });
+
+    res.json({
+      ...admin,
+      photo: admin.photo?.toString('base64') || '',
+      signature: admin.signature?.toString('base64') || ''
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch admin data', error: err.message });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 //  Movement Register Entry 
 

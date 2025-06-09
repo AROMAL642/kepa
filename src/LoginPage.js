@@ -26,6 +26,19 @@ const LoginPage = () => {
         localStorage.setItem('adminPhoto', res.data.photo);
         localStorage.setItem('adminSignature', res.data.signature);
         navigate('/admin');
+      } else if (res.data.role === 'mtiadmin') {
+     localStorage.setItem('mtiAdminPen', res.data.pen);
+        localStorage.setItem('mtiAdminEmail', res.data.email);
+        localStorage.setItem('mtiAdminName', res.data.name);
+        localStorage.setItem('mtiAdminPhone', res.data.phone);
+        localStorage.setItem('mtiAdminDob', res.data.dob);
+        localStorage.setItem('mtiAdminLicenseNo', res.data.licenseNo);
+        localStorage.setItem('mtiAdminBloodGroup', res.data.bloodGroup);
+        localStorage.setItem('mtiAdminGender', res.data.gender);
+        localStorage.setItem('mtiAdminPhoto', res.data.photo);
+        localStorage.setItem('mtiAdminSignature', res.data.signature);
+      navigate('/mtiadmin');
+      
       } else if (res.data.role === 'user') {
         localStorage.setItem('userPen', res.data.pen);
         localStorage.setItem('userGeneralNo', res.data.generalNo);
@@ -36,7 +49,6 @@ const LoginPage = () => {
         localStorage.setItem('userlicenseNo', res.data.licenseNo);
         localStorage.setItem('userbloodGroup', res.data.bloodGroup);
         localStorage.setItem('usergender', res.data.gender);
-        
         localStorage.setItem('userPhoto', res.data.photo);
         localStorage.setItem('userSignature', res.data.signature);
         navigate('/user');

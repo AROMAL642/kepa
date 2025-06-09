@@ -3,18 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import './css/admindashboard.css';
 import AddRemoveVehicleForm from './admindashboardcomponents/AddRemoveVehicleForm';
 import ViewRequests from './ViewRequests';
-
 import SearchVehicleDetails from './admindashboardcomponents/SearchVehicleDetails';
 import './css/SearchVehicleDetails.css';
 import ViewAssignVehicle from './admindashboardcomponents/ViewAssignVehicle';
 import './css/AssignVehicle.css';
-import AdminRepairSection from './AdminRepairSection';
 
-
-
-
-
-function AdminDashboard() {
+function MTIAdminDashboard() {
   const [darkMode, setDarkMode] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
   const [vehicleTab, setVehicleTab] = useState('main');
@@ -22,7 +16,7 @@ function AdminDashboard() {
   const [loadingVerifiedUsers, setLoadingVerifiedUsers] = useState(false);
   const [verifiedUsers, setVerifiedUsers] = useState([]);
   const navigate = useNavigate();
-   
+
   const [adminData, setAdminData] = useState({
     name: '',
     email: '',
@@ -33,11 +27,11 @@ function AdminDashboard() {
 
   useEffect(() => {
     setAdminData({
-      name: localStorage.getItem('adminName') || '',
-      email: localStorage.getItem('adminEmail') || '',
-      pen: localStorage.getItem('adminPen') || '',
-      photo: localStorage.getItem('adminPhoto') || '',
-      signature: localStorage.getItem('adminSignature') || ''
+      name: localStorage.getItem('mtiAdminName') || '',
+      email: localStorage.getItem('mtiAdminEmail') || '',
+      pen: localStorage.getItem('mtiAdminPen') || '',
+      photo: localStorage.getItem('mtiAdminPhoto') || '',
+      signature: localStorage.getItem('mtiAdminSignature') || ''
     });
     fetchPendingCount();
   }, []);
@@ -76,8 +70,6 @@ function AdminDashboard() {
     navigate('/adminlogin');
   };
 
-   
-
   const themeStyle = {
     background: darkMode ? '#121212' : '#fff',
     color: darkMode ? '#f1f1f1' : '#000',
@@ -91,7 +83,7 @@ function AdminDashboard() {
           {darkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
         </button>
 
-        <h2>ADMIN PANEL</h2>
+        <h2>MTI ADMIN PANEL</h2>
 
         <div className="sidebar-buttons">
           <button className="sidebar-btn" onClick={() => setActiveTab('profile')}>Profile</button>
@@ -101,7 +93,6 @@ function AdminDashboard() {
           <button className="sidebar-btn" onClick={() => { setActiveTab('VehicleDetails'); setVehicleTab('main'); }}>Vehicle</button>
 
           <button className="sidebar-btn notification-btn" onClick={() => setActiveTab('Request')}>
-           
             View Requests
             {pendingCount > 0 && <span className="notification-badge">{pendingCount}</span>}
           </button>
@@ -158,8 +149,8 @@ function AdminDashboard() {
                       <tr key={index}>
                         <td>{user.name}</td>
                         <td>{user.pen}</td>
-                        <td>{user.generalno}</td>
-                        <td>{user.mobileno}</td>
+                        <td>{user.generalNo}</td>
+                        <td>{user.phone}</td>
                         <td><button>View Full Profile</button></td>
                       </tr>
                     ))
@@ -178,11 +169,9 @@ function AdminDashboard() {
           <div className="vehicle-box" style={{ width: '400px', height: '600px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <button className="vehicle-btn" onClick={() => setVehicleTab('addremove')}>Add/Remove Vehicle</button>
             <button className="vehicle-btn" onClick={() => setVehicleTab('search')}>Search Vehicle Details</button>
-
             <button className="vehicle-btn">Expense Details</button>
             <button className="vehicle-btn">View/Print Registers</button>
             <button className="vehicle-btn" onClick={() => setVehicleTab('viewassign')}>View/Assign Vehicle</button>
-
           </div>
         )}
 
@@ -192,21 +181,16 @@ function AdminDashboard() {
 
         {activeTab === 'Request' && <ViewRequests themeStyle={themeStyle} />}
 
-         {activeTab === 'VehicleDetails' && vehicleTab === 'search' && (
-         <SearchVehicleDetails onBack={() => setVehicleTab('main')} themeStyle={themeStyle} />
+        {activeTab === 'VehicleDetails' && vehicleTab === 'search' && (
+          <SearchVehicleDetails onBack={() => setVehicleTab('main')} themeStyle={themeStyle} />
         )}
 
         {activeTab === 'VehicleDetails' && vehicleTab === 'viewassign' && (
-       <ViewAssignVehicle onBack={() => setVehicleTab('main')} themeStyle={themeStyle} />
+          <ViewAssignVehicle onBack={() => setVehicleTab('main')} themeStyle={themeStyle} />
         )}
-
-        {activeTab === 'Repair' && <AdminRepairSection themeStyle={themeStyle} />}
-
-
-
       </div>
     </div>
   );
 }
 
-export default AdminDashboard;
+export default MTIAdminDashboard;
