@@ -10,7 +10,6 @@ import './css/admindashboard.css';
 import './css/fueladmin.css';
 
 function FuelDashboard() {
-  const [darkMode, setDarkMode] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('pending');
@@ -53,12 +52,6 @@ function FuelDashboard() {
     });
   }, []);
 
-  const themeStyle = {
-    background: darkMode ? '#121212' : '#fff',
-    color: darkMode ? '#f1f1f1' : '#000',
-    borderColor: darkMode ? '#555' : '#ccc'
-  };
-
   if (loading) {
     return (
       <div style={{ padding: '40px' }}>
@@ -79,13 +72,9 @@ function FuelDashboard() {
         ☰
       </button>
 
-      <div className={`dashboard ${isDrawerOpen ? 'drawer-open' : ''}`} style={themeStyle}>
+      <div className={`dashboard ${isDrawerOpen ? 'drawer-open' : ''}`}>
         {/* Sidebar Drawer */}
         <div className={`drawer ${isDrawerOpen ? 'open' : ''}`}>
-          <button className="toggle-btn" onClick={() => setDarkMode(!darkMode)}>
-            {darkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
-          </button>
-
           <h2>FUEL SECTION</h2>
           {fuelData.role && (
             <div className="role-badge" style={{ 
@@ -110,8 +99,8 @@ function FuelDashboard() {
         </div>
 
         {/* Main Content */}
-        <div className="main-content" style={themeStyle}>
-          {activeTab === 'fuel' && <FuelAdmin darkMode={darkMode} />}
+        <div className="main-content">
+          {activeTab === 'fuel' && <FuelAdmin />}
 
           {activeTab === 'profile' && (
             <div className="form-section">
@@ -137,7 +126,6 @@ function FuelDashboard() {
                         onChange={(e) =>
                           setFuelData((prev) => ({ ...prev, dob: e.target.value }))
                         }
-                        style={themeStyle}
                       />
                     ) : (
                       <input
@@ -148,7 +136,6 @@ function FuelDashboard() {
                         onChange={(e) =>
                           setFuelData((prev) => ({ ...prev, [field.name]: e.target.value }))
                         }
-                        style={themeStyle}
                       />
                     )}
                   </div>
@@ -170,7 +157,6 @@ function FuelDashboard() {
 
                           const data = await response.json();
                           if (response.ok) {
-                            // Save to localStorage
                             localStorage.setItem('fuelName', data.updatedUser.name || '');
                             localStorage.setItem('fuelPen', data.updatedUser.pen || '');
                             localStorage.setItem('fuelEmail', data.updatedUser.email || '');
@@ -225,19 +211,19 @@ function FuelDashboard() {
           {activeTab === 'pending' && (
             <div style={{ padding: '20px' }}>
               <h2>Pending Fuel Requests</h2>
-              <FuelPendingRequest darkMode={darkMode} />
+              <FuelPendingRequest />
             </div>
           )}
 
           {activeTab === 'vehicle' && (
             <div style={{ padding: '20px' }}>
-              <SearchVehicleDetails darkMode={darkMode} />
+              <SearchVehicleDetails />
             </div>
           )}
 
           {activeTab === 'users' && (
             <div style={{ padding: '20px' }}>
-              <VerifiedUsersTable themeStyle={themeStyle} />
+              <VerifiedUsersTable />
             </div>
           )}
         </div>

@@ -41,8 +41,23 @@ router.post('/', upload.single('image'), async (req, res) => {
 //get accident report for admin
 router.get('/', async (req, res) => {
   try {
-    const reports = await Accident.find().select('-image'); // exclude image if not needed
-    res.json(reports);
+    const accidents = await Accident.find();
+    const formattedAccidents = accidents.map(report => ({
+      _id: report._id,
+      vehicleNo: report.vehicleNo,
+      pen: report.pen,
+      accidentTime: report.accidentTime,
+      location: report.location,
+      description: report.description,
+      image: report.image?.data
+        ? {
+            data: report.image.data.toString('base64'),
+            contentType: report.image.contentType
+          }
+        : null
+    }));
+
+    res.json(formattedAccidents);
   } catch (err) {
     console.error('Error fetching accident reports:', err);
     res.status(500).json({ message: 'Failed to fetch reports' });
@@ -50,19 +65,25 @@ router.get('/', async (req, res) => {
 });
 
 
-//get accident report for admin
 
+// PUT /api/accidents/:id/status
+// PUT /api/accidents/:id/status
+router.put('/accidents/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
 
-router.get('/', async (req, res) => {
   try {
-    const accidents = await Accident.find();
-    res.json(accidents);
+    const updated = await Accident.findByIdAndUpdate(id, { status }, { new: true });
+    if (!updated) {
+      return res.status(404).json({ message: 'Report not found' });
+    }
+    res.json(updated);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch accidents' });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
-module.exports = router;
+
 
 
 module.exports = router;

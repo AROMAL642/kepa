@@ -16,10 +16,7 @@ import './css/verifieduserstable.css';
 import MovementAdmin from './admindashboardcomponents/MovementAdmin';
 import AccidentReportTable from './admindashboardcomponents/AccidentReportTable';
 
-
-
 function AdminDashboard() {
-  const [darkMode, setDarkMode] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
   const [vehicleTab, setVehicleTab] = useState('main');
   const [pendingCount, setPendingCount] = useState(0);
@@ -42,22 +39,20 @@ function AdminDashboard() {
     gender: ''
   });
 
- // Replace your useEffect with:
-useEffect(() => {
-  const timer = setTimeout(() => {
-    setLoading(false);
-  }, 800);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 800);
 
-  const storedAdminData = localStorage.getItem('adminData');
-  if (storedAdminData) {
-    setAdminData(JSON.parse(storedAdminData));
-  }
+    const storedAdminData = localStorage.getItem('adminData');
+    if (storedAdminData) {
+      setAdminData(JSON.parse(storedAdminData));
+    }
 
-  fetchPendingCount();
-  return () => clearTimeout(timer);
-}, []);
+    fetchPendingCount();
+    return () => clearTimeout(timer);
+  }, []);
 
-  
   useEffect(() => {
     if (activeTab === 'userdetails') {
       fetchVerifiedUsers();
@@ -88,9 +83,9 @@ useEffect(() => {
   };
 
   const themeStyle = {
-    background: darkMode ? '#121212' : '#fff',
-    color: darkMode ? '#f1f1f1' : '#000',
-    borderColor: darkMode ? '#555' : '#ccc'
+    background: '#fff',
+    color: '#000',
+    borderColor: '#ccc'
   };
 
   if (loading) {
@@ -115,10 +110,6 @@ useEffect(() => {
 
       <div className={`dashboard ${isDrawerOpen ? 'drawer-open' : ''}`} style={themeStyle}>
         <div className={`drawer ${isDrawerOpen ? 'open' : ''}`}>
-          <button className="toggle-btn" onClick={() => setDarkMode(!darkMode)}>
-            {darkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
-          </button>
-
           <h2>ADMIN PANEL</h2>
           {adminData.role && (
             <div className="role-badge" style={{ background: '#4CAF50', color: 'white', padding: '5px 10px', borderRadius: '20px', marginBottom: '15px', fontSize: '0.9rem' }}>
@@ -230,8 +221,6 @@ useEffect(() => {
           {activeTab === 'VehicleDetails' && vehicleTab === 'viewassign' && <ViewAssignVehicle onBack={() => setVehicleTab('main')} themeStyle={themeStyle} />}
           {activeTab === 'Movement' && <MovementAdmin themeStyle={themeStyle} />}
           {activeTab === 'Accident' && <AccidentReportTable themeStyle={themeStyle} />}
-
-          
         </div>
       </div>
     </div>
