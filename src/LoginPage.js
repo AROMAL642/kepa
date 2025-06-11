@@ -9,12 +9,12 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
 
   const handleLogin = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  try {
-    const res = await axios.post('http://localhost:5000/login', { pen, password });
+    try {
+      const res = await axios.post('http://localhost:5000/login', { pen, password });
 
-  if (res.data.role === 'admin') {
+      if (res.data.role === 'admin') {
   const admin = {
     pen: res.data.pen,
     email: res.data.email,
@@ -30,7 +30,7 @@ const LoginPage = () => {
     generalNo: res.data.generalNo || ''
   };
   localStorage.setItem('adminData', JSON.stringify(admin));
-  navigate('/admin');
+        navigate('/admin');
 }
 
 
@@ -49,7 +49,7 @@ const LoginPage = () => {
         signature: res.data.signature
       };
       localStorage.setItem('user', JSON.stringify(user));
-      navigate('/user');
+        navigate('/user');
   } else if (res.data.role === 'fuel') {
   localStorage.setItem('fuelPen', res.data.pen);
   localStorage.setItem('fuelEmail', res.data.email);
@@ -65,11 +65,11 @@ const LoginPage = () => {
   navigate('/fuel');
 }
 
-  } catch (error) {
-    const msg = error.response?.data?.message || 'Network or server error';
-    alert('Login failed: ' + msg);
-  }
-};
+    } catch (error) {
+      const msg = error.response?.data?.message || 'Network or server error';
+      alert('Login failed: ' + msg);
+    }
+  };
 
   return (
     <div className="containerStyle">
