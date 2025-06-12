@@ -3,13 +3,14 @@ const router = express.Router();
 const multer = require('multer');
 const Accident = require('../models/Accident');
 
-
+// Configure multer for memory storage
 const storage = multer.memoryStorage();
 const upload = multer({
   storage: storage,
   limits: { fileSize: 5 * 1024 * 1024 } // Max 5 MB
 });
 
+// POST: Create new accident report
 router.post('/', upload.single('image'), async (req, res) => {
   try {
     const { vehicleNo, pen, accidentTime, location, description } = req.body;
@@ -38,7 +39,8 @@ router.post('/', upload.single('image'), async (req, res) => {
     res.status(500).json({ message: 'Failed to save accident report' });
   }
 });
-//get accident report for admin
+
+// GET: Get all accident reports
 router.get('/', async (req, res) => {
   try {
     const accidents = await Accident.find();
@@ -49,6 +51,7 @@ router.get('/', async (req, res) => {
       accidentTime: report.accidentTime,
       location: report.location,
       description: report.description,
+      status: report.status,
       image: report.image?.data
         ? {
             data: report.image.data.toString('base64'),
@@ -64,11 +67,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-
-
-// PUT /api/accidents/:id/status
-// PUT /api/accidents/:id/status
-router.put('/accidents/:id/status', async (req, res) => {
+// ✅ FIXED PUT route: Update accident report status
+router.put('/:id/status', async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
 
@@ -79,11 +79,9 @@ router.put('/accidents/:id/status', async (req, res) => {
     }
     res.json(updated);
   } catch (err) {
+    console.error('PUT /status error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });
-
-
-
 
 module.exports = router;

@@ -15,24 +15,26 @@ const AccidentReportTable = ({ themeStyle }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
 
-  // ✅ Fetch all reports
+  //  Fetch all reports
   const fetchReports = useCallback(async () => {
     try {
       const res = await fetch('http://localhost:5000/api/accidents');
       const data = await res.json();
+      
       const formatted = data.map((item, index) => ({
-        id: item._id,
-        _id: item._id,
-        vehicleNo: item.vehicleNo,
-        pen: item.pen,
-        accidentTime: item.accidentTime,
-        location: item.location,
-        description: item.description,
-        status: item.status || 'pending',
-        image: item.image?.data
-          ? `data:${item.image.contentType};base64,${item.image.data}`
-          : ''
-      }));
+  id: item._id,
+  _id: item._id,
+  vehicleNo: item.vehicleNo,
+  pen: item.pen,
+  accidentTime: item.accidentTime,
+  location: item.location,
+  description: item.description,
+  status: item.status, // ✅ Use directly
+  image: item.image?.data
+    ? `data:${item.image.contentType};base64,${item.image.data}`
+    : ''
+}));
+
       setRows(formatted);
     } catch (err) {
       console.error('Error fetching accident data:', err);

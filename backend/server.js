@@ -79,7 +79,6 @@ app.post('/register', async (req, res) => {
 
 
 // Login Route for User, Admin, and Fuel Section
-// Login Route for User, Admin, and Fuel Section
 app.post('/login', async (req, res) => {
   const { pen, password } = req.body;
 
@@ -183,7 +182,7 @@ app.use('/api/vehicles', addRemoveVehicleRoutes);
 //search vehcle
 
 const searchVehicleRoute = require('./routes/searchVehicle');
-app.use('/searchvehicle', searchVehicleRoute);
+app.use('/', searchVehicleRoute);
 
 
 //assign vehicle

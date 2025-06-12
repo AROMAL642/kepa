@@ -22,7 +22,7 @@ router.post('/', async (req, res) => {
       vehicleNo,
       subject,
       description,
-      date: new Date(), // ✅ important if date is required
+      date: new Date(), 
     });
 
     const savedRequest = await newRequest.save();

@@ -55,7 +55,7 @@ const handleChange = (e) => {
 
   return (
     <div className="vehicle-form-container">
-      <h2 className="form-title">Add or Remove Vehicle</h2>
+      <h2 className="form-title">Add New Vehicle</h2>
       <form className="vehicle-form" onSubmit={handleSubmit}>
         <div className="form-group">
           <label>Vehicle Number</label>

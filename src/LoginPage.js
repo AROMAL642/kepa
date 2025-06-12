@@ -15,21 +15,22 @@ const LoginPage = () => {
     const res = await axios.post('http://localhost:5000/login', { pen, password });
 
   if (res.data.role === 'admin') {
-  const admin = {
-    pen: res.data.pen,
-    email: res.data.email,
-    name: res.data.name,
-    phone: res.data.phone,
-    dob: res.data.dob,
-    licenseNo: res.data.licenseNo,
-    bloodGroup: res.data.bloodGroup,
-    gender: res.data.gender,
-    photo: res.data.photo || '',
-    signature: res.data.signature || '',
-    role: res.data.role,
-    generalNo: res.data.generalNo || ''
-  };
-  localStorage.setItem('adminData', JSON.stringify(admin));
+ const admin = {
+  pen: res.data.pen,
+  email: res.data.email,
+  name: res.data.name,
+  phone: res.data.phone,
+  dob: res.data.dob,
+  licenseNo: res.data.licenseNo,
+  bloodGroup: res.data.bloodGroup,
+  gender: res.data.gender,
+  photo: res.data.photo || '',
+  signature: res.data.signature || '',
+  role: res.data.role,
+  generalNo: res.data.generalNo || ''
+};
+localStorage.setItem('adminData', JSON.stringify(admin));
+
   navigate('/admin');
 }
 

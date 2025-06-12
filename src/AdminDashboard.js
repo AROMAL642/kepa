@@ -29,6 +29,7 @@ function AdminDashboard() {
     name: '',
     email: '',
     pen: '',
+    generalNo: '',
     photo: '',
     signature: '',
     role: '',
@@ -39,16 +40,25 @@ function AdminDashboard() {
     gender: ''
   });
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 800);
+  const fieldLabels = {
+    name: 'Name',
+    email: 'Email',
+    pen: 'PEN',
+    generalNo: 'General No',
+    phone: 'Mobile Number',
+    dob: 'Date of Birth',
+    licenseNo: 'License Number',
+    bloodGroup: 'Blood Group',
+    gender: 'Gender',
+    role: 'Role'
+  };
 
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 800);
     const storedAdminData = localStorage.getItem('adminData');
     if (storedAdminData) {
       setAdminData(JSON.parse(storedAdminData));
     }
-
     fetchPendingCount();
     return () => clearTimeout(timer);
   }, []);
@@ -98,11 +108,7 @@ function AdminDashboard() {
 
   return (
     <div>
-      <ResponsiveAppBar 
-        photo={adminData.photo} 
-        name={adminData.name} 
-        role={adminData.role} 
-      />
+      <ResponsiveAppBar photo={adminData.photo} name={adminData.name} role={adminData.role} />
 
       <button className="drawer-toggle-btn" onClick={() => setIsDrawerOpen(!isDrawerOpen)}>
         ☰
@@ -128,9 +134,7 @@ function AdminDashboard() {
               Non Verified Users
               {pendingCount > 0 && <span className="notification-badge">{pendingCount}</span>}
             </button>
-            <button className={`sidebar-btn ${activeTab === 'VerifiedUsersTable' ? 'active' : ''}`} onClick={() => setActiveTab('VerifiedUsersTable')}>
-              Users Details
-            </button>
+            <button className={`sidebar-btn ${activeTab === 'VerifiedUsersTable' ? 'active' : ''}`} onClick={() => setActiveTab('VerifiedUsersTable')}>Users Details</button>
           </div>
         </div>
 
@@ -138,15 +142,15 @@ function AdminDashboard() {
           {activeTab === 'profile' && (
             <div className="form-section">
               <div className="form-left">
-                {['name', 'email', 'pen', 'phone', 'dob', 'licenseNo', 'bloodGroup', 'gender', 'role'].map((field) => (
-                  <div className="form-group" key={field}>
-                    <label>{field.charAt(0).toUpperCase() + field.slice(1)}</label>
-                    <input 
-                      type="text" 
-                      value={adminData[field]} 
-                      readOnly 
-                      style={themeStyle} 
-                      className={field === 'role' ? 'role-field' : ''} 
+                {Object.entries(fieldLabels).map(([key, label]) => (
+                  <div className="form-group" key={key}>
+                    <label>{label}</label>
+                    <input
+                      type="text"
+                      value={adminData[key] || ''}
+                      readOnly
+                      style={themeStyle}
+                      className={key === 'role' ? 'role-field' : ''}
                     />
                   </div>
                 ))}
@@ -166,7 +170,6 @@ function AdminDashboard() {
 
           {activeTab === 'Fuel' && <FuelAdmin themeStyle={themeStyle} />}
           {activeTab === 'VerifiedUsersTable' && <VerifiedUsersTable themeStyle={themeStyle} />}
-
           {activeTab === 'userdetails' && (
             <div>
               <h2 style={{ marginBottom: '10px' }}>Verified Users</h2>
@@ -207,7 +210,7 @@ function AdminDashboard() {
 
           {activeTab === 'VehicleDetails' && vehicleTab === 'main' && (
             <div className="vehicle-box" style={{ width: '400px', height: '600px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <button className="vehicle-btn" onClick={() => setVehicleTab('addremove')}>Add/Remove Vehicle</button>
+              <button className="vehicle-btn" onClick={() => setVehicleTab('addremove')}>Add Vehicle</button>
               <button className="vehicle-btn" onClick={() => setVehicleTab('search')}>Search Vehicle Details</button>
               <button className="vehicle-btn">Expense Details</button>
               <button className="vehicle-btn">View/Print Registers</button>
