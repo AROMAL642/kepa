@@ -15,6 +15,9 @@ import FuelSectionDashboard from './FuelSectionDashboard';
 
 
 function App() {
+
+  const isAuthenticated = localStorage.getItem('adminData')
+
   return (
     <div className="App">
    
@@ -29,7 +32,12 @@ function App() {
       <Routes>
         
         <Route path="/" element={<LoginPage />} />
-        <Route path="/admin" element={<AdminDashboard />} />
+        <Route
+            path="/admin"
+            element={
+              isAuthenticated ? <AdminDashboard /> : <Navigate to="/login" />
+            }
+        />
         <Route path="/user" element={<UserDashboard />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/viewrequests" element={<ViewRequests themeStyle={{ background: 'black', color: 'white' }} />} />
