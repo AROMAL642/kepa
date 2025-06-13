@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import '../css/BackButton.css'; 
 
-function AddRemoveVehicleForm() {
+
+function AddRemoveVehicleForm({ onBack }) {
   const [vehicle, setVehicle] = useState({
     number: '',
     model: '',
@@ -13,19 +15,18 @@ function AddRemoveVehicleForm() {
     currentDriver: '',
   });
 
-const handleChange = (e) => {
-  const { name, value } = e.target;
-  const newValue = name === 'number' ? value.toUpperCase() : value;
-  setVehicle({ ...vehicle, [name]: newValue });
-};
-
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    const newValue = name === 'number' ? value.toUpperCase() : value;
+    setVehicle({ ...vehicle, [name]: newValue });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     const formattedVehicle = {
       ...vehicle,
-      number: vehicle.number.toUpperCase(), // Ensure uppercase before sending
+      number: vehicle.number.toUpperCase(),
     };
 
     try {
@@ -55,6 +56,12 @@ const handleChange = (e) => {
 
   return (
     <div className="vehicle-form-container">
+      {onBack && (
+        <button className="back-button" onClick={onBack} style={{ marginBottom: '10px' }}>
+          ⬅ Back
+        </button>
+      )}
+
       <h2 className="form-title">Add New Vehicle</h2>
       <form className="vehicle-form" onSubmit={handleSubmit}>
         <div className="form-group">

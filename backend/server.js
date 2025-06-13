@@ -79,6 +79,7 @@ app.post('/register', async (req, res) => {
 
 
 // Login Route for User, Admin, and Fuel Section
+
 app.post('/login', async (req, res) => {
   const { pen, password } = req.body;
 
@@ -123,12 +124,22 @@ app.post('/login', async (req, res) => {
         gender: user.gender
       });
     } else {
-      return res.status(200).json(baseResponse); // admin
+      return res.status(200).json({
+        ...baseResponse,
+        generalNo: user.generalNo || '',
+        phone: user.phone || '',
+        dob: user.dob || '',
+        licenseNo: user.licenseNo || '',
+        bloodGroup: user.bloodGroup || '',
+        gender: user.gender || '',
+        role: user.role || ''
+      });
     }
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
+
 
 
 //  Get User by Email 

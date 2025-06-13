@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import '../css/SearchVehicleDetails.css';
+import '../css/BackButton.css';
 
-function SearchVehicleDetails({ themeStyle }) {
+function SearchVehicleDetails({ themeStyle, onBack }) {
   const [vehicleNo, setVehicleNo] = useState('');
   const [vehicleData, setVehicleData] = useState(null);
   const [vehicleList, setVehicleList] = useState([]);
@@ -93,7 +94,6 @@ function SearchVehicleDetails({ themeStyle }) {
 
       if (!res.ok) throw new Error('Failed to update status');
 
-      // update UI
       setVehicleList(prev =>
         prev.map(vehicle =>
           vehicle.id === id ? { ...vehicle, status: newStatus } : vehicle
@@ -158,7 +158,13 @@ function SearchVehicleDetails({ themeStyle }) {
             </select>
             <button
               onClick={() => handleUpdateStatus(params.row.id)}
-              style={{ backgroundColor: '#2e7d32', color: 'white', border: 'none', borderRadius: '4px', padding: '5px 10px' }}
+              style={{
+                backgroundColor: '#2e7d32',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                padding: '5px 10px'
+              }}
             >
               Save
             </button>
@@ -184,6 +190,7 @@ function SearchVehicleDetails({ themeStyle }) {
 
   return (
     <div className="vehicle-search-container" style={themeStyle}>
+      <button className="back-button" onClick={onBack}>⬅ Back</button>
       <h2 className="vehicle-search-title">Vehicle Search</h2>
 
       <div className="vehicle-search-form">

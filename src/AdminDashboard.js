@@ -15,6 +15,8 @@ import VerifiedUsersTable from './admindashboardcomponents/VerifiedUsersTable';
 import './css/verifieduserstable.css';
 import MovementAdmin from './admindashboardcomponents/MovementAdmin';
 import AccidentReportTable from './admindashboardcomponents/AccidentReportTable';
+import dayjs from 'dayjs';
+
 
 function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('profile');
@@ -45,7 +47,7 @@ function AdminDashboard() {
     email: 'Email',
     pen: 'PEN',
     generalNo: 'General No',
-    phone: 'Mobile Number',
+    phone: 'mobile',
     dob: 'Date of Birth',
     licenseNo: 'License Number',
     bloodGroup: 'Blood Group',
@@ -145,13 +147,18 @@ function AdminDashboard() {
                 {Object.entries(fieldLabels).map(([key, label]) => (
                   <div className="form-group" key={key}>
                     <label>{label}</label>
-                    <input
-                      type="text"
-                      value={adminData[key] || ''}
+                   <input
+                     type="text"
+                     value={
+                     key === 'dob' && adminData.dob
+                    ? dayjs(adminData.dob).format('DD-MM-YYYY')
+                    : adminData[key] || ''
+                     }
                       readOnly
-                      style={themeStyle}
-                      className={key === 'role' ? 'role-field' : ''}
-                    />
+                     style={themeStyle}
+                     className={key === 'role' ? 'role-field' : ''}
+                  />
+
                   </div>
                 ))}
               </div>
