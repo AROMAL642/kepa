@@ -53,7 +53,7 @@ function UserDashboard() {
 
   const handleLogout = () => {
     localStorage.clear();
-    navigate('/userlogin');
+    navigate('/');
   };
 
   const tabMap = [

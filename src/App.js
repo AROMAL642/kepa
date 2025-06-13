@@ -19,8 +19,6 @@ import './App.css';
 
 
 function App() {
-  const isAuthenticated = localStorage.getItem('adminData');
-
   return (
     <div className="App">
       <header className="App-header">
@@ -38,7 +36,7 @@ function App() {
           <Route
             path="/admin"
             element={
-              isAuthenticated ? <AdminDashboard /> : <Navigate to="/login" />
+              localStorage.getItem('adminData') ? <AdminDashboard /> : <Navigate to="/" />
             }
           />
           <Route path="/user" element={<UserDashboard />} />
@@ -52,7 +50,7 @@ function App() {
 
 
           {/* Catch-all */}
-          <Route path="*" element={<Navigate to="/" />} />
+          {/* <Route path="*" element={<Navigate to="/" />} /> */}
         </Routes>
       </Router>
     </div>
