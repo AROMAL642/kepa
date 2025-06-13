@@ -6,7 +6,6 @@ import { useNavigate } from 'react-router-dom';
 import './css/movement.css';
 import './css/SearchVehicleDetails.css';
 import FuelRegister from './userdashboardcomponents/FuelRegister';
-import RepairRequestForm from './RepairRequestForm';
 import AccidentReportForm from './userdashboardcomponents/AccidentReportForm';
 import './css/accidentreportform.css';
 import EyeTestReport from './userdashboardcomponents/EyeTestReport';
@@ -208,12 +207,7 @@ function UserDashboard() {
             <FuelRegister darkMode={darkMode} pen={formData.pen} />
           )}
 
-          {activeTab === 'repair' && (
-            <div className="repair-request-section">
-              <RepairRequestForm darkMode={darkMode} />
-            </div>
-          )}
-
+          
           {activeTab === 'accident' && (
             <div className="accident-section">
               <AccidentReportForm themeStyle={themeStyle} pen={formData.pen} />

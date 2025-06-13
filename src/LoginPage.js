@@ -9,12 +9,12 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
 
   const handleLogin = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    try {
-      const res = await axios.post('http://localhost:5000/login', { pen, password });
+  try {
+    const res = await axios.post('http://localhost:5000/login', { pen, password });
 
-      if (res.data.role === 'admin') {
+  if (res.data.role === 'admin') {
   const admin = {
     pen: res.data.pen,
     email: res.data.email,
@@ -30,7 +30,7 @@ const LoginPage = () => {
     generalNo: res.data.generalNo || ''
   };
   localStorage.setItem('adminData', JSON.stringify(admin));
-        navigate('/admin');
+  navigate('/admin');
 }
 
 
@@ -49,7 +49,7 @@ const LoginPage = () => {
         signature: res.data.signature
       };
       localStorage.setItem('user', JSON.stringify(user));
-        navigate('/user');
+      navigate('/user');
   } else if (res.data.role === 'fuel') {
   localStorage.setItem('fuelPen', res.data.pen);
   localStorage.setItem('fuelEmail', res.data.email);
@@ -63,13 +63,26 @@ const LoginPage = () => {
   localStorage.setItem('fuelSignature', res.data.signature);
   localStorage.setItem('fuelRole', res.data.role);
   navigate('/fuel');
+}else if (res.data.role === 'repair') {
+  localStorage.setItem('repairPen', res.data.pen);
+  localStorage.setItem('repairEmail', res.data.email);
+  localStorage.setItem('repairName', res.data.name);
+  localStorage.setItem('repairPhone', res.data.phone);
+  localStorage.setItem('repairDob', res.data.dob);
+  localStorage.setItem('repairLicenseNo', res.data.licenseNo);
+  localStorage.setItem('repairBloodGroup', res.data.bloodGroup);
+  localStorage.setItem('repairGender', res.data.gender);
+  localStorage.setItem('repairPhoto', res.data.photo);
+  localStorage.setItem('repairSignature', res.data.signature);
+  localStorage.setItem('repairRole', res.data.role);
+  navigate('/repair');
 }
 
-    } catch (error) {
-      const msg = error.response?.data?.message || 'Network or server error';
-      alert('Login failed: ' + msg);
-    }
-  };
+  } catch (error) {
+    const msg = error.response?.data?.message || 'Network or server error';
+    alert('Login failed: ' + msg);
+  }
+};
 
   return (
     <div className="containerStyle">
