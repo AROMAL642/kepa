@@ -1,119 +1,42 @@
-/* Main container */
-.verified-users {
+.user-details-container {
   padding: 20px;
-  font-family: Arial, sans-serif;
-  max-width: 1200px;
-  margin: 0 auto;
 }
 
-/* Title */
-.verified-users h2 {
-  color: #2c3e50;
-  text-align: center;
-  margin-bottom: 20px;
+.user-details-section {
+  display: flex;
+  gap: 30px;
 }
 
-/* Table container */
-.table-container {
-  overflow-x: auto;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
+.user-photo-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-/* Table styles */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  background-color: white;
-}
-
-/* Table header */
-th {
-  background-color: #3498db;
-  color: white;
-  padding: 12px 15px;
-  text-align: left;
-}
-
-/* Table cells */
-td {
-  padding: 12px 15px;
-  border-bottom: 1px solid #e0e0e0;
-  color: #333;
-}
-
-/* Row hover effect */
-tr:hover {
-  background-color: #f5f5f5;
-}
-
-/* Button styles */
-.view-btn {
-  background-color: #2ecc71;
-  color: white;
-  border: none;
-  padding: 8px 12px;
+.user-photo, .user-signature {
+  width: 150px;
+  height: 150px;
+  object-fit: contain;
+  border: 1px solid #ddd;
   border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s;
 }
 
-.view-btn:hover {
-  background-color: #27ae60;
+.user-info-section {
+  flex: 1;
 }
 
-/* Loading spinner */
-.loading-spinner {
-  text-align: center;
-  padding: 20px;
-  color: #7f8c8d;
+.user-info-section p {
+  margin: 10px 0;
+  font-size: 16px;
 }
 
-/* No users message */
-.no-users {
-  text-align: center;
-  padding: 20px;
-  color: #7f8c8d;
-  background-color: #f8f9fa;
-  border-radius: 8px;
+.section-title {
+  margin-bottom: 20px;
+  color: inherit;
 }
 
-/* Responsive styles */
-@media (max-width: 768px) {
-  table {
-    display: block;
-  }
-  
-  thead {
-    display: none;
-  }
-  
-  tr {
-    display: block;
-    margin-bottom: 15px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-  }
-  
-  td {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 10px;
-    text-align: right;
-    border-bottom: 1px solid #eee;
-  }
-  
-  td::before {
-    content: attr(data-label);
-    font-weight: bold;
-    text-align: left;
-    margin-right: auto;
-    padding-right: 20px;
-    color: #3498db;
-  }
-  
-  .view-btn {
-    width: 100%;
-  }
+/* Dark mode compatibility */
+[data-theme="dark"] .user-photo, 
+[data-theme="dark"] .user-signature {
+  border-color: #444;
 }

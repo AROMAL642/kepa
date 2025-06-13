@@ -1,70 +1,63 @@
 require('dotenv').config();
 
-
 const express = require('express');
 const app = express();
 const cors = require('cors');
 const mongoose = require('mongoose');
 const path = require('path');
-const multer = require('multer');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
 
-
-
-// ✅ Only declare these once
+// Routes
 const repairRequestRoutes = require('./routes/repairRequestRoutes');
 const repairAdminRoutes = require('./routes/repairAdminRoutes');
+const userRoutes = require('./routes/Edituser');
+const movementRoutes = require('./routes/movementRoutes');
+const addRemoveVehicleRoutes = require('./routes/addremovevehicleRoutes');
+const searchVehicleRoute = require('./routes/searchVehicle');
+const assignVehicleRoutes = require('./routes/assignVehicleRoutes');
+const fuelRoutes = require('./routes/fuelregisterRoutes');
+const vehicleRoutes = require('./routes/vehicleRoutes');
+const userDetailsRoutes = require('./routes/userDetailsRoutes');
+const accidentRoutes = require('./routes/accidentreportRoutes');
+const eyeTestRoutes = require('./routes/eyeTestRoutes');
 
+// Models
+const User = require('./models/User');
+const MovementRegister = require('./models/Movement');
+const Vehicle = require('./models/Vehicle');
 
-
-app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-
-// Use routes with prefixes
-app.use('/api/user-repair', repairRequestRoutes);     // e.g., /api/user/repair/submit
-app.use('/api/admin-repair', repairAdminRoutes);   // e.g., /api/admin/repairs
 
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '1mb' }));
-const UPLOADS_DIR = path.join(__dirname, 'uploads');
-app.use('/uploads', express.static(UPLOADS_DIR));
-//app.use('/api/repair-request', repairRequestRoutes);
 
-
-
+// Optional static folder for profile/signature uploads (if used elsewhere)
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
+app.use('/uploads', express.static(uploadsDir));
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB connected to kepa DB'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
-// Multer Setup for file uploads (bill files)
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const dir = path.join(__dirname, 'uploads');
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir);
-    cb(null, dir);
-  },
-  filename: (req, file, cb) => {
-    // Save file with unique timestamp + original name
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
-  }
-});
-const upload = multer({ storage });
+// Routes usage
+app.use('/api/repair-request', repairRequestRoutes);
+app.use('/api/admin-repair', repairAdminRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/movement', movementRoutes);
+app.use('/api/movements', movementRoutes);
+app.use('/api/vehicles', addRemoveVehicleRoutes);
+app.use('/searchvehicle', searchVehicleRoute);
+app.use('/api/assignvehicle', assignVehicleRoutes);
+app.use('/api/fuel', fuelRoutes);
+app.use('/api/vehicles', vehicleRoutes); // duplicate path, ensure they're logically separate
+app.use('/api/user-details', userDetailsRoutes);
+app.use('/api/accidents', accidentRoutes);
+app.use('/api/eyetests', eyeTestRoutes);
 
-// Use imported routes
-// Models
-const User = require('./models/User');
-
-const MovementRegister = require('./models/Movement');
-const Vehicle = require('./models/Vehicle');
-
-// User Registration 
+// Registration
 app.post('/register', async (req, res) => {
   const {
     pen, generalNo, name, email, phone, licenseNo,
@@ -72,14 +65,12 @@ app.post('/register', async (req, res) => {
   } = req.body;
 
   try {
-   
-
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new User({
       pen, generalNo, name, email, phone, licenseNo,
       dob, gender, bloodGroup, password: hashedPassword,
       photo, signature,
-      verified: 'NO' // default
+      verified: 'NO'
     });
 
     await newUser.save();
@@ -90,19 +81,18 @@ app.post('/register', async (req, res) => {
   }
 });
 
-// Login Route for both User and Admin
+// Login
 app.post('/login', async (req, res) => {
   const { pen, password } = req.body;
 
   try {
-    // Check if user or admin exists with this pen
     const user = await User.findOne({ pen });
     if (!user) return res.status(401).json({ message: 'Invalid PEN number' });
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ message: 'Invalid password' });
 
-    if (user.role === 'user' && user.verified !== 'YES') {
+    if (user.role !== 'admin' && user.verified !== 'YES') {
       return res.status(403).json({ message: 'User not verified. Please wait for approval.' });
     }
 
@@ -116,8 +106,8 @@ app.post('/login', async (req, res) => {
       signature: user.signature || ''
     };
 
-    if (user.role === 'user') {
-      res.status(200).json({
+    if (user.role === 'user' || user.role === 'fuel') {
+      return res.status(200).json({
         ...baseResponse,
         generalNo: user.generalNo,
         phone: user.phone,
@@ -127,35 +117,14 @@ app.post('/login', async (req, res) => {
         gender: user.gender
       });
     } else {
-      res.status(200).json(baseResponse);
+      return res.status(200).json(baseResponse);
     }
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//  Get User by Email 
+// Get User by Email
 app.get('/api/user/:email', async (req, res) => {
   try {
     const user = await User.findOne({ email: req.params.email }).lean();
@@ -171,7 +140,7 @@ app.get('/api/user/:email', async (req, res) => {
   }
 });
 
-// Get Admin by Email 
+// Get Admin by Email
 app.get('/api/admin/:email', async (req, res) => {
   try {
     const admin = await Admin.findOne({ email: req.params.email }).lean();
@@ -187,8 +156,7 @@ app.get('/api/admin/:email', async (req, res) => {
   }
 });
 
-// get mtiadmin by email
-
+// Get MTI Admin
 app.get('/api/mtiadmin/:email', async (req, res) => {
   try {
     const admin = await Admin.findOne({ email: req.params.email }).lean();
@@ -204,57 +172,13 @@ app.get('/api/mtiadmin/:email', async (req, res) => {
   }
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-//  Movement Register Entry 
-
-const movementRoutes = require('./routes/movementRoutes');
-app.use('/api/movement', movementRoutes);
-
-// Add or remove Vehicle
-
-const addRemoveVehicleRoutes = require('./routes/addremovevehicleRoutes');
-app.use('/api/vehicles', addRemoveVehicleRoutes);
-
-//search vehcle
-
-const searchVehicleRoute = require('./routes/searchVehicle');
-app.use('/searchvehicle', searchVehicleRoute);
-
-
-//assign vehicle
-const assignVehicleRoutes = require('./routes/assignVehicleRoutes');
-app.use('/api/assignvehicle', assignVehicleRoutes);
-
-//fuel register by user
-const fuelRoutes = require('./routes/fuelregisterRoutes');
-app.use('/api', fuelRoutes);
-
-
-
-
-
-
-
-// Fetch all unverified users
+// View Unverified Users
 app.get('/api/unverified-users', async (req, res) => {
   try {
     const unverifiedUsers = await User.find(
-  { verified: 'NO' },
-  { email: 1, name: 1, pen: 1, generalNo: 1 } // to reduce loading time
-);
-
+      { verified: 'NO' },
+      { email: 1, name: 1, pen: 1, generalNo: 1 }
+    );
     res.status(200).json(unverifiedUsers);
   } catch (err) {
     console.error('Error fetching unverified users:', err);
@@ -262,8 +186,7 @@ app.get('/api/unverified-users', async (req, res) => {
   }
 });
 
-
-// Verify a user by email
+// Verify User by Email
 app.put('/api/verify-user/:email', async (req, res) => {
   try {
     const email = req.params.email;
@@ -277,8 +200,7 @@ app.put('/api/verify-user/:email', async (req, res) => {
   }
 });
 
-
-// view specific user details
+// Get Specific User
 app.get('/api/users/:id', async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -289,26 +211,8 @@ app.get('/api/users/:id', async (req, res) => {
   }
 });
 
-
-// Fetch all verified users with role = 'user'
-app.get('/api/verified-users', async (req, res) => {
-  try {
-    const verifiedUsers = await User.find(
-      { verified: 'YES', role: 'user' },
-      { name: 1, pen: 1, generalNo: 1, phone: 1} // projection
-    );
-    res.status(200).json(verifiedUsers);
-  } catch (err) {
-    console.error('Error fetching verified users:', err);
-    res.status(500).json({ message: 'Error fetching verified users', error: err.message });
-  }
-});
-
-
-
-// Start server (only once)
+// Start Server
 const PORT = 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
 });
-

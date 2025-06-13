@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+
+import ResponsiveAppBar from './admindashboardcomponents/ResponsiveAppBar';
 import './css/admindashboard.css';
 import AddRemoveVehicleForm from './admindashboardcomponents/AddRemoveVehicleForm';
 import ViewRequests from './ViewRequests';
@@ -8,10 +9,14 @@ import SearchVehicleDetails from './admindashboardcomponents/SearchVehicleDetail
 import './css/SearchVehicleDetails.css';
 import ViewAssignVehicle from './admindashboardcomponents/ViewAssignVehicle';
 import './css/AssignVehicle.css';
-import AdminRepairSection from './AdminRepairSection';
-
-
-
+import SkeletonChildren from './admindashboardcomponents/SkeletonUI'; 
+import FuelAdmin from './admindashboardcomponents/FuelAdmin';
+import './css/fueladmin.css';
+import VerifiedUsersTable from './admindashboardcomponents/VerifiedUsersTable';
+import './css/verifieduserstable.css';
+import MovementAdmin from './admindashboardcomponents/MovementAdmin';
+import AccidentReportTable from './admindashboardcomponents/AccidentReportTable';
+import AdminRepairSection from "./AdminRepairSection"
 
 
 function AdminDashboard() {
@@ -21,27 +26,39 @@ function AdminDashboard() {
   const [pendingCount, setPendingCount] = useState(0);
   const [loadingVerifiedUsers, setLoadingVerifiedUsers] = useState(false);
   const [verifiedUsers, setVerifiedUsers] = useState([]);
-  const navigate = useNavigate();
-   
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+
   const [adminData, setAdminData] = useState({
     name: '',
     email: '',
     pen: '',
     photo: '',
     signature: '',
+    role: '',
+    phone: '',
+    dob: '',
+    licenseNo: '',
+    bloodGroup: '',
+    gender: ''
   });
 
-  useEffect(() => {
-    setAdminData({
-      name: localStorage.getItem('adminName') || '',
-      email: localStorage.getItem('adminEmail') || '',
-      pen: localStorage.getItem('adminPen') || '',
-      photo: localStorage.getItem('adminPhoto') || '',
-      signature: localStorage.getItem('adminSignature') || ''
-    });
-    fetchPendingCount();
-  }, []);
+ // Replace your useEffect with:
+useEffect(() => {
+  const timer = setTimeout(() => {
+    setLoading(false);
+  }, 800);
 
+  const storedAdminData = localStorage.getItem('adminData');
+  if (storedAdminData) {
+    setAdminData(JSON.parse(storedAdminData));
+  }
+
+  fetchPendingCount();
+  return () => clearTimeout(timer);
+}, []);
+
+  
   useEffect(() => {
     if (activeTab === 'userdetails') {
       fetchVerifiedUsers();
@@ -71,108 +88,132 @@ function AdminDashboard() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate('/adminlogin');
-  };
-
-   
-
   const themeStyle = {
     background: darkMode ? '#121212' : '#fff',
     color: darkMode ? '#f1f1f1' : '#000',
     borderColor: darkMode ? '#555' : '#ccc'
   };
 
+  if (loading) {
+    return (
+      <div style={{ padding: '40px' }}>
+        <SkeletonChildren />
+      </div>
+    );
+  }
+
   return (
-    <div className="dashboard" style={themeStyle}>
-      <div className="sidebar">
-        <button className="toggle-btn" onClick={() => setDarkMode(!darkMode)}>
-          {darkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
-        </button>
+    <div>
+      <ResponsiveAppBar 
+        photo={adminData.photo} 
+        name={adminData.name} 
+        role={adminData.role} 
+      />
 
-        <h2>ADMIN PANEL</h2>
+      <button className="drawer-toggle-btn" onClick={() => setIsDrawerOpen(!isDrawerOpen)}>
+        ☰
+      </button>
 
-        <div className="sidebar-buttons">
-          <button className="sidebar-btn" onClick={() => setActiveTab('profile')}>Profile</button>
-          <button className="sidebar-btn" onClick={() => setActiveTab('Movement')}>Movement Register</button>
-          <button className="sidebar-btn" onClick={() => setActiveTab('Repair')}>Repair Reports</button>
-          <button className="sidebar-btn" onClick={() => setActiveTab('Accident')}>Accident Details</button>
-          <button className="sidebar-btn" onClick={() => { setActiveTab('VehicleDetails'); setVehicleTab('main'); }}>Vehicle</button>
-
-          <button className="sidebar-btn notification-btn" onClick={() => setActiveTab('Request')}>
-           
-            View Requests
-            {pendingCount > 0 && <span className="notification-badge">{pendingCount}</span>}
+      <div className={`dashboard ${isDrawerOpen ? 'drawer-open' : ''}`} style={themeStyle}>
+        <div className={`drawer ${isDrawerOpen ? 'open' : ''}`}>
+          <button className="toggle-btn" onClick={() => setDarkMode(!darkMode)}>
+            {darkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
           </button>
 
-          <button className="sidebar-btn" onClick={() => setActiveTab('VerifiedUsersTable')}>Users Details</button>
+          <h2>ADMIN PANEL</h2>
+          {adminData.role && (
+            <div className="role-badge" style={{ background: '#4CAF50', color: 'white', padding: '5px 10px', borderRadius: '20px', marginBottom: '15px', fontSize: '0.9rem' }}>
+              {adminData.role}
+            </div>
+          )}
+
+          <div className="sidebar-buttons">
+            <button className={`sidebar-btn ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>Profile</button>
+            <button className={`sidebar-btn ${activeTab === 'Fuel' ? 'active' : ''}`} onClick={() => setActiveTab('Fuel')}>Fuel</button>
+            <button className={`sidebar-btn ${activeTab === 'Movement' ? 'active' : ''}`} onClick={() => setActiveTab('Movement')}>Movement Register</button>
+            <button className={`sidebar-btn ${activeTab === 'Repair' ? 'active' : ''}`} onClick={() => setActiveTab('Repair')}>Repair Reports</button>
+            <button className={`sidebar-btn ${activeTab === 'Accident' ? 'active' : ''}`} onClick={() => setActiveTab('Accident')}>Accident Details</button>
+            <button className={`sidebar-btn ${activeTab === 'VehicleDetails' ? 'active' : ''}`} onClick={() => { setActiveTab('VehicleDetails'); setVehicleTab('main'); }}>Vehicle</button>
+            <button className={`sidebar-btn notification-btn ${activeTab === 'Request' ? 'active' : ''}`} onClick={() => setActiveTab('Request')}>
+              Non Verified Users
+              {pendingCount > 0 && <span className="notification-badge">{pendingCount}</span>}
+            </button>
+            <button className={`sidebar-btn ${activeTab === 'VerifiedUsersTable' ? 'active' : ''}`} onClick={() => setActiveTab('VerifiedUsersTable')}>
+              Users Details
+            </button>
+          </div>
         </div>
 
-        <button className="logout-btn" onClick={handleLogout}>🚪 Logout</button>
-      </div>
-
-      <div className="main-content" style={themeStyle}>
-        {activeTab === 'profile' && (
-          <div className="form-section">
-            <div className="form-left">
-              {['name', 'email', 'pen'].map((field) => (
-                <div className="form-group" key={field}>
-                  <label>{field.charAt(0).toUpperCase() + field.slice(1)}</label>
-                  <input type="text" value={adminData[field]} readOnly style={themeStyle} />
+        <div className="main-content" style={themeStyle}>
+          {activeTab === 'profile' && (
+            <div className="form-section">
+              <div className="form-left">
+                {['name', 'email', 'pen', 'phone', 'dob', 'licenseNo', 'bloodGroup', 'gender', 'role'].map((field) => (
+                  <div className="form-group" key={field}>
+                    <label>{field.charAt(0).toUpperCase() + field.slice(1)}</label>
+                    <input 
+                      type="text" 
+                      value={adminData[field]} 
+                      readOnly 
+                      style={themeStyle} 
+                      className={field === 'role' ? 'role-field' : ''} 
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="form-right">
+                <div className="upload-section">
+                  <img src={adminData.photo || 'https://via.placeholder.com/100'} alt="Profile" className="upload-icon" />
+                  <p>Profile Photo</p>
                 </div>
-              ))}
-            </div>
-            <div className="form-right">
-              <div className="upload-section">
-                <img src={adminData.photo || 'https://via.placeholder.com/100'} alt="Profile" className="upload-icon" />
-                <p>Profile Photo</p>
-              </div>
-              <div className="upload-section">
-                <img src={adminData.signature || 'https://via.placeholder.com/100'} alt="Signature" className="upload-icon" />
-                <p>Signature</p>
+                <div className="upload-section">
+                  <img src={adminData.signature || 'https://via.placeholder.com/100'} alt="Signature" className="upload-icon" />
+                  <p>Signature</p>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {activeTab === 'userdetails' && (
-          <div>
-            <h2 style={{ marginBottom: '10px' }}>Verified Users</h2>
-            {loadingVerifiedUsers ? (
-              <div className="loading-spinner">Loading users...</div>
-            ) : (
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>PEN</th>
-                    <th>General No</th>
-                    <th>Mobile Number</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {verifiedUsers.length > 0 ? (
-                    verifiedUsers.map((user, index) => (
-                      <tr key={index}>
-                        <td>{user.name}</td>
-                        <td>{user.pen}</td>
-                        <td>{user.generalno}</td>
-                        <td>{user.mobileno}</td>
-                        <td><button>View Full Profile</button></td>
-                      </tr>
-                    ))
-                  ) : (
+          {activeTab === 'Fuel' && <FuelAdmin themeStyle={themeStyle} />}
+          {activeTab === 'VerifiedUsersTable' && <VerifiedUsersTable themeStyle={themeStyle} />}
+
+          {activeTab === 'userdetails' && (
+            <div>
+              <h2 style={{ marginBottom: '10px' }}>Verified Users</h2>
+              {loadingVerifiedUsers ? (
+                <div className="loading-spinner">Loading users...</div>
+              ) : (
+                <table className="data-table">
+                  <thead>
                     <tr>
-                      <td colSpan="5">No verified users found.</td>
+                      <th>Name</th>
+                      <th>PEN</th>
+                      <th>General No</th>
+                      <th>Mobile Number</th>
+                      <th>Action</th>
                     </tr>
-                  )}
-                </tbody>
-              </table>
-            )}
-          </div>
-        )}
+                  </thead>
+                  <tbody>
+                    {verifiedUsers.length > 0 ? (
+                      verifiedUsers.map((user, index) => (
+                        <tr key={index}>
+                          <td>{user.name}</td>
+                          <td>{user.pen}</td>
+                          <td>{user.generalno}</td>
+                          <td>{user.mobileno}</td>
+                          <td><button>View Full Profile</button></td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="5">No verified users found.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
 
         {activeTab === 'VehicleDetails' && vehicleTab === 'main' && (
           <div className="vehicle-box" style={{ width: '400px', height: '600px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -186,27 +227,19 @@ function AdminDashboard() {
           </div>
         )}
 
-        {activeTab === 'VehicleDetails' && vehicleTab === 'addremove' && (
-          <AddRemoveVehicleForm onBack={() => setVehicleTab('main')} themeStyle={themeStyle} />
-        )}
+          {activeTab === 'VehicleDetails' && vehicleTab === 'addremove' && <AddRemoveVehicleForm onBack={() => setVehicleTab('main')} themeStyle={themeStyle} />}
+          {activeTab === 'Request' && <ViewRequests themeStyle={themeStyle} />}
+          {activeTab === 'VehicleDetails' && vehicleTab === 'search' && <SearchVehicleDetails onBack={() => setVehicleTab('main')} themeStyle={themeStyle} />}
+          {activeTab === 'VehicleDetails' && vehicleTab === 'viewassign' && <ViewAssignVehicle onBack={() => setVehicleTab('main')} themeStyle={themeStyle} />}
+          {activeTab === 'Movement' && <MovementAdmin themeStyle={themeStyle} />}
+          {activeTab === 'Accident' && <AccidentReportTable themeStyle={themeStyle} />}
 
-        {activeTab === 'Request' && <ViewRequests themeStyle={themeStyle} />}
-
-         {activeTab === 'VehicleDetails' && vehicleTab === 'search' && (
-         <SearchVehicleDetails onBack={() => setVehicleTab('main')} themeStyle={themeStyle} />
-        )}
-
-        {activeTab === 'VehicleDetails' && vehicleTab === 'viewassign' && (
-       <ViewAssignVehicle onBack={() => setVehicleTab('main')} themeStyle={themeStyle} />
-        )}
-
-        {activeTab === 'Repair' && <AdminRepairSection themeStyle={themeStyle} />}
-
-
-
+         {activeTab === 'Repair' && <AdminRepairSection themeStyle={themeStyle} />}
       </div>
     </div>
+     </div>
   );
 }
 
 export default AdminDashboard;
+

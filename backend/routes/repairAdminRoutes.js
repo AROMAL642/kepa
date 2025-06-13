@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const RepairRequest = require('../models/RepairRequest');
+const RepairRequest = require('../models/RepairRequests');
 
 // ✅ Get all repair requests (admin)
 router.get('/', async (req, res) => {

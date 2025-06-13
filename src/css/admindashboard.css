@@ -115,21 +115,45 @@ body {
   flex-direction: column;
   align-items: center;
 }
-.vehicle-btn {
-  width: 80%;
-  padding: 40px;
-  font-size: 16px;
-  border-radius: 20px;
-  border: none;
-  cursor: pointer;
-  background-color: #4b8bcf;
-  color: white;
+
+
+
+.vehicle-box {
+  background-color: #f5f5f5;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  align-items: center;
+  justify-content: center;
+  margin: 20px auto;
   transition: background-color 0.3s ease;
 }
 
-.vehicle-btn:hover {
-  background-color: #007bff;
+.vehicle-btn {
+  width: 100%;
+  padding: 15px;
+  font-size: 16px;
+  font-weight: 600;
+  background-color: #1e88e5;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
+
+.vehicle-btn:hover {
+  background-color: #1565c0;
+  transform: scale(1.03);
+}
+
+.vehicle-btn:active {
+  background-color: #0d47a1;
+}
+
+
+
+
 
 .logout-btn {
   margin-top: 20px;
@@ -397,5 +421,76 @@ body {
   100% { transform: scale(1); }
 }
 
+
+.dashboard {
+  margin-top: 64px; /* Height of the AppBar (default MUI) */
+}
+
+
+.drawer-toggle-btn {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  font-size: 24px;
+  z-index: 1001;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #333;
+}
+
+.dashboard {
+  display: flex;
+  transition: margin-left 0.3s ease;
+}
+
+.drawer {
+  width: 250px;
+  background-color: #f4f4f4;
+  padding: 20px;
+  height: 100vh;
+  position: fixed;
+  left: -250px;
+  top: 0;
+  z-index: 1000;
+  transition: left 0.3s ease;
+  overflow-y: auto;
+}
+
+.drawer.open {
+  left: 0;
+}
+
+.drawer-open .main-content {
+  margin-left: 250px;
+}
+
+.main-content {
+  flex: 1;
+  padding: 20px;
+  transition: margin-left 0.3s ease;
+}
+
+
+.drawer {
+  width: 240px;
+  transition: transform 0.3s ease;
+  position: fixed;
+  left: 0;
+  top: 64px; /* height of the AppBar */
+  height: calc(100% - 64px);
+  background-color: #333;
+  color: white;
+  overflow-y: auto;
+  z-index: 1200;
+}
+
+.drawer.open {
+  transform: translateX(0);
+}
+
+.drawer:not(.open) {
+  transform: translateX(-100%);
+}
 
 

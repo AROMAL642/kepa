@@ -9,55 +9,67 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
 
   const handleLogin = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    try {
-      const res = await axios.post('http://localhost:5000/login', { pen, password });
+  try {
+    const res = await axios.post('http://localhost:5000/login', { pen, password });
 
-      if (res.data.role === 'admin') {
-        localStorage.setItem('adminPen', res.data.pen);
-        localStorage.setItem('adminEmail', res.data.email);
-        localStorage.setItem('adminName', res.data.name);
-        localStorage.setItem('adminPhone', res.data.phone);
-        localStorage.setItem('adminDob', res.data.dob);
-        localStorage.setItem('adminLicenseNo', res.data.licenseNo);
-        localStorage.setItem('adminBloodGroup', res.data.bloodGroup);
-        localStorage.setItem('adminGender', res.data.gender);
-        localStorage.setItem('adminPhoto', res.data.photo);
-        localStorage.setItem('adminSignature', res.data.signature);
-        navigate('/admin');
-      } else if (res.data.role === 'mtiadmin') {
-     localStorage.setItem('mtiAdminPen', res.data.pen);
-        localStorage.setItem('mtiAdminEmail', res.data.email);
-        localStorage.setItem('mtiAdminName', res.data.name);
-        localStorage.setItem('mtiAdminPhone', res.data.phone);
-        localStorage.setItem('mtiAdminDob', res.data.dob);
-        localStorage.setItem('mtiAdminLicenseNo', res.data.licenseNo);
-        localStorage.setItem('mtiAdminBloodGroup', res.data.bloodGroup);
-        localStorage.setItem('mtiAdminGender', res.data.gender);
-        localStorage.setItem('mtiAdminPhoto', res.data.photo);
-        localStorage.setItem('mtiAdminSignature', res.data.signature);
-      navigate('/mtiadmin');
-      
-      } else if (res.data.role === 'user') {
-        localStorage.setItem('userPen', res.data.pen);
-        localStorage.setItem('userGeneralNo', res.data.generalNo);
-        localStorage.setItem('userEmail', res.data.email);
-        localStorage.setItem('userName', res.data.name);
-        localStorage.setItem('userphone', res.data.phone);
-        localStorage.setItem('userdob', res.data.dob);
-        localStorage.setItem('userlicenseNo', res.data.licenseNo);
-        localStorage.setItem('userbloodGroup', res.data.bloodGroup);
-        localStorage.setItem('usergender', res.data.gender);
-        localStorage.setItem('userPhoto', res.data.photo);
-        localStorage.setItem('userSignature', res.data.signature);
-        navigate('/user');
-      }
-    } catch (error) {
-      const msg = error.response?.data?.message || 'Network or server error';
-      alert('Login failed: ' + msg);
-    }
+if (res.data.role === 'admin') {
+  const admin = {
+    pen: res.data.pen,
+    email: res.data.email,
+    name: res.data.name,
+    phone: res.data.phone,
+    dob: res.data.dob,
+    licenseNo: res.data.licenseNo,
+    bloodGroup: res.data.bloodGroup,
+    gender: res.data.gender,
+    photo: res.data.photo || '',
+    signature: res.data.signature || '',
+    role: res.data.role,
+    generalNo: res.data.generalNo || ''
   };
+  localStorage.setItem('adminData', JSON.stringify(admin));
+  navigate('/admin');
+}
+
+
+     else if (res.data.role === 'user') {
+      const user = {
+        name: res.data.name,
+        pen: res.data.pen,
+        generalNo: res.data.generalNo,
+        email: res.data.email,
+        phone: res.data.phone,
+        dob: res.data.dob,
+        licenseNo: res.data.licenseNo,
+        bloodGroup: res.data.bloodGroup,
+        gender: res.data.gender,
+        photo: res.data.photo,
+        signature: res.data.signature
+      };
+      localStorage.setItem('user', JSON.stringify(user));
+      navigate('/user');
+  } else if (res.data.role === 'fuel') {
+  localStorage.setItem('fuelPen', res.data.pen);
+  localStorage.setItem('fuelEmail', res.data.email);
+  localStorage.setItem('fuelName', res.data.name);
+  localStorage.setItem('fuelPhone', res.data.phone);
+  localStorage.setItem('fuelDob', res.data.dob);
+  localStorage.setItem('fuelLicenseNo', res.data.licenseNo);
+  localStorage.setItem('fuelBloodGroup', res.data.bloodGroup);
+  localStorage.setItem('fuelGender', res.data.gender);
+  localStorage.setItem('fuelPhoto', res.data.photo);
+  localStorage.setItem('fuelSignature', res.data.signature);
+  localStorage.setItem('fuelRole', res.data.role);
+  navigate('/fuel');
+}
+
+  } catch (error) {
+    const msg = error.response?.data?.message || 'Network or server error';
+    alert('Login failed: ' + msg);
+  }
+};
 
   return (
     <div className="containerStyle">

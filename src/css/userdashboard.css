@@ -207,3 +207,22 @@ body {
 .toggle-btn:hover {
   background-color: #444;
 }
+
+
+.cancel-btn {
+  background-color: #f70c0c;
+  border: none;
+  padding: 8px 12px;
+  margin-left: 10px;
+  cursor: pointer;
+}
+
+
+.save-btn {
+  background-color: #41f70a;
+  border: none;
+  padding: 8px 12px;
+  margin-left: 10px;
+  cursor: pointer;
+}
+
