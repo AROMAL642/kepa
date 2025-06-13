@@ -12,7 +12,7 @@ import './css/accidentreportform.css';
 import EyeTestReport from './userdashboardcomponents/EyeTestReport';
 
 function UserDashboard() {
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);  
   const [activeTab, setActiveTab] = useState('profile');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const navigate = useNavigate();
@@ -33,24 +33,27 @@ function UserDashboard() {
     signature: '',
   });
 
+  
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem('user'));
-    if (user) {
-      setFormData({
-        name: user.name,
-        pen: user.pen,
-        generalNo: user.generalNo,
-        email: user.email,
-        mobile: user.phone,
-        dob: user.dob,
-        licenseNo: user.licenseNo,
-        bloodGroup: user.bloodGroup,
-        gender: user.gender,
-        profilePic: user.photo,
-        signature: user.signature
-      });
-    }
-  }, []);
+  const user = JSON.parse(localStorage.getItem('user'));
+  if (user) {
+    setFormData({
+      name: user.name,
+      pen: user.pen,
+      generalNo: user.generalNo,
+      email: user.email,
+      mobile: user.phone,
+      dob: user.dob,
+      licenseNo: user.licenseNo,
+      bloodGroup: user.bloodGroup,
+      gender: user.gender,
+      profilePic: user.photo,
+      signature: user.signature
+    });
+  }
+}, []);
+
+
 
   const handleLogout = () => {
     localStorage.clear();
@@ -61,6 +64,7 @@ function UserDashboard() {
     background: darkMode ? '#121212' : '#fff',
     color: darkMode ? '#f1f1f1' : '#000',
     borderColor: darkMode ? '#555' : '#ccc'
+
   };
 
   const tabMap = [
@@ -81,6 +85,7 @@ function UserDashboard() {
       <div className={`dashboard ${isDrawerOpen ? 'drawer-open' : ''}`} style={themeStyle}>
         {/* Sidebar Drawer */}
         <div className={`drawer ${isDrawerOpen ? 'open' : ''}`}>
+          
           <button className="toggle-btn" onClick={() => setDarkMode(!darkMode)}>
             {darkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
           </button>
@@ -171,33 +176,36 @@ function UserDashboard() {
                 )}
               </div>
 
-              <div className="form-right">
-                <div className="upload-section">
-                  <img
-                    src={formData.profilePic || 'https://via.placeholder.com/100'}
-                    alt="Profile"
-                    className="upload-icon"
-                  />
-                  <p>Profile Photo</p>
-                </div>
-                <div className="upload-section">
-                  <img
-                    src={formData.signature || 'https://via.placeholder.com/100'}
-                    alt="Signature"
-                    className="upload-icon"
-                  />
-                  <p>Signature</p>
-                </div>
+            <div className="form-right">
+              <div className="upload-section">
+                <img
+                  src={formData.profilePic || 'https://via.placeholder.com/100'}
+                  alt="Profile"
+
+                  className="upload-icon"
+                />
+                <p>Profile Photo</p>
+              </div>
+              <div className="upload-section">
+                <img
+                  src={formData.signature || 'https://via.placeholder.com/100'}
+                  alt="Signature"
+                  className="upload-icon"
+                />
+                <p>Signature</p>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
+          {/* Movement Tab */}
           {activeTab === 'movement' && (
             <div className="movement-section">
               <MovementRegister />
             </div>
           )}
 
+          {/* Vehicle Details Tab */}
           {activeTab === 'vehicle details' && (
             <div className="vehicle-details-section">
               <SearchVehicleDetails />
@@ -205,9 +213,10 @@ function UserDashboard() {
           )}
 
           {activeTab === 'fuel' && (
-            <FuelRegister darkMode={darkMode} pen={formData.pen} />
+             <FuelRegister darkMode={darkMode} pen={formData.pen} />
           )}
 
+          {/* Repair Tab */}
           {activeTab === 'repair' && (
             <div className="repair-request-section">
               <RepairRequestForm darkMode={darkMode} />
