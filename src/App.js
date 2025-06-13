@@ -15,6 +15,7 @@ import MechanicDashboard from './MechanicDashboard';
 
 
 import './App.css';
+import NotFound from './404';
 
 
 
@@ -50,7 +51,7 @@ function App() {
 
 
           {/* Catch-all */}
-          {/* <Route path="*" element={<Navigate to="/" />} /> */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
     </div>
