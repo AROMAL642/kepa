@@ -40,7 +40,8 @@ router.get('/check/:vehicleno', async (req, res) => {
   }
 });
 
-module.exports = router;
+
+
 
 
 

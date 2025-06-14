@@ -9,66 +9,65 @@ import {
   Typography
 } from '@mui/material';
 
-const AccidentReportTable = ({ themeStyle }) => {
+const RepairAdminTable = ({ themeStyle }) => {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedReport, setSelectedReport] = useState(null);
+  const [selectedRepair, setSelectedRepair] = useState(null);
 
-  //  Fetch all reports
-  const fetchReports = useCallback(async () => {
+  const fetchRepairs = useCallback(async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/accidents');
+      const res = await fetch('http://localhost:5000/api/repair-request');
       const data = await res.json();
-      
-      const formatted = data.map((item, index) => ({
-  id: item._id,
-  _id: item._id,
-  vehicleNo: item.vehicleNo,
-  pen: item.pen,
-  accidentTime: item.accidentTime,
-  location: item.location,
-  description: item.description,
-  status: item.status, // ✅ Use directly
-  image: item.image?.data
-    ? `data:${item.image.contentType};base64,${item.image.data}`
-    : ''
-}));
+
+      const formatted = data.map((item , index) => ({
+        slNo: index + 1,
+        id: item._id,
+        _id: item._id,
+        pen: item.pen,
+        vehicleNo: item.vehicleNo,
+        //userName: item.user?.name || 'Unknown',
+        subject: item.subject,
+        description: item.description,
+        date: item.date,
+        status: item.status || 'pending',
+        billFile: item.billFile?.data
+          ? `data:${item.billFile.contentType};base64,${item.billFile.data}`
+          : ''
+      }));
 
       setRows(formatted);
     } catch (err) {
-      console.error('Error fetching accident data:', err);
+      console.error('Error fetching repair requests:', err);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchReports();
-  }, [fetchReports]);
+    fetchRepairs();
+  }, [fetchRepairs]);
 
   const handleViewDetails = (row) => {
-    setSelectedReport(row);
+    setSelectedRepair(row);
     setDialogOpen(true);
   };
 
   const handleClose = () => {
     setDialogOpen(false);
-    setSelectedReport(null);
+    setSelectedRepair(null);
   };
 
-  // ✅ Update accident status (PUT request)
   const updateStatus = async (id, status) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/accidents/${id}/status`, {
+      const res = await fetch(`http://localhost:5000/api/repair-request/${id}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
       });
 
       if (res.ok) {
-        // Refresh the list
-        await fetchReports();
+        await fetchRepairs();
       } else {
         const error = await res.json();
         alert(error.message || 'Failed to update status');
@@ -79,11 +78,12 @@ const AccidentReportTable = ({ themeStyle }) => {
   };
 
   const columns = [
-    { field: 'vehicleNo', headerName: 'Vehicle No', width: 150 },
+    { field: 'slNo', headerName: 'Sl. No', width: 90 },
+
+    { field: 'vehicleNo', headerName: 'Vehicle No', width: 130 },
     { field: 'pen', headerName: 'PEN', width: 100 },
-    { field: 'accidentTime', headerName: 'Time', width: 130 },
-    { field: 'location', headerName: 'Location', width: 180 },
-    { field: 'description', headerName: 'Description', width: 220 },
+    //{ field: 'userName', headerName: 'User Name', width: 150 },
+    { field: 'subject', headerName: 'Subject', width: 180 , disableColumnMenu: true , sortable: false },
     {
       field: 'status',
       headerName: 'Status',
@@ -100,7 +100,7 @@ const AccidentReportTable = ({ themeStyle }) => {
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 260,
+      width: 270,
       renderCell: (params) => (
         <>
           <Button
@@ -137,7 +137,7 @@ const AccidentReportTable = ({ themeStyle }) => {
 
   return (
     <div style={{ height: 600, width: '100%', ...themeStyle }}>
-      <h2>Accident Report Table</h2>
+      <h2>Repair Requests</h2>
       <DataGrid
         rows={rows}
         columns={columns}
@@ -148,25 +148,25 @@ const AccidentReportTable = ({ themeStyle }) => {
       />
 
       <Dialog open={dialogOpen} onClose={handleClose} fullWidth maxWidth="sm">
-        <DialogTitle>Accident Report Details</DialogTitle>
+        <DialogTitle>Repair Request Details</DialogTitle>
         <DialogContent>
-          {selectedReport && (
+          {selectedRepair && (
             <>
-              <Typography><strong>Vehicle No:</strong> {selectedReport.vehicleNo}</Typography>
-              <Typography><strong>PEN:</strong> {selectedReport.pen}</Typography>
-              <Typography><strong>Time:</strong> {selectedReport.accidentTime}</Typography>
-              <Typography><strong>Location:</strong> {selectedReport.location}</Typography>
-              <Typography><strong>Description:</strong> {selectedReport.description}</Typography>
-              <Typography><strong>Status:</strong> {selectedReport.status}</Typography>
+              <Typography><strong>Vehicle No:</strong> {selectedRepair.vehicleNo}</Typography>
+              <Typography><strong>PEN:</strong> {selectedRepair.pen}</Typography>
+              <Typography><strong>Date:</strong> {selectedRepair.date}</Typography>
+              <Typography><strong>Subject:</strong> {selectedRepair.subject}</Typography>
+              <Typography><strong>Description:</strong> {selectedRepair.description}</Typography>
+              <Typography><strong>Status:</strong> {selectedRepair.status}</Typography>
               <br />
-              {selectedReport.image ? (
-                <img
-                  src={selectedReport.image}
-                  alt="Accident"
-                  style={{ width: '100%', maxHeight: '400px', objectFit: 'contain' }}
+              {selectedRepair.billFile ? (
+                <iframe
+                  src={selectedRepair.billFile}
+                  title="Bill File"
+                  style={{ width: '100%', height: '400px', border: 'none' }}
                 />
               ) : (
-                <Typography color="textSecondary">No Image Available</Typography>
+                <Typography color="textSecondary">No Bill File Available</Typography>
               )}
             </>
           )}
@@ -179,4 +179,4 @@ const AccidentReportTable = ({ themeStyle }) => {
   );
 };
 
-export default AccidentReportTable;
+export default RepairAdminTable;

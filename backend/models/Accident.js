@@ -24,9 +24,14 @@ const accidentSchema = new mongoose.Schema({
   bill: {
     data: Buffer,
     contentType: String
+  },
+  status: { 
+    type: String,
+    enum: ['verified', 'rejected', 'pending'], 
+    default: 'pending' 
   }
 }, {
-  timestamps: true 
+  timestamps: true
 });
 
-module.exports = mongoose.model('Accident', accidentSchema);
+module.exports = mongoose.model('Accident', accidentSchema) 
