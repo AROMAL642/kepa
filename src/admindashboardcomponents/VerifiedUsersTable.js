@@ -87,6 +87,37 @@ const VerifiedUsersTable = ({ themeStyle }) => {
     }
   };
 
+  const handleRemoveUser = async () => {
+  if (!selectedUser || !selectedUser.pen) return;
+
+  const confirmDelete = window.confirm(`Are you sure you want to delete user with PEN ${selectedUser.pen}?`);
+  if (!confirmDelete) return;
+
+  try {
+    const response = await fetch(`http://localhost:5000/api/user-delete/pen/${selectedUser.pen}`, {
+      method: 'DELETE',
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error('Delete failed:', data.message);
+      alert(`Failed to delete user: ${data.message}`);
+      return;
+    }
+
+    // Remove the user from the frontend list
+    setUsers(prevUsers => prevUsers.filter(user => user.pen !== selectedUser.pen));
+    setOpenDialog(false);
+    setSelectedUser(null);
+    alert('User successfully removed');
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    alert('Failed to delete user due to a network or server error');
+  }
+};
+
+
   const columns = [
     { field: 'name', headerName: 'Name', flex: 1 },
     { field: 'pen', headerName: 'PEN', flex: 1 },
@@ -253,7 +284,14 @@ const VerifiedUsersTable = ({ themeStyle }) => {
             </Box>
           )}
         </DialogContent>
-        <DialogActions style={{ background: themeStyle.background }}>
+        <DialogActions style={{ background: themeStyle.background, display: 'flex', justifyContent: 'space-between' }}>
+          <Button
+            onClick={handleRemoveUser}
+            variant="contained"
+            color="error"
+          >
+            Remove User
+          </Button>
           <Button onClick={() => setOpenDialog(false)} style={{ color: themeStyle.color }}>
             Close
           </Button>

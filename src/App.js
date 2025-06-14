@@ -12,6 +12,7 @@ import SearchVehicleDetails from './userdashboardcomponents/SearchVehicleDetails
 import RepairRequestForm from './userdashboardcomponents/RepairRequestForm';
 import FuelSectionDashboard from './FuelSectionDashboard';
 import MechanicDashboard from './MechanicDashboard';
+import ResetPassword from './ResetPassword';
 
 
 import './App.css';
@@ -46,6 +47,7 @@ function App() {
           <Route path="/repair-request" element={<RepairRequestForm />} />
           <Route path="/fuel" element={<FuelSectionDashboard />} />
           <Route path="/mechanic" element={<MechanicDashboard />} />
+          <Route path="/resetpassword" element={<ResetPassword />} />
 
 
           {/* Catch-all */}

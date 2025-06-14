@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-
 import ResponsiveAppBar from './admindashboardcomponents/ResponsiveAppBar';
 import './css/admindashboard.css';
 import AddRemoveVehicleForm from './admindashboardcomponents/AddRemoveVehicleForm';
@@ -9,15 +8,16 @@ import SearchVehicleDetails from './admindashboardcomponents/SearchVehicleDetail
 import './css/SearchVehicleDetails.css';
 import ViewAssignVehicle from './admindashboardcomponents/ViewAssignVehicle';
 import './css/AssignVehicle.css';
-import SkeletonChildren from './admindashboardcomponents/SkeletonUI'; 
+import SkeletonChildren from './admindashboardcomponents/SkeletonUI';
 import FuelAdmin from './admindashboardcomponents/FuelAdmin';
 import './css/fueladmin.css';
 import VerifiedUsersTable from './admindashboardcomponents/VerifiedUsersTable';
 import './css/verifieduserstable.css';
 import MovementAdmin from './admindashboardcomponents/MovementAdmin';
 import AccidentReportTable from './admindashboardcomponents/AccidentReportTable';
+import RegisterPage from './admindashboardcomponents/RegisterPage'; 
+import AdminRepairTable from './admindashboardcomponents/AdminRepairTable'; 
 import dayjs from 'dayjs';
-import AdminRepairTable from "./admindashboardcomponents/AdminRepairTable"
 
 function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('profile');
@@ -138,6 +138,7 @@ function AdminDashboard() {
               {pendingCount > 0 && <span className="notification-badge">{pendingCount}</span>}
             </button>
             <button className={`sidebar-btn ${activeTab === 'VerifiedUsersTable' ? 'active' : ''}`} onClick={() => setActiveTab('VerifiedUsersTable')}>Users Details</button>
+            <button className={`sidebar-btn ${activeTab === 'AddUser' ? 'active' : ''}`} onClick={() => setActiveTab('AddUser')}>Add Users</button> {/* ✅ New Button */}
           </div>
         </div>
 
@@ -148,18 +149,17 @@ function AdminDashboard() {
                 {Object.entries(fieldLabels).map(([key, label]) => (
                   <div className="form-group" key={key}>
                     <label>{label}</label>
-                   <input
-                     type="text"
-                     value={
-                     key === 'dob' && adminData.dob
-                    ? dayjs(adminData.dob).format('DD-MM-YYYY')
-                    : adminData[key] || ''
-                     }
+                    <input
+                      type="text"
+                      value={
+                        key === 'dob' && adminData.dob
+                          ? dayjs(adminData.dob).format('DD-MM-YYYY')
+                          : adminData[key] || ''
+                      }
                       readOnly
-                     style={themeStyle}
-                     className={key === 'role' ? 'role-field' : ''}
-                  />
-
+                      style={themeStyle}
+                      className={key === 'role' ? 'role-field' : ''}
+                    />
                   </div>
                 ))}
               </div>
@@ -236,6 +236,7 @@ function AdminDashboard() {
 
            {activeTab === 'Repair' && <AdminRepairTable themeStyle={themeStyle} />}
           
+          {activeTab === 'AddUser' && <RegisterPage themeStyle={themeStyle} />} {/* ✅ RegisterPage render */}
         </div>
       </div>
     </div>

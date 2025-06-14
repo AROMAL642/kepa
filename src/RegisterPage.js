@@ -21,34 +21,39 @@ const RegisterPage = () => {
 
   const [photo, setPhoto] = useState('');
   const [signature, setSignature] = useState('');
+  const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
     setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
     }));
+    setErrors((prev) => ({ ...prev, [e.target.name]: '' }));
   };
 
   const handleImageChange = async (e, key) => {
-  const file = e.target.files[0];
-  const maxSize = 1024 * 1024; // 1MB in bytes
+    const file = e.target.files[0];
+    const maxSize = 50 * 1024; // 50 KB
 
-  if (file) {
-    if (file.size > maxSize) {
-      alert('File size should be less than 1MB');
-      return;
+    if (file) {
+      if (file.size > maxSize) {
+        setErrors((prev) => ({
+          ...prev,
+          [key]: 'File size must be less than 50 KB',
+        }));
+        return;
+      }
+
+      const base64 = await toBase64(file);
+      key === 'photo' ? setPhoto(base64) : setSignature(base64);
+      setErrors((prev) => ({ ...prev, [key]: '' }));
     }
-
-    const base64 = await toBase64(file);
-    key === 'photo' ? setPhoto(base64) : setSignature(base64);
-  }
-};
-
+  };
 
   const toBase64 = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = () => resolve(reader.result); // includes MIME
+      reader.onload = () => resolve(reader.result);
       reader.onerror = (err) => reject(err);
       reader.readAsDataURL(file);
     });
@@ -56,10 +61,23 @@ const RegisterPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const newErrors = {};
+
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match');
-      return;
+      newErrors.confirmPassword = 'Passwords do not match';
     }
+
+    if (!photo) {
+      newErrors.photo = 'Photo is required';
+    }
+
+    if (!signature) {
+      newErrors.signature = 'Signature is required';
+    }
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) return;
 
     try {
       const res = await axios.post('http://localhost:5000/register', {
@@ -96,13 +114,17 @@ const RegisterPage = () => {
               placeholder={placeholder}
               pattern={pattern}
               className="inputStyle"
+              required={name !== 'generalNo' && name !== 'licenseNo'}
             />
+            {errors[name] && <div className="errorText">{errors[name]}</div>}
           </div>
         ))}
 
         <div className="fieldStyle">
-          <input type="date" name="dob" onChange={handleChange} required className="inputStyle" />
           <small>Date Of Birth(DOB)</small>
+          <input type="date" name="dob" onChange={handleChange} required className="inputStyle" />
+          
+          {errors.dob && <div className="errorText">{errors.dob}</div>}
         </div>
 
         <div className="fieldStyle">
@@ -112,6 +134,7 @@ const RegisterPage = () => {
             <option value="Female">Female</option>
             <option value="Other">Other</option>
           </select>
+          {errors.gender && <div className="errorText">{errors.gender}</div>}
         </div>
 
         <div className="fieldStyle">
@@ -126,28 +149,31 @@ const RegisterPage = () => {
             <option value="O+">O+</option>
             <option value="O-">O-</option>
           </select>
+          {errors.bloodGroup && <div className="errorText">{errors.bloodGroup}</div>}
         </div>
 
         <div className="fieldStyle">
+          <small>Upload Photo (Max 50 KB)</small>
           <input
             type="file"
             accept="image/*"
             onChange={(e) => handleImageChange(e, 'photo')}
-            required
             className="inputStyle"
           />
-          <small>Upload Photo</small>
+          
+          {errors.photo && <div className="errorText">{errors.photo}</div>}
         </div>
 
         <div className="fieldStyle">
+          <small>Upload Signature (Max 50 KB)</small>
           <input
             type="file"
             accept="image/*"
             onChange={(e) => handleImageChange(e, 'signature')}
-            required
             className="inputStyle"
           />
-          <small>Upload Signature</small>
+          
+          {errors.signature && <div className="errorText">{errors.signature}</div>}
         </div>
 
         <div className="fieldStyle">
@@ -170,6 +196,7 @@ const RegisterPage = () => {
             required
             className="inputStyle"
           />
+          {errors.confirmPassword && <div className="errorText">{errors.confirmPassword}</div>}
         </div>
 
         <button type="submit" className="buttonStyle">Register</button>

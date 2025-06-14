@@ -124,7 +124,7 @@ const LoginPage = () => {
         </p>
         <p>
           <span
-            onClick={() => navigate('/forgot-password')}
+            onClick={() => navigate('/resetpassword')}
             style={{ color: '#007bff', cursor: 'pointer', textDecoration: 'underline' }}
           >
             Forgot Password?
