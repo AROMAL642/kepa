@@ -62,11 +62,14 @@ function FuelDashboard() {
 
   return (
     <div>
-      <ResponsiveAppBar 
-        photo={fuelData.photo} 
-        name={fuelData.name} 
-        role={fuelData.role} 
-      />
+    <ResponsiveAppBar
+  photo={fuelData.photo}
+  name={fuelData.name}
+  role={fuelData.role} 
+  isDrawerOpen={isDrawerOpen}
+  onDrawerToggle={() => setIsDrawerOpen(!isDrawerOpen)}
+  onSelectTab={(tab) => setActiveTab(tab)} 
+/>
 
       <button className="drawer-toggle-btn" onClick={() => setIsDrawerOpen(!isDrawerOpen)}>
         ☰

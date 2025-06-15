@@ -88,35 +88,33 @@ const VerifiedUsersTable = ({ themeStyle }) => {
   };
 
   const handleRemoveUser = async () => {
-  if (!selectedUser || !selectedUser.pen) return;
+    if (!selectedUser || !selectedUser.pen) return;
 
-  const confirmDelete = window.confirm(`Are you sure you want to delete user with PEN ${selectedUser.pen}?`);
-  if (!confirmDelete) return;
+    const confirmDelete = window.confirm(`Are you sure you want to delete user with PEN ${selectedUser.pen}?`);
+    if (!confirmDelete) return;
 
-  try {
-    const response = await fetch(`http://localhost:5000/api/user-delete/pen/${selectedUser.pen}`, {
-      method: 'DELETE',
-    });
+    try {
+      const response = await fetch(`http://localhost:5000/api/user-delete/pen/${selectedUser.pen}`, {
+        method: 'DELETE',
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (!response.ok) {
-      console.error('Delete failed:', data.message);
-      alert(`Failed to delete user: ${data.message}`);
-      return;
+      if (!response.ok) {
+        console.error('Delete failed:', data.message);
+        alert(`Failed to delete user: ${data.message}`);
+        return;
+      }
+
+      setUsers(prevUsers => prevUsers.filter(user => user.pen !== selectedUser.pen));
+      setOpenDialog(false);
+      setSelectedUser(null);
+      alert('User successfully removed');
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      alert('Failed to delete user due to a network or server error');
     }
-
-    // Remove the user from the frontend list
-    setUsers(prevUsers => prevUsers.filter(user => user.pen !== selectedUser.pen));
-    setOpenDialog(false);
-    setSelectedUser(null);
-    alert('User successfully removed');
-  } catch (error) {
-    console.error('Error deleting user:', error);
-    alert('Failed to delete user due to a network or server error');
-  }
-};
-
+  };
 
   const columns = [
     { field: 'name', headerName: 'Name', flex: 1 },
@@ -131,7 +129,7 @@ const VerifiedUsersTable = ({ themeStyle }) => {
       sortable: false,
       filterable: false,
       renderCell: (params) => (
-        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', minWidth: 0, flexWrap: 'wrap' }}>
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
           <FormControl size="small" sx={{ minWidth: 120 }}>
             <Select
               value={roleAssignments[params.row._id] || 'user'}
@@ -276,10 +274,10 @@ const VerifiedUsersTable = ({ themeStyle }) => {
                 <p><strong>Email:</strong> {selectedUser.email}</p>
                 <p><strong>Phone:</strong> {selectedUser.phone}</p>
                 <p><strong>Role:</strong> {selectedUser.role}</p>
-                <p><strong>Date of Birth:</strong> {selectedUser.dob}</p>
-                <p><strong>License No:</strong> {selectedUser.licenseNo}</p>
-                <p><strong>Blood Group:</strong> {selectedUser.bloodGroup}</p>
-                <p><strong>Gender:</strong> {selectedUser.gender}</p>
+                <p><strong>Date of Birth:</strong> {selectedUser.dob ? new Date(selectedUser.dob).toLocaleDateString() : 'N/A'}</p>
+                <p><strong>License No:</strong> {selectedUser.licenseNo || 'N/A'}</p>
+                <p><strong>Blood Group:</strong> {selectedUser.bloodGroup || 'N/A'}</p>
+                <p><strong>Gender:</strong> {selectedUser.gender || 'N/A'}</p>
               </Box>
             </Box>
           )}

@@ -3,7 +3,6 @@ import ResponsiveAppBar from './admindashboardcomponents/ResponsiveAppBar';
 import './css/admindashboard.css';
 import AddRemoveVehicleForm from './admindashboardcomponents/AddRemoveVehicleForm';
 import ViewRequests from './ViewRequests';
-
 import SearchVehicleDetails from './admindashboardcomponents/SearchVehicleDetails';
 import './css/SearchVehicleDetails.css';
 import ViewAssignVehicle from './admindashboardcomponents/ViewAssignVehicle';
@@ -15,18 +14,20 @@ import VerifiedUsersTable from './admindashboardcomponents/VerifiedUsersTable';
 import './css/verifieduserstable.css';
 import MovementAdmin from './admindashboardcomponents/MovementAdmin';
 import AccidentReportTable from './admindashboardcomponents/AccidentReportTable';
-import RegisterPage from './admindashboardcomponents/RegisterPage'; 
-import AdminRepairTable from './admindashboardcomponents/AdminRepairTable'; 
+import RegisterPage from './admindashboardcomponents/RegisterPage';
+import AdminRepairTable from './admindashboardcomponents/AdminRepairTable';
 import dayjs from 'dayjs';
 
 function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState('profile');
+  const [activeTab, setActiveTab] = useState('PrintRegisters');
   const [vehicleTab, setVehicleTab] = useState('main');
   const [pendingCount, setPendingCount] = useState(0);
   const [loadingVerifiedUsers, setLoadingVerifiedUsers] = useState(false);
   const [verifiedUsers, setVerifiedUsers] = useState([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedProfile, setEditedProfile] = useState({});
 
   const [adminData, setAdminData] = useState({
     name: '',
@@ -48,7 +49,7 @@ function AdminDashboard() {
     email: 'Email',
     pen: 'PEN',
     generalNo: 'General No',
-    phone: 'mobile',
+    phone: 'Mobile',
     dob: 'Date of Birth',
     licenseNo: 'License Number',
     bloodGroup: 'Blood Group',
@@ -60,7 +61,9 @@ function AdminDashboard() {
     const timer = setTimeout(() => setLoading(false), 800);
     const storedAdminData = localStorage.getItem('adminData');
     if (storedAdminData) {
-      setAdminData(JSON.parse(storedAdminData));
+      const parsedData = JSON.parse(storedAdminData);
+      setAdminData(parsedData);
+      setEditedProfile(parsedData);
     }
     fetchPendingCount();
     return () => clearTimeout(timer);
@@ -95,10 +98,37 @@ function AdminDashboard() {
     }
   };
 
+  const handleSaveProfile = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/update-admin', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pen: adminData.pen, updates: editedProfile }),
+      });
+
+      if (res.ok) {
+        const updated = await res.json();
+        setAdminData(updated);
+        localStorage.setItem('adminData', JSON.stringify(updated));
+        setIsEditing(false);
+        alert('Profile updated successfully');
+      } else {
+        alert('Failed to update profile');
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      alert('Error updating profile');
+    }
+  };
+
+  const handleTabSelect = (tab) => {
+    setActiveTab(tab);
+  };
+
   const themeStyle = {
     background: '#fff',
     color: '#000',
-    borderColor: '#ccc'
+    borderColor: '#ccc',
   };
 
   if (loading) {
@@ -111,7 +141,13 @@ function AdminDashboard() {
 
   return (
     <div>
-      <ResponsiveAppBar photo={adminData.photo} name={adminData.name} role={adminData.role} />
+      <ResponsiveAppBar
+        photo={adminData.photo}
+        name={adminData.name}
+        isDrawerOpen={isDrawerOpen}
+        onDrawerToggle={() => setIsDrawerOpen(!isDrawerOpen)}
+        onSelectTab={handleTabSelect}
+      />
 
       <button className="drawer-toggle-btn" onClick={() => setIsDrawerOpen(!isDrawerOpen)}>
         ☰
@@ -121,24 +157,30 @@ function AdminDashboard() {
         <div className={`drawer ${isDrawerOpen ? 'open' : ''}`}>
           <h2>ADMIN PANEL</h2>
           {adminData.role && (
-            <div className="role-badge" style={{ background: '#4CAF50', color: 'white', padding: '5px 10px', borderRadius: '20px', marginBottom: '15px', fontSize: '0.9rem' }}>
+            <div className="role-badge" style={{
+              background: '#4CAF50',
+              color: 'white',
+              padding: '5px 10px',
+              borderRadius: '20px',
+              marginBottom: '15px',
+              fontSize: '0.9rem'
+            }}>
               {adminData.role}
             </div>
           )}
 
           <div className="sidebar-buttons">
-            <button className={`sidebar-btn ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>Profile</button>
             <button className={`sidebar-btn ${activeTab === 'Fuel' ? 'active' : ''}`} onClick={() => setActiveTab('Fuel')}>Fuel</button>
             <button className={`sidebar-btn ${activeTab === 'Movement' ? 'active' : ''}`} onClick={() => setActiveTab('Movement')}>Movement Register</button>
             <button className={`sidebar-btn ${activeTab === 'Repair' ? 'active' : ''}`} onClick={() => setActiveTab('Repair')}>Repair Reports</button>
             <button className={`sidebar-btn ${activeTab === 'Accident' ? 'active' : ''}`} onClick={() => setActiveTab('Accident')}>Accident Details</button>
             <button className={`sidebar-btn ${activeTab === 'VehicleDetails' ? 'active' : ''}`} onClick={() => { setActiveTab('VehicleDetails'); setVehicleTab('main'); }}>Vehicle</button>
             <button className={`sidebar-btn notification-btn ${activeTab === 'Request' ? 'active' : ''}`} onClick={() => setActiveTab('Request')}>
-              Non Verified Users
-              {pendingCount > 0 && <span className="notification-badge">{pendingCount}</span>}
+              Non Verified Users {pendingCount > 0 && <span className="notification-badge">{pendingCount}</span>}
             </button>
             <button className={`sidebar-btn ${activeTab === 'VerifiedUsersTable' ? 'active' : ''}`} onClick={() => setActiveTab('VerifiedUsersTable')}>Users Details</button>
-            <button className={`sidebar-btn ${activeTab === 'AddUser' ? 'active' : ''}`} onClick={() => setActiveTab('AddUser')}>Add Users</button> {/* ✅ New Button */}
+            <button className={`sidebar-btn ${activeTab === 'AddUser' ? 'active' : ''}`} onClick={() => setActiveTab('AddUser')}>Add Users</button>
+            <button className={`sidebar-btn ${activeTab === 'PrintRegisters' ? 'active' : ''}`} onClick={() => setActiveTab('PrintRegisters')}>View/Print Registers</button>
           </div>
         </div>
 
@@ -146,22 +188,49 @@ function AdminDashboard() {
           {activeTab === 'profile' && (
             <div className="form-section">
               <div className="form-left">
-                {Object.entries(fieldLabels).map(([key, label]) => (
-                  <div className="form-group" key={key}>
-                    <label>{label}</label>
-                    <input
-                      type="text"
-                      value={
-                        key === 'dob' && adminData.dob
-                          ? dayjs(adminData.dob).format('DD-MM-YYYY')
-                          : adminData[key] || ''
-                      }
-                      readOnly
-                      style={themeStyle}
-                      className={key === 'role' ? 'role-field' : ''}
-                    />
-                  </div>
-                ))}
+                
+
+              {Object.entries(fieldLabels).map(([key, label]) => (
+  <div className="form-group" key={key}>
+    <label>{label}</label>
+    {key === 'dob' && isEditing ? (
+      <input
+        type="date"
+        value={editedProfile.dob ? dayjs(editedProfile.dob).format('YYYY-MM-DD') : ''}
+        onChange={(e) => setEditedProfile(prev => ({ ...prev, dob: e.target.value }))}
+        style={themeStyle}
+      />
+    ) : (
+      <input
+        type="text"
+        value={
+          isEditing
+            ? editedProfile[key] || ''
+            : key === 'dob' && adminData.dob
+              ? dayjs(adminData.dob).format('DD-MM-YYYY')
+              : adminData[key] || ''
+        }
+        readOnly={!isEditing || ['pen', 'generalNo', 'role', 'gender', 'bloodGroup'].includes(key)}
+        onChange={(e) => setEditedProfile(prev => ({ ...prev, [key]: e.target.value }))}
+        style={themeStyle}
+        className={key === 'role' ? 'role-field' : ''}
+      />
+    )}
+  </div>
+))}
+
+
+
+                <div style={{ marginTop: '15px' }}>
+                  {!isEditing ? (
+                    <button onClick={() => setIsEditing(true)} className="submit-btn">Edit Profile</button>
+                  ) : (
+                    <>
+                      <button onClick={handleSaveProfile} className="save-btn">Save Changes</button>
+                      <button onClick={() => { setIsEditing(false); setEditedProfile(adminData); }} className="cancel-btn">Cancel</button>
+                    </>
+                  )}
+                </div>
               </div>
               <div className="form-right">
                 <div className="upload-section">
@@ -180,7 +249,7 @@ function AdminDashboard() {
           {activeTab === 'VerifiedUsersTable' && <VerifiedUsersTable themeStyle={themeStyle} />}
           {activeTab === 'userdetails' && (
             <div>
-              <h2 style={{ marginBottom: '10px' }}>Verified Users</h2>
+              <h2>Verified Users</h2>
               {loadingVerifiedUsers ? (
                 <div className="loading-spinner">Loading users...</div>
               ) : (
@@ -206,9 +275,7 @@ function AdminDashboard() {
                         </tr>
                       ))
                     ) : (
-                      <tr>
-                        <td colSpan="5">No verified users found.</td>
-                      </tr>
+                      <tr><td colSpan="5">No verified users found.</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -217,26 +284,27 @@ function AdminDashboard() {
           )}
 
           {activeTab === 'VehicleDetails' && vehicleTab === 'main' && (
-            <div className="vehicle-box" style={{ width: '400px', height: '600px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div className="vehicle-box">
               <button className="vehicle-btn" onClick={() => setVehicleTab('addremove')}>Add/Remove Vehicle</button>
               <button className="vehicle-btn" onClick={() => setVehicleTab('search')}>Search Vehicle Details</button>
               <button className="vehicle-btn">Expense Details</button>
-              <button className="vehicle-btn">View/Print Registers</button>
               <button className="vehicle-btn" onClick={() => setVehicleTab('viewassign')}>View/Assign Vehicle</button>
             </div>
           )}
-
-
           {activeTab === 'VehicleDetails' && vehicleTab === 'addremove' && <AddRemoveVehicleForm onBack={() => setVehicleTab('main')} themeStyle={themeStyle} />}
-          {activeTab === 'Request' && <ViewRequests themeStyle={themeStyle} />}
           {activeTab === 'VehicleDetails' && vehicleTab === 'search' && <SearchVehicleDetails onBack={() => setVehicleTab('main')} themeStyle={themeStyle} />}
           {activeTab === 'VehicleDetails' && vehicleTab === 'viewassign' && <ViewAssignVehicle onBack={() => setVehicleTab('main')} themeStyle={themeStyle} />}
+          {activeTab === 'Request' && <ViewRequests themeStyle={themeStyle} />}
           {activeTab === 'Movement' && <MovementAdmin themeStyle={themeStyle} />}
           {activeTab === 'Accident' && <AccidentReportTable themeStyle={themeStyle} />}
-
-           {activeTab === 'Repair' && <AdminRepairTable themeStyle={themeStyle} />}
-          
-          {activeTab === 'AddUser' && <RegisterPage themeStyle={themeStyle} />} {/* ✅ RegisterPage render */}
+          {activeTab === 'Repair' && <AdminRepairTable themeStyle={themeStyle} />}
+          {activeTab === 'AddUser' && <RegisterPage themeStyle={themeStyle} />}
+          {activeTab === 'PrintRegisters' && (
+            <div>
+              <h2>View/Print Registers</h2>
+              <p>This section will include all registers for fuel, movement, accident, and repair reports, with options to print/export.</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -244,4 +312,3 @@ function AdminDashboard() {
 }
 
 export default AdminDashboard;
-

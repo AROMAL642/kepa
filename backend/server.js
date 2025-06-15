@@ -197,6 +197,9 @@ app.get('/api/admin/:email', async (req, res) => {
 const userRoutes = require('./routes/Edituser');
 app.use('/api/users', userRoutes); 
 
+app.use('/api', userRoutes);
+
+
 // Register by Admin Route
 const registerByAdminRoute = require('./routes/registerbyadmin');
 app.use('/registerbyadmin', registerByAdminRoute);
