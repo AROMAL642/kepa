@@ -13,6 +13,8 @@ import RepairRequestForm from './userdashboardcomponents/RepairRequestForm';
 import FuelSectionDashboard from './FuelSectionDashboard';
 import MechanicDashboard from './MechanicDashboard';
 import ResetPassword from './ResetPassword';
+import RepairDashboard from './RepairSectionDashboard';
+
 
 
 import './App.css';
@@ -33,6 +35,8 @@ function App() {
   <Routes>
           <Route path="/" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/repair" element={<RepairDashboard />} />
+
           <Route
             path="/admin"
             element={

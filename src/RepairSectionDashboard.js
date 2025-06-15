@@ -6,12 +6,10 @@ import VerifiedUserTable from './repairsectiondashboardcomponents/VerifiedUserTa
 //import FuelPendingRequest from './fuelsectiondashboardcomponents/fuelpendingrequest';
 //import SearchVehicleDetails from './admindashboardcomponents/SearchVehicleDetails';
 
-
 import './css/admindashboard.css';
-import './css/repairadmin.css';
+import './css/fueladmin.css';
 
 function RepairDashboard() {
-  const [darkMode, setDarkMode] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('pending');
@@ -54,11 +52,6 @@ function RepairDashboard() {
     });
   }, []);
 
-  const themeStyle = {
-    background: darkMode ? '#121212' : '#fff',
-    color: darkMode ? '#f1f1f1' : '#000',
-    borderColor: darkMode ? '#555' : '#ccc'
-  };
 
   if (loading) {
     return (
@@ -204,19 +197,11 @@ function RepairDashboard() {
 
               <div className="form-right">
                 <div className="upload-section">
-                  <img
-                    src={repairData.photo || 'https://via.placeholder.com/100'}
-                    alt="Profile"
-                    className="upload-icon"
-                  />
+                  <img src={repairData.photo || 'https://via.placeholder.com/100'} alt="Profile" className="upload-icon" />
                   <p>Profile Photo</p>
                 </div>
                 <div className="upload-section">
-                  <img
-                    src={repairData.signature || 'https://via.placeholder.com/100'}
-                    alt="Signature"
-                    className="upload-icon"
-                  />
+                  <img src={repairData.signature || 'https://via.placeholder.com/100'} alt="Signature" className="upload-icon" />
                   <p>Signature</p>
                 </div>
               </div>

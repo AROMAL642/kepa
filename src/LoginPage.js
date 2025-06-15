@@ -55,7 +55,7 @@ const LoginPage = () => {
         navigate('/user');
       }
 
-      else if (role === 'fuel' || role === 'mechanic') {
+      else if (role === 'fuel' || role === 'mechanic' || role === 'repair') {
         // Shared format for fuel & mechanic dashboards
         localStorage.setItem('fuelPen', res.data.pen);
         localStorage.setItem('fuelEmail', res.data.email);
@@ -72,6 +72,7 @@ const LoginPage = () => {
         // Redirect appropriately
         if (role === 'fuel') navigate('/fuel');
         else if (role === 'mechanic') navigate('/mechanic');
+        else if (role === 'repair') navigate('/repair');
       }
 
     } catch (error) {
