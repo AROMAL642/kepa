@@ -11,7 +11,6 @@ import './css/accidentreportform.css';
 import EyeTestReport from './userdashboardcomponents/EyeTestReport';
 
 function UserDashboard() {
-  const [darkMode, setDarkMode] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const navigate = useNavigate();
@@ -53,13 +52,7 @@ function UserDashboard() {
 
   const handleLogout = () => {
     localStorage.clear();
-    navigate('/userlogin');
-  };
-
-  const themeStyle = {
-    background: darkMode ? '#121212' : '#fff',
-    color: darkMode ? '#f1f1f1' : '#000',
-    borderColor: darkMode ? '#555' : '#ccc'
+    navigate('/');
   };
 
   const tabMap = [
@@ -77,13 +70,8 @@ function UserDashboard() {
       <button className="drawer-toggle-btn" onClick={() => setIsDrawerOpen(!isDrawerOpen)}>
         ☰
       </button>
-      <div className={`dashboard ${isDrawerOpen ? 'drawer-open' : ''}`} style={themeStyle}>
-        {/* Sidebar Drawer */}
+      <div className={`dashboard ${isDrawerOpen ? 'drawer-open' : ''}`}>
         <div className={`drawer ${isDrawerOpen ? 'open' : ''}`}>
-          <button className="toggle-btn" onClick={() => setDarkMode(!darkMode)}>
-            {darkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
-          </button>
-
           <h2>Welcome {formData.name || 'User'}!</h2>
 
           <div className="sidebar-buttons">
@@ -101,9 +89,7 @@ function UserDashboard() {
           <button className="logout-btn" onClick={handleLogout}>🚪 Logout</button>
         </div>
 
-        {/* Main Content Area */}
-        <div className="main-content" style={themeStyle}>
-
+        <div className="main-content">
           {activeTab === 'profile' && (
             <div className="form-section">
               <div className="form-left">
@@ -128,7 +114,6 @@ function UserDashboard() {
                       onChange={e =>
                         setFormData(prev => ({ ...prev, [field.name]: e.target.value }))
                       }
-                      style={themeStyle}
                     />
                   </div>
                 ))}
@@ -204,22 +189,26 @@ function UserDashboard() {
           )}
 
           {activeTab === 'fuel' && (
-            <FuelRegister darkMode={darkMode} pen={formData.pen} />
+            <FuelRegister pen={formData.pen} />
           )}
 
-          
+          {activeTab === 'repair' && (
+            <div className="repair-request-section">
+              <RepairRequestForm />
+            </div>
+          )}
+
           {activeTab === 'accident' && (
             <div className="accident-section">
-              <AccidentReportForm themeStyle={themeStyle} pen={formData.pen} />
+              <AccidentReportForm pen={formData.pen} />
             </div>
           )}
 
           {activeTab === 'eyetest' && (
             <div className="eyetest-section">
-              <EyeTestReport themeStyle={themeStyle} pen={formData.pen} />
+              <EyeTestReport pen={formData.pen} />
             </div>
           )}
-
         </div>
       </div>
     </>

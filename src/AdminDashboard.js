@@ -15,11 +15,10 @@ import VerifiedUsersTable from './admindashboardcomponents/VerifiedUsersTable';
 import './css/verifieduserstable.css';
 import MovementAdmin from './admindashboardcomponents/MovementAdmin';
 import AccidentReportTable from './admindashboardcomponents/AccidentReportTable';
-
+import dayjs from 'dayjs';
 
 
 function AdminDashboard() {
-  const [darkMode, setDarkMode] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
   const [vehicleTab, setVehicleTab] = useState('main');
   const [pendingCount, setPendingCount] = useState(0);
@@ -32,6 +31,7 @@ function AdminDashboard() {
     name: '',
     email: '',
     pen: '',
+    generalNo: '',
     photo: '',
     signature: '',
     role: '',
@@ -42,22 +42,29 @@ function AdminDashboard() {
     gender: ''
   });
 
- // Replace your useEffect with:
-useEffect(() => {
-  const timer = setTimeout(() => {
-    setLoading(false);
-  }, 800);
+  const fieldLabels = {
+    name: 'Name',
+    email: 'Email',
+    pen: 'PEN',
+    generalNo: 'General No',
+    phone: 'mobile',
+    dob: 'Date of Birth',
+    licenseNo: 'License Number',
+    bloodGroup: 'Blood Group',
+    gender: 'Gender',
+    role: 'Role'
+  };
 
-  const storedAdminData = localStorage.getItem('adminData');
-  if (storedAdminData) {
-    setAdminData(JSON.parse(storedAdminData));
-  }
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 800);
+    const storedAdminData = localStorage.getItem('adminData');
+    if (storedAdminData) {
+      setAdminData(JSON.parse(storedAdminData));
+    }
+    fetchPendingCount();
+    return () => clearTimeout(timer);
+  }, []);
 
-  fetchPendingCount();
-  return () => clearTimeout(timer);
-}, []);
-
-  
   useEffect(() => {
     if (activeTab === 'userdetails') {
       fetchVerifiedUsers();
@@ -88,9 +95,9 @@ useEffect(() => {
   };
 
   const themeStyle = {
-    background: darkMode ? '#121212' : '#fff',
-    color: darkMode ? '#f1f1f1' : '#000',
-    borderColor: darkMode ? '#555' : '#ccc'
+    background: '#fff',
+    color: '#000',
+    borderColor: '#ccc'
   };
 
   if (loading) {
@@ -103,11 +110,7 @@ useEffect(() => {
 
   return (
     <div>
-      <ResponsiveAppBar 
-        photo={adminData.photo} 
-        name={adminData.name} 
-        role={adminData.role} 
-      />
+      <ResponsiveAppBar photo={adminData.photo} name={adminData.name} role={adminData.role} />
 
       <button className="drawer-toggle-btn" onClick={() => setIsDrawerOpen(!isDrawerOpen)}>
         ☰
@@ -115,10 +118,6 @@ useEffect(() => {
 
       <div className={`dashboard ${isDrawerOpen ? 'drawer-open' : ''}`} style={themeStyle}>
         <div className={`drawer ${isDrawerOpen ? 'open' : ''}`}>
-          <button className="toggle-btn" onClick={() => setDarkMode(!darkMode)}>
-            {darkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
-          </button>
-
           <h2>ADMIN PANEL</h2>
           {adminData.role && (
             <div className="role-badge" style={{ background: '#4CAF50', color: 'white', padding: '5px 10px', borderRadius: '20px', marginBottom: '15px', fontSize: '0.9rem' }}>
@@ -137,9 +136,7 @@ useEffect(() => {
               Non Verified Users
               {pendingCount > 0 && <span className="notification-badge">{pendingCount}</span>}
             </button>
-            <button className={`sidebar-btn ${activeTab === 'VerifiedUsersTable' ? 'active' : ''}`} onClick={() => setActiveTab('VerifiedUsersTable')}>
-              Users Details
-            </button>
+            <button className={`sidebar-btn ${activeTab === 'VerifiedUsersTable' ? 'active' : ''}`} onClick={() => setActiveTab('VerifiedUsersTable')}>Users Details</button>
           </div>
         </div>
 
@@ -147,16 +144,21 @@ useEffect(() => {
           {activeTab === 'profile' && (
             <div className="form-section">
               <div className="form-left">
-                {['name', 'email', 'pen', 'phone', 'dob', 'licenseNo', 'bloodGroup', 'gender', 'role'].map((field) => (
-                  <div className="form-group" key={field}>
-                    <label>{field.charAt(0).toUpperCase() + field.slice(1)}</label>
-                    <input 
-                      type="text" 
-                      value={adminData[field]} 
-                      readOnly 
-                      style={themeStyle} 
-                      className={field === 'role' ? 'role-field' : ''} 
-                    />
+                {Object.entries(fieldLabels).map(([key, label]) => (
+                  <div className="form-group" key={key}>
+                    <label>{label}</label>
+                   <input
+                     type="text"
+                     value={
+                     key === 'dob' && adminData.dob
+                    ? dayjs(adminData.dob).format('DD-MM-YYYY')
+                    : adminData[key] || ''
+                     }
+                      readOnly
+                     style={themeStyle}
+                     className={key === 'role' ? 'role-field' : ''}
+                  />
+
                   </div>
                 ))}
               </div>
@@ -175,7 +177,6 @@ useEffect(() => {
 
           {activeTab === 'Fuel' && <FuelAdmin themeStyle={themeStyle} />}
           {activeTab === 'VerifiedUsersTable' && <VerifiedUsersTable themeStyle={themeStyle} />}
-
           {activeTab === 'userdetails' && (
             <div>
               <h2 style={{ marginBottom: '10px' }}>Verified Users</h2>
@@ -216,7 +217,7 @@ useEffect(() => {
 
           {activeTab === 'VehicleDetails' && vehicleTab === 'main' && (
             <div className="vehicle-box" style={{ width: '400px', height: '600px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <button className="vehicle-btn" onClick={() => setVehicleTab('addremove')}>Add/Remove Vehicle</button>
+              <button className="vehicle-btn" onClick={() => setVehicleTab('addremove')}>Add Vehicle</button>
               <button className="vehicle-btn" onClick={() => setVehicleTab('search')}>Search Vehicle Details</button>
               <button className="vehicle-btn">Expense Details</button>
               <button className="vehicle-btn">View/Print Registers</button>
@@ -230,8 +231,6 @@ useEffect(() => {
           {activeTab === 'VehicleDetails' && vehicleTab === 'viewassign' && <ViewAssignVehicle onBack={() => setVehicleTab('main')} themeStyle={themeStyle} />}
           {activeTab === 'Movement' && <MovementAdmin themeStyle={themeStyle} />}
           {activeTab === 'Accident' && <AccidentReportTable themeStyle={themeStyle} />}
-
-          
         </div>
       </div>
     </div>

@@ -13,6 +13,29 @@ import {
   Chip
 } from '@mui/material';
 
+const StatusChip = ({ status }) => {
+  let color = 'default';
+  const normalized = status?.toString().trim().toLowerCase();
+
+  if (normalized === 'approved') color = 'success';
+  else if (normalized === 'rejected') color = 'error';
+  else if (normalized === 'pending') color = 'warning';
+
+  return (
+    <Chip
+      label={status}
+      color={color}
+      variant="outlined"
+      size="small"
+      sx={{
+        fontWeight: 'bold',
+        pointerEvents: 'none',
+        textTransform: 'capitalize'
+      }}
+    />
+  );
+};
+
 const FuelAdmin = ({ darkMode }) => {
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -58,48 +81,11 @@ const FuelAdmin = ({ darkMode }) => {
     { field: 'billNo', headerName: 'Bill No', flex: 1 },
     { field: 'fullTankText', headerName: 'Full Tank', flex: 1 },
     {
-  field: 'status',
-  headerName: 'Status',
-  flex: 1,
-  sortable: false,
-  filterable: false,
-  renderCell: (params) => {
-    let chipColor;
-    let chipVariant = 'outlined';
-    
-    switch(params.value) {
-      case 'Approved':
-        chipColor = 'success'; // Green
-        chipVariant = 'filled';
-        break;
-      case 'Rejected':
-        chipColor = 'error'; // Red
-        chipVariant = 'filled';
-        break;
-      case 'Pending':
-      default:
-        chipColor = 'warning'; // Orange
-        break;
-    }
-    
-    return (
-      <Box sx={{ pointerEvents: 'none' }}>
-        <Chip 
-          label={params.value} 
-          color={chipColor} 
-          variant={chipVariant}
-          sx={{
-            fontWeight: 'bold',
-            ...(params.value === 'Pending' && {
-              backgroundColor: 'rgba(255, 152, 0, 0.1)', // Light orange background
-              borderColor: 'orange' // Orange border
-            })
-          }}
-        />
-      </Box>
-    );
-  }
-},
+      field: 'status',
+      headerName: 'Status',
+      flex: 1,
+      renderCell: (params) => <StatusChip status={params.value} />
+    },
     {
       field: 'actions',
       headerName: 'Details',
@@ -178,7 +164,7 @@ const FuelAdmin = ({ darkMode }) => {
                 <Typography><strong>Amount (₹):</strong> {selectedEntry.amount}</Typography>
                 <Typography><strong>Bill No:</strong> {selectedEntry.billNo}</Typography>
                 <Typography><strong>Full Tank:</strong> {selectedEntry.fullTankText}</Typography>
-                <Typography><strong>Status:</strong> {selectedEntry.status}</Typography>
+                <Typography><strong>Status:</strong> <StatusChip status={selectedEntry.status} /></Typography>
                 <Typography><strong>Firm Name:</strong> {selectedEntry.firmName}</Typography>
               </Box>
 
