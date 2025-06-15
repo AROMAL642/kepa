@@ -1,85 +1,108 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');           //  Import multer
-const path = require('path');               //  Import path
-const fs = require('fs');                   //  Import fs
-const RepairRequest = require('../models/RepairRequest');
+const multer = require('multer');
+const RepairRequest = require('../models/RepairRequests');
+const User = require('../models/User'); 
 
 
-// 1. Submit new repair request
-router.post('/', async (req, res) => {
+
+// Configure multer for memory storage (buffer, not disk)
+const storage = multer.memoryStorage();
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 } // Max 5 MB
+});
+
+// ✅ POST: Create new repair request
+router.post('/', upload.single('billFile'), async (req, res) => {
   try {
-    console.log('Incoming request:', req.body); //  LOG
+    const { vehicleNo, pen, date, subject, description } = req.body;
 
-    const { appNo, vehicleNo, subject, description } = req.body;
-
-    if (!appNo || !vehicleNo || !subject || !description) {
-      return res.status(400).json({ message: 'Missing required fields' });
-    }
-
-    const newRequest = new RepairRequest({
-      appNo,
+    const repairData = {
       vehicleNo,
+      pen,
+      date,
       subject,
       description,
-      date: new Date(), 
-    });
+      status: 'pending',
+      
+    };
 
-    const savedRequest = await newRequest.save();
-    console.log('Saved request:', savedRequest); //  LOG
+    // newly added delete
 
-    res.status(201).json({ message: 'Repair request submitted', requestId: savedRequest._id });
-  } catch (err) {
-    console.error('Error saving request:', err); //  LOG
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
+    const user = await User.findOne({ pen });
+    if (!user) {
+  return res.status(400).json({ message: `No user found with PEN ${pen}` });
+}
 
 
-// 2. Multer setup for file upload
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const dir = path.join(__dirname, '../uploads');
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir);
-    cb(null, dir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueName = `${Date.now()}-${file.originalname}`;
-    cb(null, uniqueName);
-  }
-});
-const upload = multer({
-  storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // ✅ Max 10MB
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|pdf/;
-    const ext = path.extname(file.originalname).toLowerCase();
-    if (allowedTypes.test(ext)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only PDF, JPG, and PNG files are allowed'));
+
+
+
+
+
+
+
+
+
+    if (req.file) {
+      repairData.billFile = {
+        data: req.file.buffer,
+        contentType: req.file.mimetype
+      };
     }
+
+    const newRepair = new RepairRequest(repairData);
+    await newRepair.save();
+
+    res.status(201).json({ message: 'Repair request submitted successfully' });
+  } catch (err) {
+    console.error('Error saving repair request:', err);
+    res.status(500).json({ message: 'Failed to submit repair request' });
   }
 });
 
-// 3. Upload bill for a repair request
-router.post('/:id/upload-bill', upload.single('bill'), async (req, res) => {
+// ✅ GET: Get all repair requests
+router.get('/', async (req, res) => {
   try {
-    const requestId = req.params.id;
-    const billFile = req.file?.filename;
+    const repairs = await RepairRequest.find();
+    const formattedRepairs = repairs.map(req => ({
+      _id: req._id,
+      vehicleNo: req.vehicleNo,
+      pen: req.pen,
+      date: req.date,
+      subject: req.subject,
+      description: req.description,
+      status: req.status || 'pending',
+      billFile: req.billFile?.data
+        ? {
+            data: req.billFile.data.toString('base64'),
+            contentType: req.billFile.contentType
+          }
+        : null
+    }));
 
-    const updated = await RepairRequest.findByIdAndUpdate(
-      requestId,
-      { bill: billFile },
-      { new: true }
-    );
-
-    if (!updated) return res.status(404).json({ message: 'Repair request not found' });
-
-    res.status(200).json({ message: 'Bill uploaded successfully', bill: billFile });
+    res.json(formattedRepairs);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Failed to upload bill', error: err.message });
+    console.error('Error fetching repair requests:', err);
+    res.status(500).json({ message: 'Failed to fetch repair requests' });
+  }
+});
+
+// ✅ PUT: Update repair request status
+router.put('/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  try {
+    const updated = await RepairRequest.findByIdAndUpdate(id, { status }, { new: true });
+    if (!updated) {
+      return res.status(404).json({ message: 'Repair request not found' });
+    }
+    res.json(updated);
+  } catch (err) {
+    console.error('PUT /status error:', err);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 

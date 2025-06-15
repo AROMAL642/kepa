@@ -1,22 +1,23 @@
 import React, { useState, useEffect } from 'react';
-
 import ResponsiveAppBar from './admindashboardcomponents/ResponsiveAppBar';
 import './css/admindashboard.css';
 import AddRemoveVehicleForm from './admindashboardcomponents/AddRemoveVehicleForm';
 import ViewRequests from './ViewRequests';
+
 import SearchVehicleDetails from './admindashboardcomponents/SearchVehicleDetails';
 import './css/SearchVehicleDetails.css';
 import ViewAssignVehicle from './admindashboardcomponents/ViewAssignVehicle';
 import './css/AssignVehicle.css';
-import SkeletonChildren from './admindashboardcomponents/SkeletonUI'; 
+import SkeletonChildren from './admindashboardcomponents/SkeletonUI';
 import FuelAdmin from './admindashboardcomponents/FuelAdmin';
 import './css/fueladmin.css';
 import VerifiedUsersTable from './admindashboardcomponents/VerifiedUsersTable';
 import './css/verifieduserstable.css';
 import MovementAdmin from './admindashboardcomponents/MovementAdmin';
 import AccidentReportTable from './admindashboardcomponents/AccidentReportTable';
+import RegisterPage from './admindashboardcomponents/RegisterPage'; 
+import AdminRepairTable from './admindashboardcomponents/AdminRepairTable'; 
 import dayjs from 'dayjs';
-
 
 function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('profile');
@@ -137,6 +138,7 @@ function AdminDashboard() {
               {pendingCount > 0 && <span className="notification-badge">{pendingCount}</span>}
             </button>
             <button className={`sidebar-btn ${activeTab === 'VerifiedUsersTable' ? 'active' : ''}`} onClick={() => setActiveTab('VerifiedUsersTable')}>Users Details</button>
+            <button className={`sidebar-btn ${activeTab === 'AddUser' ? 'active' : ''}`} onClick={() => setActiveTab('AddUser')}>Add Users</button> {/* ✅ New Button */}
           </div>
         </div>
 
@@ -147,18 +149,17 @@ function AdminDashboard() {
                 {Object.entries(fieldLabels).map(([key, label]) => (
                   <div className="form-group" key={key}>
                     <label>{label}</label>
-                   <input
-                     type="text"
-                     value={
-                     key === 'dob' && adminData.dob
-                    ? dayjs(adminData.dob).format('DD-MM-YYYY')
-                    : adminData[key] || ''
-                     }
+                    <input
+                      type="text"
+                      value={
+                        key === 'dob' && adminData.dob
+                          ? dayjs(adminData.dob).format('DD-MM-YYYY')
+                          : adminData[key] || ''
+                      }
                       readOnly
-                     style={themeStyle}
-                     className={key === 'role' ? 'role-field' : ''}
-                  />
-
+                      style={themeStyle}
+                      className={key === 'role' ? 'role-field' : ''}
+                    />
                   </div>
                 ))}
               </div>
@@ -217,7 +218,7 @@ function AdminDashboard() {
 
           {activeTab === 'VehicleDetails' && vehicleTab === 'main' && (
             <div className="vehicle-box" style={{ width: '400px', height: '600px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <button className="vehicle-btn" onClick={() => setVehicleTab('addremove')}>Add Vehicle</button>
+              <button className="vehicle-btn" onClick={() => setVehicleTab('addremove')}>Add/Remove Vehicle</button>
               <button className="vehicle-btn" onClick={() => setVehicleTab('search')}>Search Vehicle Details</button>
               <button className="vehicle-btn">Expense Details</button>
               <button className="vehicle-btn">View/Print Registers</button>
@@ -225,12 +226,17 @@ function AdminDashboard() {
             </div>
           )}
 
+
           {activeTab === 'VehicleDetails' && vehicleTab === 'addremove' && <AddRemoveVehicleForm onBack={() => setVehicleTab('main')} themeStyle={themeStyle} />}
           {activeTab === 'Request' && <ViewRequests themeStyle={themeStyle} />}
           {activeTab === 'VehicleDetails' && vehicleTab === 'search' && <SearchVehicleDetails onBack={() => setVehicleTab('main')} themeStyle={themeStyle} />}
           {activeTab === 'VehicleDetails' && vehicleTab === 'viewassign' && <ViewAssignVehicle onBack={() => setVehicleTab('main')} themeStyle={themeStyle} />}
           {activeTab === 'Movement' && <MovementAdmin themeStyle={themeStyle} />}
           {activeTab === 'Accident' && <AccidentReportTable themeStyle={themeStyle} />}
+
+           {activeTab === 'Repair' && <AdminRepairTable themeStyle={themeStyle} />}
+          
+          {activeTab === 'AddUser' && <RegisterPage themeStyle={themeStyle} />} {/* ✅ RegisterPage render */}
         </div>
       </div>
     </div>
@@ -238,3 +244,4 @@ function AdminDashboard() {
 }
 
 export default AdminDashboard;
+

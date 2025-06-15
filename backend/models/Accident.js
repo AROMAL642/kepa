@@ -21,7 +21,7 @@ const accidentSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  image: {
+  bill: {
     data: Buffer,
     contentType: String
   },

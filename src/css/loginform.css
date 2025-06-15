@@ -109,6 +109,14 @@
   border-radius: 4px;
   font-size: 14px;
 }
+.errorText {
+  color: red;
+  font-size: 0.85rem;
+  margin-top: 4px;
+}
+
+
+
 
 /* Responsive adjustments */
 @media (max-width: 600px) {

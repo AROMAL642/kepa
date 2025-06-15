@@ -2,9 +2,7 @@ import React from "react";
 import "./404.css";
 
 export default function NotFound() {
-  const handleGoBack = () => {
-    window.history.back();
-  };
+  
 
   const handleGoHome = () => {
     window.location.href = "/";

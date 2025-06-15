@@ -7,9 +7,10 @@ const userSchema = new mongoose.Schema({
     required: true
   },
   generalNo: {
-    type: String,
-    unique: true
-  },
+  type: String,
+  sparse: true 
+},
+
   name: {
     type: String,
     required: true

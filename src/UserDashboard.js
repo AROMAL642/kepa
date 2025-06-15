@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import './css/movement.css';
 import './css/SearchVehicleDetails.css';
 import FuelRegister from './userdashboardcomponents/FuelRegister';
+import RepairRequestForm from './userdashboardcomponents/RepairRequestForm';
 import AccidentReportForm from './userdashboardcomponents/AccidentReportForm';
 import './css/accidentreportform.css';
 import EyeTestReport from './userdashboardcomponents/EyeTestReport';
@@ -194,7 +195,7 @@ function UserDashboard() {
 
           {activeTab === 'repair' && (
             <div className="repair-request-section">
-              <RepairRequestForm />
+              <RepairRequestForm pen={formData.pen}/>
             </div>
           )}
 

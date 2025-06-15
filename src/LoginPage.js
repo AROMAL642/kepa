@@ -14,7 +14,8 @@ const LoginPage = () => {
     try {
       const res = await axios.post('http://localhost:5000/login', { pen, password });
 
-      const { role } = res.data;
+
+       const { role } = res.data;
 
       if (role === 'admin') {
         const adminData = {
@@ -77,6 +78,7 @@ const LoginPage = () => {
       const msg = error.response?.data?.message || 'Network or server error';
       alert('Login failed: ' + msg);
     }
+
   };
 
   return (
@@ -122,7 +124,7 @@ const LoginPage = () => {
         </p>
         <p>
           <span
-            onClick={() => navigate('/forgot-password')}
+            onClick={() => navigate('/resetpassword')}
             style={{ color: '#007bff', cursor: 'pointer', textDecoration: 'underline' }}
           >
             Forgot Password?
