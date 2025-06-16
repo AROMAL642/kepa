@@ -73,7 +73,7 @@ function RepairDashboard() {
         ☰
       </button>
 
-      <div className={`dashboard ${isDrawerOpen ? 'drawer-open' : ''}`} style={themeStyle}>
+      <div className={`dashboard ${isDrawerOpen ? 'drawer-open' : ''}`}>
         {/* Sidebar Drawer */}
         <div className={`drawer ${isDrawerOpen ? 'open' : ''}`}>
          
@@ -104,8 +104,7 @@ function RepairDashboard() {
         </div>
 
         {/* Main Content */}
-        <div className="main-content" style={themeStyle}>
-          {activeTab === 'repair' && <RepairAdmin darkMode={darkMode} />}
+        <div className="main-content" >
 
           {activeTab === 'profile' && (
             <div className="form-section">
@@ -131,7 +130,7 @@ function RepairDashboard() {
                         onChange={(e) =>
                           setRepairData((prev) => ({ ...prev, dob: e.target.value }))
                         }
-                        style={themeStyle}
+                        
                       />
                     ) : (
                       <input
@@ -142,7 +141,7 @@ function RepairDashboard() {
                         onChange={(e) =>
                           setRepairData((prev) => ({ ...prev, [field.name]: e.target.value }))
                         }
-                        style={themeStyle}
+                      
                       />
                     )}
                   </div>
@@ -226,7 +225,7 @@ function RepairDashboard() {
 
           {activeTab === 'users' && (
             <div style={{ padding: '20px' }}>
-              <VerifiedUserTable themeStyle={themeStyle} />
+              <VerifiedUserTable  />
             </div>
           )}
         </div>
