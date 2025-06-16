@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 
 import LoginPage from './LoginPage';
+import RepairDashboard from './RepairSectionDashboard';
 import RegisterPage from './RegisterPage';
 import AdminDashboard from './AdminDashboard';
 import UserDashboard from './UserDashboard';
@@ -47,6 +48,7 @@ function App() {
           <Route path="/repair-request" element={<RepairRequestForm />} />
           <Route path="/fuel" element={<FuelSectionDashboard />} />
           <Route path="/mechanic" element={<MechanicDashboard />} />
+          <Route path="/repair" element={<RepairDashboard/>} />
           <Route path="/resetpassword" element={<ResetPassword />} />
 
 
