@@ -10,8 +10,6 @@ import {
   DialogContent,
   DialogActions
 } from '@mui/material';
-import UserDetails from './UserDetails';
-import './css/admindashboard.css';
 
 function ViewRequests({ themeStyle }) {
   const [requests, setRequests] = useState([]);
@@ -61,7 +59,16 @@ function ViewRequests({ themeStyle }) {
     setLoadingDetails(true);
     try {
       const res = await axios.get(`http://localhost:5000/api/user/${email}`);
-      setSelectedUser(res.data);
+      const user = res.data;
+
+      if (user.photo && typeof user.photo !== 'string') {
+        user.photo = `data:image/jpeg;base64,${Buffer.from(user.photo.data).toString('base64')}`;
+      }
+      if (user.signature && typeof user.signature !== 'string') {
+        user.signature = `data:image/png;base64,${Buffer.from(user.signature.data).toString('base64')}`;
+      }
+
+      setSelectedUser(user);
       setDialogOpen(true);
     } catch (err) {
       console.error(err);
@@ -143,9 +150,43 @@ function ViewRequests({ themeStyle }) {
         <DialogContent dividers>
           {loadingDetails ? (
             <CircularProgress />
-          ) : (
-            selectedUser && <UserDetails user={selectedUser} />
-          )}
+          ) : selectedUser ? (
+            <div style={{ marginTop: '20px', border: '1px solid #ccc', padding: '20px', borderRadius: '10px' }}>
+              <h3>User Details</h3>
+              <p><strong>Name:</strong> {selectedUser.name}</p>
+              <p><strong>Email:</strong> {selectedUser.email}</p>
+              <p><strong>Phone:</strong> {selectedUser.phone}</p>
+              <p><strong>PEN:</strong> {selectedUser.pen}</p>
+              <p><strong>General No:</strong> {selectedUser.generalNo}</p>
+              <p><strong>DOB:</strong> {new Date(selectedUser.dob).toLocaleDateString()}</p>
+              <p><strong>Gender:</strong> {selectedUser.gender}</p>
+              <p><strong>Blood Group:</strong> {selectedUser.bloodGroup}</p>
+              <p><strong>License No:</strong> {selectedUser.licenseNo}</p>
+
+              <div style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
+                <div>
+                  {selectedUser.photo ? (
+                    <>
+                      <img src={selectedUser.photo} alt="User" width="100" />
+                      <p>Photo</p>
+                    </>
+                  ) : (
+                    <p>No photo</p>
+                  )}
+                </div>
+                <div>
+                  {selectedUser.signature ? (
+                    <>
+                      <img src={selectedUser.signature} alt="Signature" width="100" />
+                      <p>Signature</p>
+                    </>
+                  ) : (
+                    <p>No signature</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : null}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog} color="primary">

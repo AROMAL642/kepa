@@ -16,6 +16,8 @@ import MovementAdmin from './admindashboardcomponents/MovementAdmin';
 import AccidentReportTable from './admindashboardcomponents/AccidentReportTable';
 import RegisterPage from './admindashboardcomponents/RegisterPage';
 import AdminRepairTable from './admindashboardcomponents/AdminRepairTable';
+import ViewPrintRegisters from './admindashboardcomponents/ViewPrintRegisters';
+
 import dayjs from 'dayjs';
 
 function AdminDashboard() {
@@ -299,12 +301,8 @@ function AdminDashboard() {
           {activeTab === 'Accident' && <AccidentReportTable themeStyle={themeStyle} />}
           {activeTab === 'Repair' && <AdminRepairTable themeStyle={themeStyle} />}
           {activeTab === 'AddUser' && <RegisterPage themeStyle={themeStyle} />}
-          {activeTab === 'PrintRegisters' && (
-            <div>
-              <h2>View/Print Registers</h2>
-              <p>This section will include all registers for fuel, movement, accident, and repair reports, with options to print/export.</p>
-            </div>
-          )}
+          {activeTab === 'PrintRegisters' && <ViewPrintRegisters />}
+
         </div>
       </div>
     </div>

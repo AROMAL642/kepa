@@ -15,7 +15,6 @@ const AccidentReportTable = ({ themeStyle }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
 
-  // Fetch all accident reports
   const fetchReports = useCallback(async () => {
     try {
       const res = await fetch('http://localhost:5000/api/accidents');
@@ -30,6 +29,7 @@ const AccidentReportTable = ({ themeStyle }) => {
         location: item.location,
         description: item.description,
         status: item.status,
+        date: item.date,
         image: item.image?.data
           ? `data:${item.image.contentType};base64,${item.image.data}`
           : ''
@@ -57,7 +57,6 @@ const AccidentReportTable = ({ themeStyle }) => {
     setSelectedReport(null);
   };
 
-  // Update accident status (PUT request)
   const updateStatus = async (id, status) => {
     try {
       const res = await fetch(`http://localhost:5000/api/accidents/${id}/status`, {
@@ -67,7 +66,7 @@ const AccidentReportTable = ({ themeStyle }) => {
       });
 
       if (res.ok) {
-        await fetchReports(); // Refresh table
+        await fetchReports();
       } else {
         const error = await res.json();
         alert(error.message || 'Failed to update status');
@@ -77,18 +76,44 @@ const AccidentReportTable = ({ themeStyle }) => {
     }
   };
 
+  // Helper functions
+  const formatDate = (value) => {
+    try {
+      const date = new Date(value);
+      return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString();
+    } catch {
+      return 'Invalid Date';
+    }
+  };
+
+  const formatTime = (value) => {
+    return value && /^\d{2}:\d{2}$/.test(value) ? value : 'Invalid Time';
+  };
+
   const columns = [
     { field: 'vehicleNo', headerName: 'Vehicle No', width: 150 },
     { field: 'pen', headerName: 'PEN', width: 100 },
     {
-      field: 'accidentTime',
-      headerName: 'Time',
-      width: 180,
-      valueFormatter: (params) =>
-        params.value && !isNaN(Date.parse(params.value))
-          ? new Date(params.value).toLocaleString()
-          : 'Invalid Date'
-    },
+  field: 'date',
+  headerName: 'Date',
+  width: 150,
+  renderCell: (params) => {
+    const val = params.row?.date;
+    if (!val) return 'N/A';
+    const date = new Date(val);
+    return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString();
+  }
+},
+{
+  field: 'accidentTime',
+  headerName: 'Time',
+  width: 120,
+  renderCell: (params) => {
+    const val = params.row?.accidentTime;
+    return val && /^\d{2}:\d{2}$/.test(val) ? val : 'Invalid Time';
+  }
+}
+,
     { field: 'location', headerName: 'Location', width: 180 },
     { field: 'description', headerName: 'Description', width: 220 },
     {
@@ -103,7 +128,7 @@ const AccidentReportTable = ({ themeStyle }) => {
         };
         return (
           <strong style={{ color: colorMap[params.value] || 'gray' }}>
-            {params.value.toUpperCase()}
+            {params.value?.toUpperCase()}
           </strong>
         );
       }
@@ -166,16 +191,16 @@ const AccidentReportTable = ({ themeStyle }) => {
               <Typography><strong>Vehicle No:</strong> {selectedReport.vehicleNo}</Typography>
               <Typography><strong>PEN:</strong> {selectedReport.pen}</Typography>
               <Typography>
-                <strong>Time:</strong>{' '}
-                {selectedReport.accidentTime && !isNaN(Date.parse(selectedReport.accidentTime))
-                  ? new Date(selectedReport.accidentTime).toLocaleString()
-                  : 'Invalid or Missing Date'}
+                <strong>Date:</strong> {formatDate(selectedReport.date)}
+              </Typography>
+              <Typography>
+                <strong>Time:</strong> {formatTime(selectedReport.accidentTime)}
               </Typography>
               <Typography><strong>Location:</strong> {selectedReport.location}</Typography>
               <Typography><strong>Description:</strong> {selectedReport.description}</Typography>
               <Typography><strong>Status:</strong> {selectedReport.status}</Typography>
               <br />
-              {selectedReport.image && selectedReport.image.startsWith('data:image') ? (
+              {selectedReport.image ? (
                 <img
                   src={selectedReport.image}
                   alt="Accident"

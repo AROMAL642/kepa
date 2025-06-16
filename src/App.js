@@ -6,7 +6,6 @@ import RegisterPage from './RegisterPage';
 import AdminDashboard from './AdminDashboard';
 import UserDashboard from './UserDashboard';
 import ViewRequests from './ViewRequests';
-import UserDetails from './UserDetails';
 import AddRemoveVehicleForm from './admindashboardcomponents/AddRemoveVehicleForm';
 import SearchVehicleDetails from './userdashboardcomponents/SearchVehicleDetails';
 import RepairRequestForm from './userdashboardcomponents/RepairRequestForm';
@@ -46,7 +45,7 @@ function AppWrapper() {
         <Route path="/admin" element={localStorage.getItem('adminData') ? <AdminDashboard /> : <Navigate to="/" />} />
         <Route path="/user" element={<UserDashboard />} />
         <Route path="/viewrequests" element={<ViewRequests themeStyle={{ background: 'black', color: 'white' }} />} />
-        <Route path="/userdetails/:id" element={<UserDetails />} />
+        
         <Route path="/admin/vehicles" element={<AddRemoveVehicleForm />} />
         <Route path="/searchvehicle" element={<SearchVehicleDetails />} />
         <Route path="/repair-request" element={<RepairRequestForm />} />

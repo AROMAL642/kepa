@@ -258,11 +258,13 @@ const accidentRoutes = require('./routes/accidentreportRoutes');
 app.use('/api/accidents', accidentRoutes);
 
 //eye test report
-
-
 const eyeTestRoutes = require('./routes/eyeTestRoutes');
 app.use('/api/eyetests', eyeTestRoutes);
 
+//view print registerd
+
+const reportRoutes = require('./routes/viewprintregisterRoutes');
+app.use('/api', reportRoutes);
 
 
 // Fetch all unverified users
