@@ -14,6 +14,7 @@ const repairRequestRoutes = require('./routes/repairRequestRoutes');
 
 
 
+
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
@@ -27,7 +28,6 @@ app.use('/api/repair-request', require('./routes/repairRequestRoutes'));
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB connected to kepa DB'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
-
 // Multer Setup for file uploads (bill files)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -42,7 +42,7 @@ const storage = multer.diskStorage({
     cb(null, file.fieldname + '-' + uniqueSuffix + ext);
   }
 });
-const upload = multer({ storage });
+// const upload = multer({ storage });
 
 // Use imported routes
 // Models
@@ -59,15 +59,29 @@ app.post('/register', async (req, res) => {
   } = req.body;
 
   try {
-   
-
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({
-      pen, generalNo, name, email, phone, licenseNo,
-      dob, gender, bloodGroup, password: hashedPassword,
-      photo, signature,
-      verified: 'NO' // default
-    });
+
+    // Only include generalNo if it’s not an empty string
+    const userData = {
+      pen,
+      name,
+      email,
+      phone,
+      licenseNo,
+      dob,
+      gender,
+      bloodGroup,
+      password: hashedPassword,
+      photo,
+      signature,
+      verified: 'NO',
+    };
+
+    if (generalNo && generalNo.trim() !== '') {
+      userData.generalNo = generalNo.trim();
+    }
+
+    const newUser = new User(userData);
 
     await newUser.save();
     res.status(201).json({ message: 'Registration Request Sent Successfully. Wait for Approval.' });
@@ -76,6 +90,7 @@ app.post('/register', async (req, res) => {
     res.status(500).json({ message: 'Registration failed', error: err.message });
   }
 });
+
 
 
 // Login Route for User, Admin, and Fuel Section
@@ -134,11 +149,14 @@ app.post('/login', async (req, res) => {
         gender: user.gender || '',
         role: user.role || ''
       });
+
     }
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
+
+
 
 
 
@@ -174,9 +192,18 @@ app.get('/api/admin/:email', async (req, res) => {
   }
 });
 
+
 //edit user profile
 const userRoutes = require('./routes/Edituser');
 app.use('/api/users', userRoutes); 
+
+// Register by Admin Route
+const registerByAdminRoute = require('./routes/registerbyadmin');
+app.use('/registerbyadmin', registerByAdminRoute);
+
+//reset password
+const resetPasswordRoute = require('./routes/resetPasswordRoute');
+app.use('/api', resetPasswordRoute);
 
 //  Movement Register Entry 
 
@@ -218,6 +245,10 @@ app.use('/api/vehicles', vehicleRoutes);
 
 const userDetailsRoutes = require('./routes/userDetailsRoutes');
 app.use('/api/user-details', userDetailsRoutes);
+
+//delete user by admin
+
+app.use('/api/user-delete', userDetailsRoutes);
 
 //Accident Report
 const accidentRoutes = require('./routes/accidentreportRoutes');
@@ -283,4 +314,5 @@ const PORT = 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
 });
+
 

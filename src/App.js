@@ -9,9 +9,10 @@ import ViewRequests from './ViewRequests';
 import UserDetails from './UserDetails';
 import AddRemoveVehicleForm from './admindashboardcomponents/AddRemoveVehicleForm';
 import SearchVehicleDetails from './userdashboardcomponents/SearchVehicleDetails';
-import RepairRequestForm from './RepairRequestForm';
+import RepairRequestForm from './userdashboardcomponents/RepairRequestForm';
 import FuelSectionDashboard from './FuelSectionDashboard';
 import MechanicDashboard from './MechanicDashboard';
+import ResetPassword from './ResetPassword';
 
 
 import './App.css';
@@ -29,9 +30,7 @@ function App() {
       </header>
 
       <Router>
-       
-
-        <Routes>
+  <Routes>
           <Route path="/" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route
@@ -45,9 +44,10 @@ function App() {
           <Route path="/userdetails/:id" element={<UserDetails />} />
           <Route path="/admin/vehicles" element={<AddRemoveVehicleForm />} />
           <Route path="/searchvehicle" element={<SearchVehicleDetails />} />
-          <Route path="/repair" element={<RepairRequestForm />} />
+          <Route path="/repair-request" element={<RepairRequestForm />} />
           <Route path="/fuel" element={<FuelSectionDashboard />} />
           <Route path="/mechanic" element={<MechanicDashboard />} />
+          <Route path="/resetpassword" element={<ResetPassword />} />
 
 
           {/* Catch-all */}
