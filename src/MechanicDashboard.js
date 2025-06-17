@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ResponsiveAppBar from './admindashboardcomponents/ResponsiveAppBar';
 import SkeletonChildren from './admindashboardcomponents/SkeletonUI';
-import FuelPendingRequest from './fuelsectiondashboardcomponents/fuelpendingrequest';
+import MechanicPendingRequests from './mechanicdashboardcomponents/MechanicPendingRequests';
 import SearchVehicleDetails from './mechanicdashboardcomponents/SearchVehicleDetails';
 import VerifiedUsersTable from './mechanicdashboardcomponents/VerifiedUsersTable';
 
@@ -179,8 +179,8 @@ function MechanicDashboard() {
 
           {activeTab === 'pending' && (
             <div style={{ padding: '20px' }}>
-              <h2>Pending Fuel Requests</h2>
-              <FuelPendingRequest />
+              <h2>Pending Repair Requests</h2>
+              <MechanicPendingRequests/>
             </div>
           )}
 
