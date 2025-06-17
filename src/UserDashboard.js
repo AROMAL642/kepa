@@ -10,6 +10,7 @@ import RepairRequestForm from './userdashboardcomponents/RepairRequestForm';
 import AccidentReportForm from './userdashboardcomponents/AccidentReportForm';
 import './css/accidentreportform.css';
 import EyeTestReport from './userdashboardcomponents/EyeTestReport';
+import ResponsiveAppBar from './admindashboardcomponents/ResponsiveAppBar';
 
 function UserDashboard() {
   const [activeTab, setActiveTab] = useState('profile');
@@ -35,18 +36,23 @@ function UserDashboard() {
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
     if (user) {
+      const formattedDOB = user.dob
+        ? user.dob.split('T')[0]  // Format: YYYY-MM-DD
+        : '';
+
       setFormData({
         name: user.name,
         pen: user.pen,
         generalNo: user.generalNo,
         email: user.email,
         mobile: user.phone,
-        dob: user.dob,
+        dob: formattedDOB,
         licenseNo: user.licenseNo,
         bloodGroup: user.bloodGroup,
         gender: user.gender,
         profilePic: user.photo,
-        signature: user.signature
+        signature: user.signature,
+        role: user.role || 'user',
       });
     }
   }, []);
@@ -68,9 +74,18 @@ function UserDashboard() {
 
   return (
     <>
+      <ResponsiveAppBar
+        photo={formData.profilePic}
+        name={formData.name}
+        role={formData.role}
+        isDrawerOpen={isDrawerOpen}
+        onDrawerToggle={() => setIsDrawerOpen(!isDrawerOpen)}
+        onSelectTab={(tab) => setActiveTab(tab)}
+      />
       <button className="drawer-toggle-btn" onClick={() => setIsDrawerOpen(!isDrawerOpen)}>
         ☰
       </button>
+
       <div className={`dashboard ${isDrawerOpen ? 'drawer-open' : ''}`}>
         <div className={`drawer ${isDrawerOpen ? 'open' : ''}`}>
           <h2>Welcome {formData.name || 'User'}!</h2>
@@ -79,7 +94,7 @@ function UserDashboard() {
             {tabMap.map(({ key, label }) => (
               <button
                 key={key}
-                className="sidebar-btn"
+                className={`sidebar-btn ${activeTab === key ? 'active' : ''}`}
                 onClick={() => setActiveTab(key)}
               >
                 {label}
@@ -95,12 +110,12 @@ function UserDashboard() {
             <div className="form-section">
               <div className="form-left">
                 {[
-                  { label: 'Name', name: 'name', readOnly: true },
+                  { label: 'Name', name: 'name' },
                   { label: 'PEN number', name: 'pen', readOnly: true },
                   { label: 'General Number', name: 'generalNo', readOnly: true },
                   { label: 'Email', name: 'email' },
                   { label: 'Mobile Number', name: 'mobile' },
-                  { label: 'DOB', name: 'dob', readOnly: true },
+                  { label: 'DOB', name: 'dob', type: 'date' },  // Editable DOB
                   { label: 'Licence Number', name: 'licenseNo' },
                   { label: 'Blood Group', name: 'bloodGroup', readOnly: true },
                   { label: 'Gender', name: 'gender', readOnly: true },
@@ -108,10 +123,10 @@ function UserDashboard() {
                   <div className="form-group" key={field.name}>
                     <label>{field.label}</label>
                     <input
-                      type="text"
+                      type={field.type || 'text'}
                       name={field.name}
                       value={formData[field.name] || ''}
-                      readOnly={!editMode || field.readOnly}
+                      readOnly={field.readOnly || !editMode}
                       onChange={e =>
                         setFormData(prev => ({ ...prev, [field.name]: e.target.value }))
                       }
@@ -195,7 +210,7 @@ function UserDashboard() {
 
           {activeTab === 'repair' && (
             <div className="repair-request-section">
-              <RepairRequestForm pen={formData.pen}/>
+              <RepairRequestForm pen={formData.pen} />
             </div>
           )}
 

@@ -131,13 +131,30 @@ router.get('/vehicle/:vehicleNo', async (req, res) => {
 // GET all vehicles (with fuel entries)
 router.get('/', async (req, res) => {
   try {
-    const vehicles = await VehicleFuel.find().sort({ vehicleNo: 1 });
+    const vehiclesRaw = await VehicleFuel.find().sort({ vehicleNo: 1 });
 
-    res.status(200).json({
-      success: true,
-      count: vehicles.length,
-      vehicles
-    });
+const vehicles = vehiclesRaw.map(vehicle => {
+  const fuelEntries = vehicle.fuelEntries.map(entry => {
+    return {
+      ...entry.toObject(),
+      file: entry.file ? entry.file.toString('base64') : null,
+      fileType: entry.fileType || null
+    };
+  });
+
+  return {
+    _id: vehicle._id,
+    vehicleNo: vehicle.vehicleNo,
+    fuelEntries
+  };
+});
+
+res.status(200).json({
+  success: true,
+  count: vehicles.length,
+  vehicles
+});
+
 
   } catch (error) {
     console.error('Error fetching vehicles:', error);

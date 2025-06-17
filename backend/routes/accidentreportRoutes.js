@@ -13,14 +13,15 @@ const upload = multer({
 // POST: Create new accident report
 router.post('/', upload.single('image'), async (req, res) => {
   try {
-    const { vehicleNo, pen, accidentTime, location, description } = req.body;
+    const { vehicleNo, pen, accidentTime, location, description, date } = req.body;
 
     const accidentData = {
       vehicleNo,
       pen,
       accidentTime,
       location,
-      description
+      description,
+      date: new Date(date) // ✅ Fix: ensure date is included
     };
 
     if (req.file) {
@@ -39,7 +40,6 @@ router.post('/', upload.single('image'), async (req, res) => {
     res.status(500).json({ message: 'Failed to save accident report' });
   }
 });
-
 // GET: Get all accident reports
 router.get('/', async (req, res) => {
   try {
@@ -52,6 +52,7 @@ router.get('/', async (req, res) => {
       location: report.location,
       description: report.description,
       status: report.status,
+      date: report.date,
       image: report.image?.data
         ? {
             data: report.image.data.toString('base64'),
@@ -66,6 +67,7 @@ router.get('/', async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch reports' });
   }
 });
+
 
 // ✅ FIXED PUT route: Update accident report status
 router.put('/:id/status', async (req, res) => {

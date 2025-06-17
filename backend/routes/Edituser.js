@@ -34,4 +34,36 @@ router.put('/update', async (req, res) => {
   }
 });
 
+
+
+router.put('/update-admin', async (req, res) => {
+  const { pen, updates } = req.body;
+
+  if (!pen || !updates) {
+    return res.status(400).json({ error: 'PEN and updates are required' });
+  }
+
+  try {
+    // Exclude fields that should not be updated
+    const protectedFields = ['pen', 'generalNo', '_id', 'role'];
+    protectedFields.forEach(field => delete updates[field]);
+
+    const updatedAdmin = await User.findOneAndUpdate(
+      { pen, role: 'admin' }, // only update if role is admin
+      { $set: updates },
+      { new: true }
+    );
+
+    if (!updatedAdmin) {
+      return res.status(404).json({ error: 'Admin not found' });
+    }
+
+    res.status(200).json(updatedAdmin);
+  } catch (error) {
+    console.error('Error updating admin profile:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+
 module.exports = router;

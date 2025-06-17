@@ -197,6 +197,9 @@ app.get('/api/admin/:email', async (req, res) => {
 const userRoutes = require('./routes/Edituser');
 app.use('/api/users', userRoutes); 
 
+app.use('/api', userRoutes);
+
+
 // Register by Admin Route
 const registerByAdminRoute = require('./routes/registerbyadmin');
 app.use('/registerbyadmin', registerByAdminRoute);
@@ -255,11 +258,13 @@ const accidentRoutes = require('./routes/accidentreportRoutes');
 app.use('/api/accidents', accidentRoutes);
 
 //eye test report
-
-
 const eyeTestRoutes = require('./routes/eyeTestRoutes');
 app.use('/api/eyetests', eyeTestRoutes);
 
+//view print registerd
+
+const reportRoutes = require('./routes/viewprintregisterRoutes');
+app.use('/api', reportRoutes);
 
 
 // Fetch all unverified users
