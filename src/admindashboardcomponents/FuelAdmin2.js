@@ -12,7 +12,6 @@ import {
   Typography,
   Chip
 } from '@mui/material';
-import FuelAdmin2 from './FuelAdmin2'; // ✅ Import directly
 
 const FuelAdmin = ({ darkMode }) => {
   const [vehicles, setVehicles] = useState([]);
@@ -20,7 +19,6 @@ const FuelAdmin = ({ darkMode }) => {
   const [error, setError] = useState(null);
   const [selectedEntry, setSelectedEntry] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
-  const [showAll, setShowAll] = useState(false); // ✅ View toggle
 
   const fetchFuelData = async () => {
     try {
@@ -44,36 +42,23 @@ const FuelAdmin = ({ darkMode }) => {
         `http://localhost:5000/api/fuel/${entry.vehicleNo}/${entry._id}`,
         { status: newStatus }
       );
-      setVehicles((prevVehicles) =>
-        prevVehicles.map((vehicle) =>
-          vehicle.vehicleNo === entry.vehicleNo
-            ? {
-                ...vehicle,
-                fuelEntries: vehicle.fuelEntries.map((e) =>
-                  e._id === entry._id ? { ...e, status: newStatus } : e
-                )
-              }
-            : vehicle
-        )
-      );
+      await fetchFuelData(); // Refresh list after status update
     } catch (error) {
       console.error('Failed to update status:', error);
       alert('Error updating status');
     }
   };
 
-  const allEntries = vehicles.flatMap((vehicle) =>
-    vehicle.fuelEntries
-      .filter((entry) => (entry.status || 'Pending').toLowerCase() === 'pending')
-      .map((entry) => ({
-        ...entry,
-        id: entry._id,
-        vehicleNo: vehicle.vehicleNo,
-        dateString: new Date(entry.date).toLocaleDateString(),
-        fullTankText: entry.fullTank === 'yes' ? 'Yes' : 'No',
-        status: entry.status || 'Pending',
-        fuelType: entry.fuelType || 'N/A'
-      }))
+  const allEntries = vehicles.flatMap(vehicle =>
+    vehicle.fuelEntries.map(entry => ({
+      ...entry,
+      id: entry._id,
+      vehicleNo: vehicle.vehicleNo,
+      fuelType: entry.fuelType || 'Unknown',
+      dateString: new Date(entry.date).toLocaleDateString(),
+      fullTankText: entry.fullTank === 'yes' ? 'Yes' : 'No',
+      status: entry.status || 'Pending'
+    }))
   );
 
   const getStatusChip = (status) => {
@@ -109,7 +94,8 @@ const FuelAdmin = ({ darkMode }) => {
 
   const columns = [
     { field: 'vehicleNo', headerName: 'Vehicle No', flex: 1 },
-    { field: 'pen', headerName: 'Entered By(PEN)', flex: 1 },
+    { field: 'fuelType', headerName: 'Fuel Type', flex: 1 },
+    { field: 'pen', headerName: 'Entered By(PEN)', flex: 2 },
     { field: 'dateString', headerName: 'Date', flex: 1 },
     { field: 'presentKm', headerName: 'Present KM', flex: 1, type: 'number' },
     { field: 'previousKm', headerName: 'Previous KM', flex: 1, type: 'number' },
@@ -117,19 +103,20 @@ const FuelAdmin = ({ darkMode }) => {
     { field: 'amount', headerName: 'Amount (₹)', flex: 1, type: 'number' },
     { field: 'billNo', headerName: 'Bill No', flex: 1 },
     { field: 'fullTankText', headerName: 'Full Tank', flex: 1 },
-    { field: 'fuelType', headerName: 'Fuel Type', flex: 1 },
     {
       field: 'status',
       headerName: 'Status',
       flex: 1.5,
       renderCell: (params) => (
-        <Box sx={{ pointerEvents: 'none' }}>{getStatusChip(params.value)}</Box>
+        <Box sx={{ pointerEvents: 'none' }}>
+          {getStatusChip(params.value)}
+        </Box>
       )
     },
     {
       field: 'actions',
       headerName: 'Actions',
-      flex: 2.5,
+      flex: 3,
       renderCell: (params) => (
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Button
@@ -181,34 +168,11 @@ const FuelAdmin = ({ darkMode }) => {
     );
   }
 
-  // ✅ If "View All" is clicked, render FuelAdmin2 instead
-  if (showAll) {
-    return (
-      <Box sx={{ p: 2 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-          <Typography variant="h4">All Fuel Entries</Typography>
-          <Button variant="outlined" onClick={() => setShowAll(false)}>
-            Back to Pending
-          </Button>
-        </Box>
-        <FuelAdmin2 darkMode={darkMode} />
-      </Box>
-    );
-  }
-
   return (
     <Box sx={{ flexGrow: 1, minWidth: 0, height: '100%', p: 2, overflow: 'hidden' }}>
-      {/* Top heading and View All button */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h4">Pending Fuel Entry</Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => setShowAll(true)} // ✅ Toggle to show all
-        >
-          View All
-        </Button>
-      </Box>
+      <Typography variant="h4" gutterBottom>
+        Fuel Entry Review
+      </Typography>
 
       <Box sx={{ flexGrow: 1, minWidth: 0, height: '600px' }}>
         <DataGrid
@@ -236,6 +200,7 @@ const FuelAdmin = ({ darkMode }) => {
             <Box sx={{ p: 2 }}>
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
                 <Typography><strong>Vehicle No:</strong> {selectedEntry.vehicleNo}</Typography>
+                <Typography><strong>Fuel Type:</strong> {selectedEntry.fuelType}</Typography>
                 <Typography><strong>Entered By(PEN):</strong> {selectedEntry.pen}</Typography>
                 <Typography><strong>Date:</strong> {selectedEntry.dateString}</Typography>
                 <Typography><strong>Present KM:</strong> {selectedEntry.presentKm}</Typography>
@@ -245,7 +210,6 @@ const FuelAdmin = ({ darkMode }) => {
                 <Typography><strong>Amount (₹):</strong> {selectedEntry.amount}</Typography>
                 <Typography><strong>Bill No:</strong> {selectedEntry.billNo}</Typography>
                 <Typography><strong>Full Tank:</strong> {selectedEntry.fullTankText}</Typography>
-                <Typography><strong>Fuel Type:</strong> {selectedEntry.fuelType}</Typography>
                 <Typography>
                   <strong>Status:</strong>
                   <Box component="span" sx={{ ml: 1 }}>

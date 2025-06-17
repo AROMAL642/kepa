@@ -15,7 +15,6 @@ function FuelRegister({ darkMode, pen }) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState('');
   const [validVehicles, setValidVehicles] = useState([]);
-
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [fuelForm, setFuelForm] = useState({
@@ -30,10 +29,10 @@ function FuelRegister({ darkMode, pen }) {
     date: new Date().toISOString().split('T')[0],
     billNo: '',
     fullTank: 'no',
-    file: null
+    file: null,
+    fuelType: ''
   });
 
-  // Fetch valid vehicle numbers
   useEffect(() => {
     const fetchVehicleNumbers = async () => {
       try {
@@ -49,20 +48,17 @@ function FuelRegister({ darkMode, pen }) {
     fetchVehicleNumbers();
   }, []);
 
- const handleFuelChange = async (e) => {
-  const { name, value, type, files } = e.target;
-  
-  const newValue = name === 'vehicleNo' ? value.toUpperCase() : value;
+  const handleFuelChange = async (e) => {
+    const { name, value, type, files } = e.target;
+    const newValue = name === 'vehicleNo' ? value.toUpperCase() : value;
 
-  const updatedForm = {
-    ...fuelForm,
-    [name]: type === 'file' ? files[0] : newValue
-  };
+    const updatedForm = {
+      ...fuelForm,
+      [name]: type === 'file' ? files[0] : newValue
+    };
 
-    // Validate vehicle number
     if (name === 'vehicleNo') {
       const isValid = validVehicles.includes(value);
-      
       setError(isValid ? '' : 'Invalid vehicle number - not registered in system');
 
       if (isValid && value) {
@@ -78,7 +74,6 @@ function FuelRegister({ darkMode, pen }) {
       }
     }
 
-    // Auto-calculate KMPL
     if (['presentKm', 'previousKm', 'quantity'].includes(name)) {
       const present = parseFloat(updatedForm.presentKm) || 0;
       const previous = parseFloat(updatedForm.previousKm) || 0;
@@ -97,7 +92,11 @@ function FuelRegister({ darkMode, pen }) {
     setError('');
     setIsSubmitting(true);
 
-    const requiredFields = ['vehicleNo', 'pen', 'presentKm', 'quantity', 'amount', 'date', 'billNo'];
+    const requiredFields = [
+      'vehicleNo', 'pen', 'presentKm',
+      'quantity', 'amount', 'date',
+      'billNo', 'fuelType'
+    ];
     const missingFields = requiredFields.filter(field => !fuelForm[field]);
 
     if (missingFields.length > 0) {
@@ -138,7 +137,7 @@ function FuelRegister({ darkMode, pen }) {
       const data = await res.json();
 
       if (res.ok) {
-        setOpen(true); // Show dialog
+        setOpen(true);
         setFuelForm({
           vehicleNo: '',
           pen: pen || '',
@@ -151,9 +150,9 @@ function FuelRegister({ darkMode, pen }) {
           date: new Date().toISOString().split('T')[0],
           billNo: '',
           fullTank: 'no',
-          file: null
+          file: null,
+          fuelType: ''
         });
-      
       } else {
         setError(data.message || 'Failed to save fuel data');
       }
@@ -200,7 +199,23 @@ function FuelRegister({ darkMode, pen }) {
           )}
         </div>
 
-        {/* Dynamic Fields */}
+        {/* Fuel Type Dropdown */}
+        <div className="fieldStyle">
+          <label>Fuel Type*</label>
+          <select
+            className="inputStyle"
+            name="fuelType"
+            value={fuelForm.fuelType}
+            onChange={handleFuelChange}
+            style={themeStyle}
+            required
+          >
+            <option value="">-- Select Fuel Type --</option>
+            <option value="Petrol">Petrol</option>
+            <option value="Diesel">Diesel</option>
+          </select>
+        </div>
+
         {[
           { label: 'Firm Name', name: 'firmName', required: true },
           { label: 'Present km', name: 'presentKm', type: 'number', required: true },
@@ -267,19 +282,18 @@ function FuelRegister({ darkMode, pen }) {
         </div>
 
         <div className="fieldStyle">
-  <label>Upload Bill (required)</label>
-  <input 
-    type="file" 
-    name="file" 
-    onChange={handleFuelChange}
-    accept="image/*,.pdf"
-    required
-  />
-</div>
+          <label>Upload Bill (required)</label>
+          <input
+            type="file"
+            name="file"
+            onChange={handleFuelChange}
+            accept="image/*,.pdf"
+            required
+          />
+        </div>
 
-
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           className="buttonStyle"
           disabled={isSubmitting || !validVehicles.includes(fuelForm.vehicleNo)}
         >

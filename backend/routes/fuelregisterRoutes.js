@@ -2,14 +2,13 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const VehicleFuel = require('../models/Fuel');
-const Vehicle = require('../models/Vehicle'); // ✅ Import Vehicle model
-
+const Vehicle = require('../models/Vehicle');
 
 const storage = multer.memoryStorage();
-const upload = multer({ 
+const upload = multer({
   storage,
   limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB limit
+    fileSize: 5 * 1024 * 1024 // 5MB
   }
 });
 
@@ -17,30 +16,39 @@ const upload = multer({
 router.post('/', upload.single('file'), async (req, res) => {
   try {
     const requiredFields = [
-      'vehicleNo', 'pen', 'presentKm', 
+      'vehicleNo', 'pen', 'presentKm',
       'quantity', 'amount', 'date', 'billNo', 'fullTank'
     ];
 
     for (const field of requiredFields) {
       if (!req.body[field]) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           success: false,
-          message: `Missing required field: ${field}` 
+          message: `Missing required field: ${field}`
         });
       }
     }
 
     const {
       vehicleNo, pen, firmName, presentKm, quantity,
-      amount, previousKm, kmpl, date, billNo, fullTank
+      amount, kmpl, date, billNo, fullTank
     } = req.body;
 
-    let vehicleFuel = await VehicleFuel.findOne({ vehicleNo });
+    const latestKmDoc = await VehicleFuel.aggregate([
+      { $match: { vehicleNo } },
+      { $unwind: '$fuelEntries' },
+      { $sort: { 'fuelEntries.date': -1 } },
+      { $limit: 1 },
+      { $project: { presentKm: '$fuelEntries.presentKm' } }
+    ]);
 
+    const previousKm = latestKmDoc.length ? latestKmDoc[0].presentKm : 0;
+
+    let vehicleFuel = await VehicleFuel.findOne({ vehicleNo });
     if (!vehicleFuel) {
-      vehicleFuel = new VehicleFuel({ 
-        vehicleNo, 
-        fuelEntries: [] 
+      vehicleFuel = new VehicleFuel({
+        vehicleNo,
+        fuelEntries: []
       });
     }
 
@@ -50,7 +58,7 @@ router.post('/', upload.single('file'), async (req, res) => {
       presentKm: Number(presentKm),
       quantity: Number(quantity),
       amount: Number(amount),
-      previousKm: Number(previousKm || 0),
+      previousKm: Number(previousKm),
       kmpl: Number(kmpl || 0),
       date: new Date(date),
       billNo,
@@ -66,36 +74,38 @@ router.post('/', upload.single('file'), async (req, res) => {
     vehicleFuel.fuelEntries.push(newEntry);
     await vehicleFuel.save();
 
-    res.status(201).json({ 
+    res.status(201).json({
       success: true,
       message: 'Fuel entry saved successfully',
       vehicleNo,
+      previousKm,
       entryId: vehicleFuel.fuelEntries[vehicleFuel.fuelEntries.length - 1]._id
     });
 
   } catch (error) {
     console.error('Error saving fuel entry:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
       message: 'Failed to save fuel entry',
-      error: error.message 
+      error: error.message
     });
   }
 });
 
-// GET previousKm
+// GET previousKm for a vehicle
 router.get('/previousKm/:vehicleNo', async (req, res) => {
   try {
-    const vehicleFuel = await VehicleFuel.findOne({ 
-      vehicleNo: req.params.vehicleNo 
-    });
+    const { vehicleNo } = req.params;
 
-    let previousKm = 0;
+    const latestKmDoc = await VehicleFuel.aggregate([
+      { $match: { vehicleNo } },
+      { $unwind: '$fuelEntries' },
+      { $sort: { 'fuelEntries.date': -1 } },
+      { $limit: 1 },
+      { $project: { presentKm: '$fuelEntries.presentKm' } }
+    ]);
 
-    if (vehicleFuel && vehicleFuel.fuelEntries.length > 0) {
-      const sortedEntries = [...vehicleFuel.fuelEntries].sort((a, b) => b.date - a.date);
-      previousKm = sortedEntries[0].presentKm;
-    }
+    const previousKm = latestKmDoc.length ? latestKmDoc[0].presentKm : 0;
 
     res.status(200).json({ success: true, previousKm });
   } catch (error) {
@@ -128,33 +138,39 @@ router.get('/vehicle/:vehicleNo', async (req, res) => {
   }
 });
 
-// GET all vehicles (with fuel entries)
+// GET all vehicles with fuel entries and fuel type
 router.get('/', async (req, res) => {
   try {
     const vehiclesRaw = await VehicleFuel.find().sort({ vehicleNo: 1 });
 
-const vehicles = vehiclesRaw.map(vehicle => {
-  const fuelEntries = vehicle.fuelEntries.map(entry => {
-    return {
-      ...entry.toObject(),
-      file: entry.file ? entry.file.toString('base64') : null,
-      fileType: entry.fileType || null
-    };
-  });
+    const vehicleNos = vehiclesRaw.map(v => v.vehicleNo);
+    const fuelTypesMap = {};
 
-  return {
-    _id: vehicle._id,
-    vehicleNo: vehicle.vehicleNo,
-    fuelEntries
-  };
-});
+    const vehiclesInfo = await Vehicle.find({ number: { $in: vehicleNos } });
+    vehiclesInfo.forEach(v => {
+      fuelTypesMap[v.number] = v.fuelType;
+    });
 
-res.status(200).json({
-  success: true,
-  count: vehicles.length,
-  vehicles
-});
+    const vehicles = vehiclesRaw.map(vehicle => {
+      const fuelEntries = vehicle.fuelEntries.map(entry => ({
+        ...entry.toObject(),
+        file: entry.file ? entry.file.toString('base64') : null,
+        fileType: entry.fileType || null,
+        fuelType: fuelTypesMap[vehicle.vehicleNo] || 'Unknown'
+      }));
 
+      return {
+        _id: vehicle._id,
+        vehicleNo: vehicle.vehicleNo,
+        fuelEntries
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      count: vehicles.length,
+      vehicles
+    });
 
   } catch (error) {
     console.error('Error fetching vehicles:', error);
@@ -162,16 +178,11 @@ res.status(200).json({
   }
 });
 
-
-
-
 // Validate vehicle number
 router.get('/validate-vehicle/:vehicleNo', async (req, res) => {
   try {
-    const vehicle = await Vehicle.findOne({ 
-      number: req.params.vehicleNo 
-    });
-    
+    const vehicle = await Vehicle.findOne({ number: req.params.vehicleNo });
+
     if (!vehicle) {
       return res.status(404).json({
         success: false,
@@ -197,8 +208,7 @@ router.get('/validate-vehicle/:vehicleNo', async (req, res) => {
   }
 });
 
-
-// update status bu fuel section
+// Update fuel entry status (approve/reject)
 router.put('/:vehicleNo/:entryId', async (req, res) => {
   const { vehicleNo, entryId } = req.params;
   const { status } = req.body;
@@ -216,7 +226,7 @@ router.put('/:vehicleNo/:entryId', async (req, res) => {
       return res.status(404).json({ message: 'Fuel entry not found' });
     }
 
-    entry.status = status.toLowerCase(); // enforce lowercase: 'approved' / 'rejected'
+    entry.status = status.toLowerCase();
     await vehicleFuel.save();
 
     res.status(200).json({ message: 'Status updated successfully', entry });
@@ -225,6 +235,5 @@ router.put('/:vehicleNo/:entryId', async (req, res) => {
     res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 });
-
 
 module.exports = router;

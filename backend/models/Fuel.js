@@ -12,6 +12,7 @@ const fuelEntrySchema = new mongoose.Schema({
   date: { type: Date, required: true, default: Date.now },
   billNo: { type: String, required: true },
   fullTank: { type: String, enum: ['yes', 'no'], required: true },
+  
   file: { type: Buffer },
   fileType: { type: String },
   status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
