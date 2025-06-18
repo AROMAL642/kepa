@@ -9,6 +9,47 @@
   margin-bottom: 20px;
 }
 
+.form-section {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px;
+}
+
+.form-left {
+  flex: 2;
+  padding-right: 20px;
+}
+
+.form-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.upload-icon {
+  width: 100px;
+  height: 100px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.upload-section {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+
 .fuel-table {
   width: 100%;
   border-collapse: collapse;

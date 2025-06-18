@@ -88,6 +88,30 @@ router.get('/view/:pen', async (req, res) => {
 });
 
 
+//view eyetest report by admin
+router.get('/details/:pen', async (req, res) => {
+  try {
+    const { pen } = req.params;
+    const reportDoc = await EyeTestReport.findOne({ pen });
+
+    if (!reportDoc || reportDoc.reports.length === 0) {
+      return res.status(404).json({ message: 'No Eye Test Report found for this PEN' });
+    }
+
+    const latestReport = reportDoc.reports[0];
+
+    res.status(200).json({
+      pen,
+      date: latestReport.date,
+      fileType: latestReport.fileType,
+      // Uncomment the next line if you want to send base64 too
+      // fileData: latestReport.fileData
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving Eye Test details', error: error.message });
+  }
+});
+
 
 
 module.exports = router;

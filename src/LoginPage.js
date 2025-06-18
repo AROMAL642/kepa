@@ -14,8 +14,7 @@ const LoginPage = () => {
     try {
       const res = await axios.post('http://localhost:5000/login', { pen, password });
 
-
-       const { role } = res.data;
+      const { role } = res.data;
 
       if (role === 'admin') {
         const adminData = {
@@ -55,30 +54,35 @@ const LoginPage = () => {
         navigate('/user');
       }
 
-      else if (role === 'fuel' || role === 'mechanic') {
-        // Shared format for fuel & mechanic dashboards
-        localStorage.setItem('fuelPen', res.data.pen);
-        localStorage.setItem('fuelEmail', res.data.email);
-        localStorage.setItem('fuelName', res.data.name);
-        localStorage.setItem('fuelPhone', res.data.phone);
-        localStorage.setItem('fuelDob', res.data.dob);
-        localStorage.setItem('fuelLicenseNo', res.data.licenseNo);
-        localStorage.setItem('fuelBloodGroup', res.data.bloodGroup);
-        localStorage.setItem('fuelGender', res.data.gender);
-        localStorage.setItem('fuelPhoto', res.data.photo);
-        localStorage.setItem('fuelSignature', res.data.signature);
-        localStorage.setItem('fuelRole', role);
+      else if (role === 'fuel' || role === 'mechanic' || role === 'repair') {
+        const commonData = {
+          pen: res.data.pen,
+          email: res.data.email,
+          name: res.data.name,
+          phone: res.data.phone,
+          dob: res.data.dob,
+          licenseNo: res.data.licenseNo,
+          bloodGroup: res.data.bloodGroup,
+          gender: res.data.gender,
+          photo: res.data.photo,
+          signature: res.data.signature,
+          role: res.data.role
+        };
 
-        // Redirect appropriately
-        if (role === 'fuel') navigate('/fuel');
-        else if (role === 'mechanic') navigate('/mechanic');
+        const prefix = role; // 'fuel', 'mechanic', or 'repair'
+        Object.entries(commonData).forEach(([key, value]) => {
+          const localStorageKey = `${prefix}${key.charAt(0).toUpperCase()}${key.slice(1)}`;
+          localStorage.setItem(localStorageKey, value);
+        });
+
+        // Navigate based on role
+        navigate(`/${role}`);
       }
 
     } catch (error) {
       const msg = error.response?.data?.message || 'Network or server error';
       alert('Login failed: ' + msg);
     }
-
   };
 
   return (

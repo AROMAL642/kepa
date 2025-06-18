@@ -4,7 +4,6 @@ import SkeletonChildren from './admindashboardcomponents/SkeletonUI';
 import MechanicRepairList from './mechanicdashboardcomponents/MechanicRepairList';
 import SearchVehicleDetails from './mechanicdashboardcomponents/SearchVehicleDetails';
 import VerifiedUsersTable from './mechanicdashboardcomponents/VerifiedUsersTable';
-
 import './css/admindashboard.css';
 import './css/fueladmin.css';
 

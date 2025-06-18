@@ -167,12 +167,14 @@ const ViewPrintRegisters = () => {
         </FormControl>
 
         {vehicleOption === 'individual' && (
-          <TextField
-            label="Vehicle Number"
-            value={vehicleNumber}
-            onChange={(e) => setVehicleNumber(e.target.value)}
-            fullWidth
-          />
+         <TextField
+          placeholder="eg.KL01AA1234"
+          label="Vehicle Number"
+          value={vehicleNumber}
+          onChange={(e) => setVehicleNumber(e.target.value.toUpperCase())}
+          fullWidth
+         />
+
         )}
 
         <TextField
