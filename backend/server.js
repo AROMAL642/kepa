@@ -9,10 +9,7 @@ const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const app = express(); 
 const repairRequestRoutes = require('./routes/repairRequestRoutes');
-
-
-
-
+const mechanicRoutes = require('./routes/mechanicRoutes');
 
 
 // Middleware
@@ -22,6 +19,7 @@ const UPLOADS_DIR = path.join(__dirname, 'uploads');
 app.use('/uploads', express.static(UPLOADS_DIR));
 //app.use('/api/repair-request', repairRequestRoutes);
 app.use('/api/repair-request', require('./routes/repairRequestRoutes'));
+app.use('/api/mechanic', mechanicRoutes);
 
 
 // MongoDB Connection
@@ -197,6 +195,9 @@ app.get('/api/admin/:email', async (req, res) => {
 const userRoutes = require('./routes/Edituser');
 app.use('/api/users', userRoutes); 
 
+app.use('/api', userRoutes);
+
+
 // Register by Admin Route
 const registerByAdminRoute = require('./routes/registerbyadmin');
 app.use('/registerbyadmin', registerByAdminRoute);
@@ -255,11 +256,13 @@ const accidentRoutes = require('./routes/accidentreportRoutes');
 app.use('/api/accidents', accidentRoutes);
 
 //eye test report
-
-
 const eyeTestRoutes = require('./routes/eyeTestRoutes');
 app.use('/api/eyetests', eyeTestRoutes);
 
+//view print registerd
+
+const reportRoutes = require('./routes/viewprintregisterRoutes');
+app.use('/api', reportRoutes);
 
 
 // Fetch all unverified users

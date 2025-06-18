@@ -18,19 +18,31 @@ const MechanicPendingRequests = ({ darkMode }) => {
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
-  const [files, setFiles] = useState({}); // report & bill
+  const [files, setFiles] = useState({});
   const [statuses, setStatuses] = useState({});
 
   const fetchMechanicRequests = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/mechanic'); // update URL as needed
-      const requests = response.data.map((req, index) => ({
-        ...req,
-        id: req._id,
-        slNo: index + 1,
-        dateString: new Date(req.date).toLocaleDateString(),
-      }));
+      const response = await axios.get('http://localhost:5000/api/mechanic/approved');
+      const requests = response.data.map((req, index) => {
+        const status = req.status || 'Pending';
+        return {
+          ...req,
+          id: req._id,
+          slNo: index + 1,
+          dateString: new Date(req.date).toLocaleDateString(),
+          status,
+        };
+      });
+
       setRows(requests);
+
+      // Initialize statuses
+      const initialStatuses = {};
+      requests.forEach((req) => {
+        initialStatuses[req._id] = req.status;
+      });
+      setStatuses(initialStatuses);
     } catch (error) {
       console.error('Error fetching mechanic requests:', error);
     } finally {
@@ -63,14 +75,20 @@ const MechanicPendingRequests = ({ darkMode }) => {
 
   const handleSubmit = async (row) => {
     const formData = new FormData();
-    if (files[row.id]?.report) formData.append('report', files[row.id].report);
-    if (files[row.id]?.bill) formData.append('bill', files[row.id].bill);
+
+    if (!files[row.id]?.report || !files[row.id]?.bill) {
+      alert('Please upload both report and bill before submitting.');
+      return;
+    }
+
+    formData.append('report', files[row.id].report);
+    formData.append('bill', files[row.id].bill);
     formData.append('status', statuses[row.id] || 'Pending');
 
     try {
-      await axios.post(`http://localhost:5000/api/mechanic/${row._id}/submit`, formData); // update URL
+      await axios.post(`http://localhost:5000/api/mechanic/${row._id}/submit`, formData);
       alert('Submitted successfully');
-      fetchMechanicRequests(); // refresh
+      fetchMechanicRequests();
     } catch (err) {
       console.error('Submit failed:', err);
       alert('Failed to submit');
@@ -79,6 +97,7 @@ const MechanicPendingRequests = ({ darkMode }) => {
 
   const columns = [
     { field: 'slNo', headerName: 'Sl No', flex: 0.5 },
+    { field: 'vehicleNo', headerName: 'Vehicle No', flex: 1 },
     { field: 'dateString', headerName: 'Date', flex: 1 },
     {
       field: 'viewRequest',
@@ -101,11 +120,16 @@ const MechanicPendingRequests = ({ darkMode }) => {
       headerName: 'Upload Report',
       flex: 2,
       renderCell: (params) => (
-        <input
-          type="file"
-          accept=".pdf,.png,.jpg"
-          onChange={(e) => handleFileChange(e, params.row.id, 'report')}
-        />
+        <Box>
+          <input
+            type="file"
+            accept=".pdf,.png,.jpg"
+            onChange={(e) => handleFileChange(e, params.row.id, 'report')}
+          />
+          {files[params.row.id]?.report && (
+            <Typography variant="body2">{files[params.row.id].report.name}</Typography>
+          )}
+        </Box>
       ),
     },
     {
@@ -116,7 +140,7 @@ const MechanicPendingRequests = ({ darkMode }) => {
         <TextField
           size="small"
           variant="outlined"
-          defaultValue={params.row.status || 'Pending'}
+          value={statuses[params.row.id] || 'Pending'}
           onChange={(e) => handleStatusChange(e, params.row.id)}
         />
       ),
@@ -126,11 +150,16 @@ const MechanicPendingRequests = ({ darkMode }) => {
       headerName: 'Upload Bill',
       flex: 2,
       renderCell: (params) => (
-        <input
-          type="file"
-          accept=".pdf,.png,.jpg"
-          onChange={(e) => handleFileChange(e, params.row.id, 'bill')}
-        />
+        <Box>
+          <input
+            type="file"
+            accept=".pdf,.png,.jpg"
+            onChange={(e) => handleFileChange(e, params.row.id, 'bill')}
+          />
+          {files[params.row.id]?.bill && (
+            <Typography variant="body2">{files[params.row.id].bill.name}</Typography>
+          )}
+        </Box>
       ),
     },
     {
@@ -152,7 +181,7 @@ const MechanicPendingRequests = ({ darkMode }) => {
   return (
     <Box sx={{ p: 2 }}>
       <Typography variant="h4" gutterBottom>
-        Mechanic Pending Requests
+        Mechanic Requests
       </Typography>
 
       {loading ? (
@@ -187,7 +216,8 @@ const MechanicPendingRequests = ({ darkMode }) => {
               <Typography><strong>Sl No:</strong> {selectedRow.slNo}</Typography>
               <Typography><strong>Date:</strong> {selectedRow.dateString}</Typography>
               <Typography><strong>Status:</strong> {selectedRow.status || 'Pending'}</Typography>
-              {/* Add more fields if available in the mechanic data */}
+              <Typography><strong>Vehicle No:</strong> {selectedRow.vehicleNo}</Typography>
+              {/* Add more fields as needed */}
             </Box>
           )}
         </DialogContent>

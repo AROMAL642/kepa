@@ -61,10 +61,15 @@ function MechanicDashboard() {
 
   return (
     <div>
-      <ResponsiveAppBar 
-        photo={mechanicData.photo} 
+   
+        <ResponsiveAppBar
+          photo={mechanicData.photo} 
         name={mechanicData.name} 
-        role={mechanicData.role} 
+        role={mechanicData.role}
+          isDrawerOpen={isDrawerOpen}
+          onDrawerToggle={() => setIsDrawerOpen(!isDrawerOpen)}
+          onSelectTab={(tab) => setActiveTab(tab)}
+
       />
 
       <button className="drawer-toggle-btn" onClick={() => setIsDrawerOpen(!isDrawerOpen)}>
@@ -179,7 +184,7 @@ function MechanicDashboard() {
 
           {activeTab === 'pending' && (
             <div style={{ padding: '20px' }}>
-              <h2>Pending Repair Requests</h2>
+              <h2>Pending Mechanic Requests</h2>
               <MechanicPendingRequests/>
             </div>
           )}

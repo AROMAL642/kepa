@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 
-
 const AccidentReportForm = ({ themeStyle, pen }) => {
   const [vehicleNo, setVehicleNo] = useState('');
   const [accidentTime, setAccidentTime] = useState('');
@@ -53,10 +52,16 @@ const AccidentReportForm = ({ themeStyle, pen }) => {
       return;
     }
 
+    if (!e.target.date.value) {
+      alert('Please select the date of accident!');
+      return;
+    }
+
     const formData = new FormData();
     formData.append('vehicleNo', vehicleNo);
     formData.append('pen', pen);
     formData.append('accidentTime', accidentTime);
+    formData.append('date', e.target.date.value); // ✅ FIXED: Date now added
     formData.append('location', e.target.location.value);
     formData.append('description', e.target.description.value);
     if (imageFile) formData.append('image', imageFile);
@@ -68,6 +73,11 @@ const AccidentReportForm = ({ themeStyle, pen }) => {
       });
       if (response.ok) {
         alert('Accident form submitted successfully!');
+        // Clear form after submission
+        setVehicleNo('');
+        setAccidentTime('');
+        setImageFile(null);
+        e.target.reset();
       } else {
         alert('Error submitting accident form.');
       }
