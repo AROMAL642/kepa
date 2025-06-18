@@ -266,17 +266,18 @@ app.use('/api/eye-test', eyeTestRoutes);
 const reportRoutes = require('./routes/viewprintregisterRoutes');
 app.use('/api', reportRoutes);
 
-//app.use('/api/repair-request', repairRequestRoutes);
+//repair requests
 
 const repairRequestRoutes = require('./routes/repairRequestRoutes');
-//const mechanicRepairRoutes = require('./routes/mechanicRepairRoutes');
-
 app.use('/api/repairRequestRoutes', require('./routes/repairRequestRoutes'));
-
-
 app.use('/api/repair-request', require('./routes/repairRequestRoutes'));
-//app.use('/api/mechanic-repair',require('./routes/mechanicRepairRoutes'));
-//const mechanicRepairRoutes = require('./routes/mechanicRepairRoutes');
+
+const repairRoutes = require('./routes/repairRequestRoutes');
+app.use('/api/repairs', repairRoutes);
+
+//stock register
+const stockRoutes = require('./routes/stockRoutes');
+app.use('/api/stocks', stockRoutes);
 
 
 // Fetch all unverified users
