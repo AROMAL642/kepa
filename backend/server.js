@@ -258,6 +258,8 @@ app.use('/api/accidents', accidentRoutes);
 //eye test report
 const eyeTestRoutes = require('./routes/eyeTestRoutes');
 app.use('/api/eyetests', eyeTestRoutes);
+app.use('/api/eye-test', eyeTestRoutes);
+
 
 //view print registerd
 

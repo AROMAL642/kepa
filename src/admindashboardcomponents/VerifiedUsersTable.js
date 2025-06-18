@@ -18,6 +18,7 @@ const VerifiedUsersTable = ({ themeStyle }) => {
   const [openDialog, setOpenDialog] = useState(false);
   const [roleAssignments, setRoleAssignments] = useState({});
   const [updatingRole, setUpdatingRole] = useState(null);
+  const [eyeTestLoading, setEyeTestLoading] = useState(false);
 
   useEffect(() => {
     const fetchVerifiedUsers = async () => {
@@ -113,6 +114,31 @@ const VerifiedUsersTable = ({ themeStyle }) => {
     } catch (error) {
       console.error('Error deleting user:', error);
       alert('Failed to delete user due to a network or server error');
+    }
+  };
+
+  const handleViewEyeTestReport = async () => {
+    if (!selectedUser || !selectedUser.pen) return;
+
+    setEyeTestLoading(true);
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/eye-test/view/${selectedUser.pen}`);
+
+      if (!response.ok) {
+        alert('No Eye Test Report found for this user.');
+        setEyeTestLoading(false);
+        return;
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    } catch (error) {
+      console.error('Error fetching Eye Test Report:', error);
+      alert('Failed to fetch Eye Test Report');
+    } finally {
+      setEyeTestLoading(false);
     }
   };
 
@@ -282,14 +308,27 @@ const VerifiedUsersTable = ({ themeStyle }) => {
             </Box>
           )}
         </DialogContent>
-        <DialogActions style={{ background: themeStyle.background, display: 'flex', justifyContent: 'space-between' }}>
-          <Button
-            onClick={handleRemoveUser}
-            variant="contained"
-            color="error"
-          >
-            Remove User
-          </Button>
+        <DialogActions
+          style={{
+            background: themeStyle.background,
+            display: 'flex',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '10px',
+          }}
+        >
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button onClick={handleViewEyeTestReport} variant="outlined" disabled={eyeTestLoading}>
+              {eyeTestLoading ? 'Loading...' : 'View Eye Test Report'}
+            </Button>
+            <Button
+              onClick={handleRemoveUser}
+              variant="contained"
+              color="error"
+            >
+              Remove User
+            </Button>
+          </Box>
           <Button onClick={() => setOpenDialog(false)} style={{ color: themeStyle.color }}>
             Close
           </Button>

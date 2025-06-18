@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 
 import LoginPage from './LoginPage';
+import RepairDashboard from './RepairSectionDashboard';
 import RegisterPage from './RegisterPage';
 import AdminDashboard from './AdminDashboard';
 import UserDashboard from './UserDashboard';
@@ -10,6 +11,7 @@ import AddRemoveVehicleForm from './admindashboardcomponents/AddRemoveVehicleFor
 import SearchVehicleDetails from './userdashboardcomponents/SearchVehicleDetails';
 import RepairRequestForm from './userdashboardcomponents/RepairRequestForm';
 import FuelSectionDashboard from './FuelSectionDashboard';
+import FuelAdmin2 from './admindashboardcomponents/FuelAdmin2';
 import MechanicDashboard from './MechanicDashboard';
 import ResetPassword from './ResetPassword';
 import NotFound from './404';
@@ -52,6 +54,9 @@ function AppWrapper() {
         <Route path="/fuel" element={<FuelSectionDashboard />} />
         <Route path="/mechanic" element={<MechanicDashboard />} />
         <Route path="/resetpassword" element={<ResetPassword />} />
+        <Route path="/fuel-admin2" element={<FuelAdmin2 />} />
+        <Route path="/repair" element={<RepairDashboard />} />
+
         <Route path="*" element={<NotFound />} />
       </Routes>
     </div>

@@ -15,7 +15,6 @@ function FuelRegister({ darkMode, pen }) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState('');
   const [validVehicles, setValidVehicles] = useState([]);
-
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [fuelForm, setFuelForm] = useState({
@@ -30,10 +29,10 @@ function FuelRegister({ darkMode, pen }) {
     date: new Date().toISOString().split('T')[0],
     billNo: '',
     fullTank: 'no',
-    file: null
+    file: null,
+    fuelType: ''
   });
 
-  // Fetch valid vehicle numbers
   useEffect(() => {
     const fetchVehicleNumbers = async () => {
       try {
@@ -49,43 +48,48 @@ function FuelRegister({ darkMode, pen }) {
     fetchVehicleNumbers();
   }, []);
 
- const handleFuelChange = async (e) => {
-  const { name, value, type, files } = e.target;
-  
-  const newValue = name === 'vehicleNo' ? value.toUpperCase() : value;
+  const handleFuelChange = async (e) => {
+    const { name, value, type, files } = e.target;
+    const newValue = name === 'vehicleNo' ? value.toUpperCase() : value;
 
-  const updatedForm = {
-    ...fuelForm,
-    [name]: type === 'file' ? files[0] : newValue
-  };
+    let updatedForm = {
+      ...fuelForm,
+      [name]: type === 'file' ? files[0] : newValue
+    };
 
-    // Validate vehicle number
+    // Vehicle number validation and fetching previousKm
     if (name === 'vehicleNo') {
-      const isValid = validVehicles.includes(value);
-      
+      const isValid = validVehicles.includes(newValue);
       setError(isValid ? '' : 'Invalid vehicle number - not registered in system');
 
-      if (isValid && value) {
+      if (isValid && newValue) {
         try {
-          const response = await fetch(`http://localhost:5000/api/fuel/previousKm/${value}`);
+          const response = await fetch(`http://localhost:5000/api/fuel/previousKm/${newValue}`);
           const data = await response.json();
           if (response.ok) {
             updatedForm.previousKm = data.previousKm || 0;
+          } else {
+            updatedForm.previousKm = 0;
           }
         } catch (error) {
           console.error('Error fetching previous KM:', error);
+          updatedForm.previousKm = 0;
         }
+      } else {
+        updatedForm.previousKm = '';
       }
     }
 
-    // Auto-calculate KMPL
-    if (['presentKm', 'previousKm', 'quantity'].includes(name)) {
+    // Calculate KMPL
+    if (['presentKm', 'previousKm', 'quantity'].includes(name) || name === 'vehicleNo') {
       const present = parseFloat(updatedForm.presentKm) || 0;
       const previous = parseFloat(updatedForm.previousKm) || 0;
       const quantity = parseFloat(updatedForm.quantity) || 0;
-      if (present > 0 && previous >= 0 && quantity > 0) {
-        const distance = present - previous;
-        updatedForm.kmpl = (distance / quantity).toFixed(2);
+      if (present > 0 && previous >= 0 && quantity > 0 && present > previous) {
+        updatedForm.kmpl = (present - previous) / quantity;
+        updatedForm.kmpl = updatedForm.kmpl.toFixed(2);
+      } else {
+        updatedForm.kmpl = '';
       }
     }
 
@@ -97,7 +101,11 @@ function FuelRegister({ darkMode, pen }) {
     setError('');
     setIsSubmitting(true);
 
-    const requiredFields = ['vehicleNo', 'pen', 'presentKm', 'quantity', 'amount', 'date', 'billNo'];
+    const requiredFields = [
+      'vehicleNo', 'pen', 'presentKm',
+      'quantity', 'amount', 'date',
+      'billNo', 'fuelType'
+    ];
     const missingFields = requiredFields.filter(field => !fuelForm[field]);
 
     if (missingFields.length > 0) {
@@ -138,7 +146,7 @@ function FuelRegister({ darkMode, pen }) {
       const data = await res.json();
 
       if (res.ok) {
-        setOpen(true); // Show dialog
+        setOpen(true);
         setFuelForm({
           vehicleNo: '',
           pen: pen || '',
@@ -151,9 +159,9 @@ function FuelRegister({ darkMode, pen }) {
           date: new Date().toISOString().split('T')[0],
           billNo: '',
           fullTank: 'no',
-          file: null
+          file: null,
+          fuelType: ''
         });
-      
       } else {
         setError(data.message || 'Failed to save fuel data');
       }
@@ -200,7 +208,23 @@ function FuelRegister({ darkMode, pen }) {
           )}
         </div>
 
-        {/* Dynamic Fields */}
+        {/* Fuel Type Dropdown */}
+        <div className="fieldStyle">
+          <label>Fuel Type*</label>
+          <select
+            className="inputStyle"
+            name="fuelType"
+            value={fuelForm.fuelType}
+            onChange={handleFuelChange}
+            style={themeStyle}
+            required
+          >
+            <option value="">-- Select Fuel Type --</option>
+            <option value="Petrol">Petrol</option>
+            <option value="Diesel">Diesel</option>
+          </select>
+        </div>
+
         {[
           { label: 'Firm Name', name: 'firmName', required: true },
           { label: 'Present km', name: 'presentKm', type: 'number', required: true },
@@ -267,19 +291,18 @@ function FuelRegister({ darkMode, pen }) {
         </div>
 
         <div className="fieldStyle">
-  <label>Upload Bill (required)</label>
-  <input 
-    type="file" 
-    name="file" 
-    onChange={handleFuelChange}
-    accept="image/*,.pdf"
-    required
-  />
-</div>
+          <label>Upload Bill (required)</label>
+          <input
+            type="file"
+            name="file"
+            onChange={handleFuelChange}
+            accept="image/*,.pdf"
+            required
+          />
+        </div>
 
-
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           className="buttonStyle"
           disabled={isSubmitting || !validVehicles.includes(fuelForm.vehicleNo)}
         >

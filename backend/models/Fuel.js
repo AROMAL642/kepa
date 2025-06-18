@@ -1,27 +1,25 @@
 const mongoose = require('mongoose');
 
-// Sub-schema for each fuel entry
-const fuelEntrySchema = new mongoose.Schema({
+const FuelEntrySchema = new mongoose.Schema({
   pen: { type: String, required: true },
-  firmName: { type: String, required: true },
+  firmName: { type: String },
   presentKm: { type: Number, required: true },
+  previousKm: { type: Number },
   quantity: { type: Number, required: true },
   amount: { type: Number, required: true },
-  previousKm: { type: Number, required: true },
-  kmpl: { type: Number, required: true },
-  date: { type: Date, required: true, default: Date.now },
+  kmpl: { type: Number },
+  date: { type: Date, required: true },
   billNo: { type: String, required: true },
-  fullTank: { type: String, enum: ['yes', 'no'], required: true },
+  fullTank: { type: Boolean, required: true }, // ✅ changed from enum to Boolean
   file: { type: Buffer },
   fileType: { type: String },
-  status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
-  createdAt: { type: Date, default: Date.now }
-}, { _id: true });
+  fuelType: { type: String, required: true },
+  status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' }
+});
 
-// Main schema: one document per vehicle
-const vehicleFuelSchema = new mongoose.Schema({
+const VehicleFuelSchema = new mongoose.Schema({
   vehicleNo: { type: String, required: true, unique: true },
-  fuelEntries: [fuelEntrySchema]
-}, { timestamps: true });
+  fuelEntries: [FuelEntrySchema]
+});
 
-module.exports = mongoose.model('VehicleFuel', vehicleFuelSchema);
+module.exports = mongoose.model('VehicleFuel', VehicleFuelSchema);

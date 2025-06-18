@@ -36,39 +36,25 @@ const FuelAdmin = ({ darkMode }) => {
     fetchFuelData();
   }, []);
 
-  const handleStatusUpdate = async (entry, newStatus) => {
-    try {
-      await axios.put(
-        `http://localhost:5000/api/fuel/${entry.vehicleNo}/${entry._id}`,
-        { status: newStatus }
-      );
-      await fetchFuelData(); // Refresh list after status update
-    } catch (error) {
-      console.error('Failed to update status:', error);
-      alert('Error updating status');
-    }
-  };
+  const allEntries = vehicles.flatMap((vehicle) =>
+    vehicle.fuelEntries
+      .filter((entry) => (entry.status || 'Pending').toLowerCase() === 'pending')
+      .map((entry) => ({
+        ...entry,
+        id: entry._id,
+        vehicleNo: vehicle.vehicleNo,
+        dateString: new Date(entry.date).toLocaleDateString(),
+        fullTankText: entry.fullTank === 'yes' ? 'Yes' : 'No',
+        status: entry.status || 'Pending',
+        fuelType: entry.fuelType || 'N/A'
+      }))
+  );
 
-const allEntries = vehicles.flatMap(vehicle =>
-  vehicle.fuelEntries
-    .filter(entry => (entry.status || 'Pending').toLowerCase() === 'pending')
-    .map(entry => ({
-      ...entry,
-      id: entry._id,
-      vehicleNo: vehicle.vehicleNo,
-      dateString: new Date(entry.date).toLocaleDateString(),
-      fullTankText: entry.fullTank === 'yes' ? 'Yes' : 'No',
-      status: entry.status || 'Pending'
-    }))
-);
-
-
-  // Function to get chip color based on status
   const getStatusChip = (status) => {
     let color;
     let label = status;
-    
-    switch(status.toLowerCase()) {
+
+    switch (status.toLowerCase()) {
       case 'approved':
         color = 'success';
         label = 'Approved';
@@ -81,13 +67,13 @@ const allEntries = vehicles.flatMap(vehicle =>
         color = 'warning';
         label = 'Pending';
     }
-    
+
     return (
-      <Chip 
-        label={label} 
-        color={color} 
+      <Chip
+        label={label}
+        color={color}
         variant="outlined"
-        sx={{ 
+        sx={{
           fontWeight: 'bold',
           minWidth: 100
         }}
@@ -101,45 +87,25 @@ const allEntries = vehicles.flatMap(vehicle =>
     { field: 'dateString', headerName: 'Date', flex: 1 },
     { field: 'presentKm', headerName: 'Present KM', flex: 1, type: 'number' },
     { field: 'previousKm', headerName: 'Previous KM', flex: 1, type: 'number' },
-    
     { field: 'quantity', headerName: 'Qty (L)', flex: 1, type: 'number' },
     { field: 'amount', headerName: 'Amount (₹)', flex: 1, type: 'number' },
     { field: 'billNo', headerName: 'Bill No', flex: 1 },
     { field: 'fullTankText', headerName: 'Full Tank', flex: 1 },
+    { field: 'fuelType', headerName: 'Fuel Type', flex: 1 },
     {
       field: 'status',
       headerName: 'Status',
       flex: 1.5,
       renderCell: (params) => (
-        <Box sx={{ pointerEvents: 'none' }}>
-          {getStatusChip(params.value)}
-        </Box>
+        <Box sx={{ pointerEvents: 'none' }}>{getStatusChip(params.value)}</Box>
       )
     },
     {
       field: 'actions',
       headerName: 'Actions',
-      flex: 2.5,
+      flex: 1,
       renderCell: (params) => (
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button
-            variant="contained"
-            size="small"
-            color="success"
-            disabled={params.row.status === 'Approved'}
-            onClick={() => handleStatusUpdate(params.row, 'Approved')}
-          >
-            Approve
-          </Button>
-          <Button
-            variant="contained"
-            size="small"
-            color="error"
-            disabled={params.row.status === 'Rejected'}
-            onClick={() => handleStatusUpdate(params.row, 'Rejected')}
-          >
-            Reject
-          </Button>
+        <Box>
           <Button
             variant="outlined"
             size="small"
@@ -212,13 +178,14 @@ const allEntries = vehicles.flatMap(vehicle =>
                 <Typography><strong>Amount (₹):</strong> {selectedEntry.amount}</Typography>
                 <Typography><strong>Bill No:</strong> {selectedEntry.billNo}</Typography>
                 <Typography><strong>Full Tank:</strong> {selectedEntry.fullTankText}</Typography>
+                <Typography><strong>Fuel Type:</strong> {selectedEntry.fuelType}</Typography>
+                <Typography><strong>Firm Name:</strong> {selectedEntry.firmName}</Typography>
                 <Typography>
-                  <strong>Status:</strong> 
+                  <strong>Status:</strong>
                   <Box component="span" sx={{ ml: 1 }}>
                     {getStatusChip(selectedEntry.status)}
                   </Box>
                 </Typography>
-                <Typography><strong>Firm Name:</strong> {selectedEntry.firmName}</Typography>
               </Box>
 
               {selectedEntry.file && (
