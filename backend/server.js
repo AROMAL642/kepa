@@ -8,7 +8,7 @@ const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const app = express(); 
-const repairRequestRoutes = require('./routes/repairRequestRoutes');
+
 
 
 
@@ -20,8 +20,6 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 app.use('/uploads', express.static(UPLOADS_DIR));
-//app.use('/api/repair-request', repairRequestRoutes);
-app.use('/api/repair-request', require('./routes/repairRequestRoutes'));
 
 
 // MongoDB Connection
@@ -59,15 +57,29 @@ app.post('/register', async (req, res) => {
   } = req.body;
 
   try {
-   
-
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({
-      pen, generalNo, name, email, phone, licenseNo,
-      dob, gender, bloodGroup, password: hashedPassword,
-      photo, signature,
-      verified: 'NO' // default
-    });
+
+    // Only include generalNo if it’s not an empty string
+    const userData = {
+      pen,
+      name,
+      email,
+      phone,
+      licenseNo,
+      dob,
+      gender,
+      bloodGroup,
+      password: hashedPassword,
+      photo,
+      signature,
+      verified: 'NO',
+    };
+
+    if (generalNo && generalNo.trim() !== '') {
+      userData.generalNo = generalNo.trim();
+    }
+
+    const newUser = new User(userData);
 
     await newUser.save();
     res.status(201).json({ message: 'Registration Request Sent Successfully. Wait for Approval.' });
@@ -76,6 +88,7 @@ app.post('/register', async (req, res) => {
     res.status(500).json({ message: 'Registration failed', error: err.message });
   }
 });
+
 
 
 // Login Route for User, Admin, and Fuel Section
@@ -182,6 +195,17 @@ app.get('/api/admin/:email', async (req, res) => {
 const userRoutes = require('./routes/Edituser');
 app.use('/api/users', userRoutes); 
 
+app.use('/api', userRoutes);
+
+
+// Register by Admin Route
+const registerByAdminRoute = require('./routes/registerbyadmin');
+app.use('/registerbyadmin', registerByAdminRoute);
+
+//reset password
+const resetPasswordRoute = require('./routes/resetPasswordRoute');
+app.use('/api', resetPasswordRoute);
+
 //  Movement Register Entry 
 
 const movementRoutes = require('./routes/movementRoutes');
@@ -223,15 +247,29 @@ app.use('/api/vehicles', vehicleRoutes);
 const userDetailsRoutes = require('./routes/userDetailsRoutes');
 app.use('/api/user-details', userDetailsRoutes);
 
+//delete user by admin
+
+app.use('/api/user-delete', userDetailsRoutes);
+
 //Accident Report
 const accidentRoutes = require('./routes/accidentreportRoutes');
 app.use('/api/accidents', accidentRoutes);
 
 //eye test report
-
-
 const eyeTestRoutes = require('./routes/eyeTestRoutes');
 app.use('/api/eyetests', eyeTestRoutes);
+
+//view print registerd
+
+const reportRoutes = require('./routes/viewprintregisterRoutes');
+app.use('/api', reportRoutes);
+
+//app.use('/api/repair-request', repairRequestRoutes);
+const repairRequestRoutes = require('./routes/repairRequestRoutes');
+//const mechanicRepairRoutes = require('./routes/mechanicRepairRoutes');
+
+app.use('/api/repair-request', require('./routes/repairRequestRoutes'));
+//app.use('/api/mechanic-repair',require('./routes/mechanicRepairRoutes'));
 
 
 

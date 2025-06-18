@@ -83,4 +83,19 @@ router.put('/:id/role', async (req, res) => {
 
 
 
+// DELETE user by PEN number
+router.delete('/pen/:pen', async (req, res) => {
+  try {
+    const deletedUser = await User.findOneAndDelete({ pen: req.params.pen });
+    if (!deletedUser) {
+      return res.status(404).json({ message: 'User with specified PEN not found' });
+    }
+    res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting user by PEN:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
 module.exports = router;

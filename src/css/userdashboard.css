@@ -226,3 +226,13 @@ body {
   cursor: pointer;
 }
 
+
+.app-bar {
+  width: 100%;
+  transition: width 0.3s ease;
+}
+
+.app-bar.drawer-open {
+  width: calc(100% - 1cm); /* shrink by 1cm */
+}
+

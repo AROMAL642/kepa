@@ -15,18 +15,18 @@ const RepairAdminTable = ({ themeStyle }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedRepair, setSelectedRepair] = useState(null);
 
+  // 🔄 Fetch repair data from backend
   const fetchRepairs = useCallback(async () => {
     try {
       const res = await fetch('http://localhost:5000/api/repair-request');
       const data = await res.json();
 
-      const formatted = data.map((item , index) => ({
+      const formatted = data.map((item, index) => ({
         slNo: index + 1,
         id: item._id,
         _id: item._id,
         pen: item.pen,
         vehicleNo: item.vehicleNo,
-        //userName: item.user?.name || 'Unknown',
         subject: item.subject,
         description: item.description,
         date: item.date,
@@ -58,6 +58,7 @@ const RepairAdminTable = ({ themeStyle }) => {
     setSelectedRepair(null);
   };
 
+  // ✅ Update status endpoint
   const updateStatus = async (id, status) => {
     try {
       const res = await fetch(`http://localhost:5000/api/repair-request/${id}/status`, {
@@ -77,61 +78,92 @@ const RepairAdminTable = ({ themeStyle }) => {
     }
   };
 
+  // ✅ Forward verified request to mechanic
+  const forwardToMechanic = async (id) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/repair-request/${id}/forward-to-mechanic`, {
+        method: 'PUT',
+      });
+
+      if (res.ok) {
+        alert('Request forwarded to mechanic');
+        await fetchRepairs();
+      } else {
+        const error = await res.json();
+        alert(error.message || 'Failed to forward request');
+      }
+    } catch (err) {
+      console.error('Error forwarding:', err);
+      alert('Network error while forwarding');
+    }
+  };
+
   const columns = [
     { field: 'slNo', headerName: 'Sl. No', width: 90 },
-
     { field: 'vehicleNo', headerName: 'Vehicle No', width: 130 },
     { field: 'pen', headerName: 'PEN', width: 100 },
-    //{ field: 'userName', headerName: 'User Name', width: 150 },
-    { field: 'subject', headerName: 'Subject', width: 180 , disableColumnMenu: true , sortable: false },
+    { field: 'subject', headerName: 'Subject', width: 180, disableColumnMenu: true, sortable: false },
     {
       field: 'status',
       headerName: 'Status',
-      width: 120,
+      width: 140,
       renderCell: (params) => {
         const colorMap = {
           verified: 'green',
           rejected: 'red',
-          pending: 'gray'
+          pending: 'gray',
+          forwarded: 'blue',
+          sent_to_repair_admin: 'orange'
         };
-        return <strong style={{ color: colorMap[params.value] || 'gray' }}>{params.value.toUpperCase()}</strong>;
+        return (
+          <strong style={{ color: colorMap[params.value] || 'gray' }}>
+            {params.value.toUpperCase().replace(/_/g, ' ')}
+          </strong>
+        );
       }
     },
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 270,
-      renderCell: (params) => (
-        <>
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={() => handleViewDetails(params.row)}
-            style={{ marginRight: 8 }}
-          >
-            View
-          </Button>
-          <Button
-            variant="contained"
-            color="success"
-            size="small"
-            onClick={() => updateStatus(params.row._id, 'verified')}
-            disabled={params.row.status === 'verified'}
-            style={{ marginRight: 4 }}
-          >
-            Verify
-          </Button>
-          <Button
-            variant="contained"
-            color="error"
-            size="small"
-            onClick={() => updateStatus(params.row._id, 'rejected')}
-            disabled={params.row.status === 'rejected'}
-          >
-            Reject
-          </Button>
-        </>
-      )
+      width: 300,
+      renderCell: (params) => {
+        const isVerifiedOrBeyond = ['verified', 'forwarded', 'sent_to_repair_admin', 'user_approved'].includes(params.row.status);
+
+        return (
+          <>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => handleViewDetails(params.row)}
+              style={{ marginRight: 8 }}
+            >
+              View
+            </Button>
+            <Button
+              variant="contained"
+              color="success"
+              size="small"
+              onClick={async () => {
+                await updateStatus(params.row._id, 'verified');
+                await forwardToMechanic(params.row._id);
+              }}
+              disabled={isVerifiedOrBeyond}
+              style={{ marginRight: 4 }}
+            >
+              Verify
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              size="small"
+              onClick={() => updateStatus(params.row._id, 'rejected')}
+              disabled={params.row.status === 'rejected'}
+            >
+              Reject
+            </Button>
+          </>
+        );
+      }
     }
   ];
 
@@ -147,6 +179,7 @@ const RepairAdminTable = ({ themeStyle }) => {
         style={{ background: themeStyle.background, color: themeStyle.color }}
       />
 
+      {/* 👇 Repair Details Dialog */}
       <Dialog open={dialogOpen} onClose={handleClose} fullWidth maxWidth="sm">
         <DialogTitle>Repair Request Details</DialogTitle>
         <DialogContent>

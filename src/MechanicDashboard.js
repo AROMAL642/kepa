@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ResponsiveAppBar from './admindashboardcomponents/ResponsiveAppBar';
 import SkeletonChildren from './admindashboardcomponents/SkeletonUI';
-import FuelPendingRequest from './fuelsectiondashboardcomponents/fuelpendingrequest';
+import MechanicRepairList from './mechanicdashboardcomponents/MechanicRepairList';
 import SearchVehicleDetails from './mechanicdashboardcomponents/SearchVehicleDetails';
 import VerifiedUsersTable from './mechanicdashboardcomponents/VerifiedUsersTable';
 
@@ -61,10 +61,15 @@ function MechanicDashboard() {
 
   return (
     <div>
-      <ResponsiveAppBar 
-        photo={mechanicData.photo} 
+   
+        <ResponsiveAppBar
+          photo={mechanicData.photo} 
         name={mechanicData.name} 
-        role={mechanicData.role} 
+        role={mechanicData.role}
+          isDrawerOpen={isDrawerOpen}
+          onDrawerToggle={() => setIsDrawerOpen(!isDrawerOpen)}
+          onSelectTab={(tab) => setActiveTab(tab)}
+
       />
 
       <button className="drawer-toggle-btn" onClick={() => setIsDrawerOpen(!isDrawerOpen)}>
@@ -179,8 +184,8 @@ function MechanicDashboard() {
 
           {activeTab === 'pending' && (
             <div style={{ padding: '20px' }}>
-              <h2>Pending Fuel Requests</h2>
-              <FuelPendingRequest />
+              <h2>Pending Requests</h2>
+              < MechanicRepairList />
             </div>
           )}
 
