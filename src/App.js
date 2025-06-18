@@ -55,6 +55,8 @@ function AppWrapper() {
         <Route path="/mechanic" element={<MechanicDashboard />} />
         <Route path="/resetpassword" element={<ResetPassword />} />
         <Route path="/fuel-admin2" element={<FuelAdmin2 />} />
+        <Route path="/repair" element={<RepairDashboard />} />
+
         <Route path="*" element={<NotFound />} />
       </Routes>
     </div>

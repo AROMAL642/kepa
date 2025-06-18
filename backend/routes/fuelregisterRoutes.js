@@ -4,6 +4,7 @@ const multer = require('multer');
 const VehicleFuel = require('../models/Fuel');
 const Vehicle = require('../models/Vehicle');
 
+// Configure multer
 const storage = multer.memoryStorage();
 const upload = multer({
   storage,
@@ -13,13 +14,15 @@ const upload = multer({
 });
 
 // POST route to save fuel entry
+// POST route to save fuel entry
 router.post('/', upload.single('file'), async (req, res) => {
   try {
     const requiredFields = [
       'vehicleNo', 'pen', 'presentKm',
-      'quantity', 'amount', 'date', 'billNo', 'fullTank'
+      'quantity', 'amount', 'date', 'billNo', 'fullTank', 'fuelType'
     ];
 
+    // Check for missing fields
     for (const field of requiredFields) {
       if (!req.body[field]) {
         return res.status(400).json({
@@ -29,22 +32,30 @@ router.post('/', upload.single('file'), async (req, res) => {
       }
     }
 
+    // Extract data from request
     const {
-      vehicleNo, pen, firmName, presentKm, quantity,
-      amount, kmpl, date, billNo, fullTank
+      vehicleNo, pen, firmName, presentKm,
+      quantity, amount, kmpl, date,
+      billNo, fullTank, fuelType
     } = req.body;
 
-    const latestKmDoc = await VehicleFuel.aggregate([
-      { $match: { vehicleNo } },
-      { $unwind: '$fuelEntries' },
-      { $sort: { 'fuelEntries.date': -1 } },
-      { $limit: 1 },
-      { $project: { presentKm: '$fuelEntries.presentKm' } }
-    ]);
+    // Get the latest entry's presentKm to set as previousKm
+    const latestVehicle = await VehicleFuel.findOne({ vehicleNo });
 
-    const previousKm = latestKmDoc.length ? latestKmDoc[0].presentKm : 0;
+    let previousKm = 0;
+    if (latestVehicle && latestVehicle.fuelEntries.length > 0) {
+      // Sort by date and then by _id (Mongo ObjectID has timestamp ordering)
+const sortedEntries = [...latestVehicle.fuelEntries].sort((a, b) => {
+  const dateDiff = new Date(b.date) - new Date(a.date);
+  if (dateDiff !== 0) return dateDiff;
+  return b._id.toString().localeCompare(a._id.toString()); // fallback to ObjectId order
+});
 
-    let vehicleFuel = await VehicleFuel.findOne({ vehicleNo });
+      previousKm = sortedEntries[0].presentKm;
+    }
+
+    // Create new or fetch existing vehicle fuel record
+    let vehicleFuel = latestVehicle;
     if (!vehicleFuel) {
       vehicleFuel = new VehicleFuel({
         vehicleNo,
@@ -52,17 +63,19 @@ router.post('/', upload.single('file'), async (req, res) => {
       });
     }
 
+    // Build new fuel entry
     const newEntry = {
       pen,
       firmName,
       presentKm: Number(presentKm),
       quantity: Number(quantity),
       amount: Number(amount),
-      previousKm: Number(previousKm),
+      previousKm,
       kmpl: Number(kmpl || 0),
       date: new Date(date),
       billNo,
-      fullTank,
+      fullTank: fullTank === 'yes' || fullTank === true || fullTank === 'true',
+      fuelType,
       status: 'pending'
     };
 
@@ -71,6 +84,7 @@ router.post('/', upload.single('file'), async (req, res) => {
       newEntry.fileType = req.file.mimetype;
     }
 
+    // Save the new entry
     vehicleFuel.fuelEntries.push(newEntry);
     await vehicleFuel.save();
 
@@ -91,6 +105,7 @@ router.post('/', upload.single('file'), async (req, res) => {
     });
   }
 });
+
 
 // GET previousKm for a vehicle
 router.get('/previousKm/:vehicleNo', async (req, res) => {

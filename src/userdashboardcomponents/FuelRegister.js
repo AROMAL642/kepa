@@ -52,35 +52,44 @@ function FuelRegister({ darkMode, pen }) {
     const { name, value, type, files } = e.target;
     const newValue = name === 'vehicleNo' ? value.toUpperCase() : value;
 
-    const updatedForm = {
+    let updatedForm = {
       ...fuelForm,
       [name]: type === 'file' ? files[0] : newValue
     };
 
+    // Vehicle number validation and fetching previousKm
     if (name === 'vehicleNo') {
-      const isValid = validVehicles.includes(value);
+      const isValid = validVehicles.includes(newValue);
       setError(isValid ? '' : 'Invalid vehicle number - not registered in system');
 
-      if (isValid && value) {
+      if (isValid && newValue) {
         try {
-          const response = await fetch(`http://localhost:5000/api/fuel/previousKm/${value}`);
+          const response = await fetch(`http://localhost:5000/api/fuel/previousKm/${newValue}`);
           const data = await response.json();
           if (response.ok) {
             updatedForm.previousKm = data.previousKm || 0;
+          } else {
+            updatedForm.previousKm = 0;
           }
         } catch (error) {
           console.error('Error fetching previous KM:', error);
+          updatedForm.previousKm = 0;
         }
+      } else {
+        updatedForm.previousKm = '';
       }
     }
 
-    if (['presentKm', 'previousKm', 'quantity'].includes(name)) {
+    // Calculate KMPL
+    if (['presentKm', 'previousKm', 'quantity'].includes(name) || name === 'vehicleNo') {
       const present = parseFloat(updatedForm.presentKm) || 0;
       const previous = parseFloat(updatedForm.previousKm) || 0;
       const quantity = parseFloat(updatedForm.quantity) || 0;
-      if (present > 0 && previous >= 0 && quantity > 0) {
-        const distance = present - previous;
-        updatedForm.kmpl = (distance / quantity).toFixed(2);
+      if (present > 0 && previous >= 0 && quantity > 0 && present > previous) {
+        updatedForm.kmpl = (present - previous) / quantity;
+        updatedForm.kmpl = updatedForm.kmpl.toFixed(2);
+      } else {
+        updatedForm.kmpl = '';
       }
     }
 

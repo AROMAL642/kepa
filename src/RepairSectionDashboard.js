@@ -1,24 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import ResponsiveAppBar from './admindashboardcomponents/ResponsiveAppBar';
 import SkeletonChildren from './admindashboardcomponents/SkeletonUI';
-//import VerifiedUserTable from './repairsectiondashboardcomponents/VerifiedUserTable';
-//import FuelPendingRequest from './fuelsectiondashboardcomponents/fuelpendingrequest';
-//import SearchVehicleDetails from './admindashboardcomponents/SearchVehicleDetails';
+import SearchVehicleDetails from './repairsectiondashboardcomponents/SearchVehicleDetails';
+import VerifiedUsersTable from './fuelsectiondashboardcomponents/VerifiedUsersTable';
+import RepairPendingRequest from './repairsectiondashboardcomponents/RepairPendingRequest';
 
 import './css/admindashboard.css';
 import './css/fueladmin.css';
 
+const RepairEntryReview = () => <div>Repair Entry Review Placeholder</div>;
+const EssentialityCertificate = () => <div>Essentiality Certificate Placeholder</div>;
+const TechnicalCertificate = () => <div>Technical Certificate Placeholder</div>;
+
 function RepairDashboard() {
-  //const [editMode, setEditMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('pending');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const [repairData, setRepairData] = useState({
     name: '',
     email: '',
     pen: '',
-    mobile: '',
+    phone: '',
     dob: '',
     licenseNo: '',
     bloodGroup: '',
@@ -29,174 +33,189 @@ function RepairDashboard() {
   });
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 800);
+    const timer = setTimeout(() => setLoading(false), 800);
     return () => clearTimeout(timer);
   }, []);
 
- useEffect(() => {
-  setRepairData({
-    name: localStorage.getItem('repairName') || '',
-    pen: localStorage.getItem('repairPen') || '',
-    email: localStorage.getItem('repairEmail') || '',
-    mobile: localStorage.getItem('repairMobile') || '',
-    dob: localStorage.getItem('repairDob') || '',
-    licenseNo: localStorage.getItem('repairLicenseNo') || '',
-    bloodGroup: localStorage.getItem('repairBloodGroup') || '',
-    gender: localStorage.getItem('repairGender') || '',
-    role: localStorage.getItem('repairRole') || '',
-    photo: localStorage.getItem('repairPhoto') || '',
-    signature: localStorage.getItem('repairSignature') || '',
-  });
-}, []);
+  useEffect(() => {
+    setRepairData({
+      name: localStorage.getItem('repairName') || '',
+      email: localStorage.getItem('repairEmail') || '',
+      pen: localStorage.getItem('repairPen') || '',
+      phone: localStorage.getItem('repairPhone') || '',
+      dob: (localStorage.getItem('repairDob') || '').substring(0, 10),
+      licenseNo: localStorage.getItem('repairLicenseNo') || '',
+      bloodGroup: localStorage.getItem('repairBloodGroup') || '',
+      gender: localStorage.getItem('repairGender') || '',
+      photo: localStorage.getItem('repairPhoto') || '',
+      signature: localStorage.getItem('repairSignature') || '',
+      role: localStorage.getItem('repairRole') || ''
+    });
+  }, []);
 
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+    setRepairData(prev => ({ ...prev, [name]: value }));
+  };
 
+  const handleEditToggle = () => {
+    setIsEditing(!isEditing);
+  };
+
+  const handleSave = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/users/update', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(repairData),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        const updated = data.updatedUser;
+
+        localStorage.setItem('repairName', updated.name || '');
+        localStorage.setItem('repairPen', updated.pen || '');
+        localStorage.setItem('repairEmail', updated.email || '');
+        localStorage.setItem('repairPhone', updated.phone || '');
+        localStorage.setItem('repairDob', (updated.dob || '').substring(0, 10));
+        localStorage.setItem('repairLicenseNo', updated.licenseNo || '');
+        localStorage.setItem('repairBloodGroup', updated.bloodGroup || '');
+        localStorage.setItem('repairGender', updated.gender || '');
+        localStorage.setItem('repairPhoto', updated.photo || '');
+        localStorage.setItem('repairSignature', updated.signature || '');
+        localStorage.setItem('repairRole', updated.role || '');
+
+        setRepairData(prev => ({
+          ...prev,
+          ...updated,
+          dob: (updated.dob || '').substring(0, 10)
+        }));
+
+        alert('Profile updated successfully');
+        setIsEditing(false);
+      } else {
+        alert(data.message || 'Update failed');
+      }
+    } catch (err) {
+      alert('Error while updating profile');
+      console.error(err);
+    }
+  };
 
   if (loading) {
-    return (
-      <div style={{ padding: '40px' }}>
-        <SkeletonChildren />
-      </div>
-    );
+    return <div style={{ padding: '40px' }}><SkeletonChildren /></div>;
   }
 
   return (
     <div>
-      <ResponsiveAppBar 
-        photo={repairData.photo} 
-        name={repairData.name} 
-        role={repairData.role} 
+      <ResponsiveAppBar
+        photo={repairData.photo}
+        name={repairData.name}
+        role={repairData.role}
+        isDrawerOpen={isDrawerOpen}
+        onDrawerToggle={() => setIsDrawerOpen(!isDrawerOpen)}
+        onSelectTab={(tab) => setActiveTab(tab)}
       />
 
-      <button className="drawer-toggle-btn" onClick={() => setIsDrawerOpen(!isDrawerOpen)}>
-        ☰
-      </button>
+      <button className="drawer-toggle-btn" onClick={() => setIsDrawerOpen(!isDrawerOpen)}>☰</button>
 
       <div className={`dashboard ${isDrawerOpen ? 'drawer-open' : ''}`}>
-        {/* Sidebar Drawer */}
         <div className={`drawer ${isDrawerOpen ? 'open' : ''}`}>
-         
-
           <h2>REPAIR SECTION</h2>
           {repairData.role && (
-            <div className="role-badge" style={{ 
-              background: '#4CAF50', 
-              color: 'white', 
-              padding: '5px 10px', 
-              borderRadius: '20px',
-              marginBottom: '15px',
-              fontSize: '0.9rem'
-            }}>
-              {repairData.role}
-            </div>
+            <div className="role-badge" style={{
+              background: '#4CAF50', color: 'white', padding: '5px 10px',
+              borderRadius: '20px', marginBottom: '15px', fontSize: '0.9rem'
+            }}>{repairData.role}</div>
           )}
-
           <div className="sidebar-buttons">
-            <button className={`sidebar-btn ${activeTab === 'repair' ? 'active' : ''}`} onClick={() => setActiveTab('fuel')}>Repair Entry Review</button>
+            <button className={`sidebar-btn ${activeTab === 'repair' ? 'active' : ''}`} onClick={() => setActiveTab('repair')}>Repair Entry Review</button>
             <button className={`sidebar-btn ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>Profile</button>
             <button className={`sidebar-btn ${activeTab === 'pending' ? 'active' : ''}`} onClick={() => setActiveTab('pending')}>View Pending Requests</button>
             <button className={`sidebar-btn ${activeTab === 'vehicle' ? 'active' : ''}`} onClick={() => setActiveTab('vehicle')}>Vehicle Details</button>
             <button className={`sidebar-btn ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>Users Details</button>
             <button className={`sidebar-btn ${activeTab === 'escertif' ? 'active' : ''}`} onClick={() => setActiveTab('escertif')}>Essentiality Certificate</button>
-            <button className={`sidebar-btn ${activeTab === 'techcert' ? 'active' : ''}`} onClick={() => setActiveTab('techcertf')}>Technical Certificate</button>
+            <button className={`sidebar-btn ${activeTab === 'techcert' ? 'active' : ''}`} onClick={() => setActiveTab('techcert')}>Technical Certificate</button>
           </div>
         </div>
 
-        {/* Main Content */}
-        <div className="main-content" >
+        <div className="main-content">
+          {activeTab === 'repair' && <RepairEntryReview />}
 
-{/* Always Show Name and Photo on Sidebar or Top */}
-<div className="profile-summary" style={{ padding: '20px', textAlign: 'center' }}>
-  <img 
-    src={repairData.photo || 'https://via.placeholder.com/80'} 
-    alt="Profile" 
-    style={{ width: '80px', height: '80px', borderRadius: '50%' }} 
-  />
-  <h4 style={{ marginTop: '10px', color: 'white' }}>{repairData.name || 'Admin'}</h4>
-  <img 
-    src={repairData.signature || 'https://via.placeholder.com/100'} 
-    alt="Signature" 
-    style={{ marginTop: '10px', maxWidth: '100px' }} 
-  />
-</div>
-{activeTab === 'profile' && (
-  <div className="form-section">
-    <div className="form-left">
-      <div className="form-group">
-        <label>Name</label>
-        <input type="text" name="name" value={repairData.name} readOnly />
-      </div>
-      <div className="form-group">
-        <label>PEN Number</label>
-        <input type="text" name="pen" value={repairData.pen} readOnly />
-      </div>
-      <div className="form-group">
-        <label>Email</label>
-        <input type="text" name="email" value={repairData.email} readOnly />
-      </div>
-      <div className="form-group">
-        <label>Mobile Number</label>
-        <input type="text" name="mobile" value={repairData.mobile} readOnly />
-      </div>
-      <div className="form-group">
-        <label>Date of Birth</label>
-        <input type="text" name="dob" value={repairData.dob} readOnly />
-      </div>
-      <div className="form-group">
-        <label>License Number</label>
-        <input type="text" name="licenseNo" value={repairData.licenseNo} readOnly />
-      </div>
-      <div className="form-group">
-        <label>Blood Group</label>
-        <input type="text" name="bloodGroup" value={repairData.bloodGroup} readOnly />
-      </div>
-      <div className="form-group">
-        <label>Gender</label>
-        <input type="text" name="gender" value={repairData.gender} readOnly />
-      </div>
-      <div className="form-group">
-        <label>Role</label>
-        <input type="text" name="role" value={repairData.role} readOnly />
-      </div>
-    </div>
+          {activeTab === 'profile' && (
+            <div className="form-section">
+              <div className="form-left">
+                {[
+                  { label: 'Name', name: 'name' },
+                  { label: 'PEN Number', name: 'pen', readOnly: true },
+                  { label: 'Email', name: 'email' },
+                  { label: 'Mobile', name: 'phone' },
+                  { label: 'Date of Birth', name: 'dob', type: 'date' },
+                  { label: 'License Number', name: 'licenseNo' },
+                  { label: 'Blood Group', name: 'bloodGroup', readOnly: true },
+                  { label: 'Gender', name: 'gender', readOnly: true },
+                  { label: 'Role', name: 'role', readOnly: true },
+                ].map(({ label, name, type = 'text', readOnly = false }) => (
+                  <div className="form-group" key={name}>
+                    <label>{label}</label>
+                    <input
+                      type={type}
+                      name={name}
+                      value={repairData[name] || ''}
+                      readOnly={!isEditing || readOnly}
+                      onChange={handleEditChange}
+                    />
+                  </div>
+                ))}
 
-    <div className="form-right">
-      <div className="upload-section">
-        <img src={repairData.photo || 'https://via.placeholder.com/100'} alt="Profile" className="upload-icon" />
-        <p>Profile Photo</p>
-      </div>
-      <div className="upload-section">
-        <img src={repairData.signature || 'https://via.placeholder.com/100'} alt="Signature" className="upload-icon" />
-        <p>Signature</p>
-      </div>
-    </div>
-  </div>
-)}
+                <button onClick={handleEditToggle} className="edit-btn">
+                  {isEditing ? 'Cancel' : 'Edit'}
+                </button>
+                {isEditing && (
+                  <button onClick={handleSave} className="save-btn">Save</button>
+                )}
+              </div>
 
+              <div className="form-right">
+                <div className="upload-section">
+                  <img src={repairData.photo || 'https://via.placeholder.com/100'} alt="Profile" className="upload-icon" />
+                  <p>Profile Photo</p>
+                </div>
+                <div className="upload-section">
+                  <img src={repairData.signature || 'https://via.placeholder.com/100'} alt="Signature" className="upload-icon" />
+                  <p>Signature</p>
+                </div>
+              </div>
+            </div>
+          )}
 
-          {/*
           {activeTab === 'pending' && (
             <div style={{ padding: '20px' }}>
               <h2>Pending Repair Requests</h2>
-              <RepairPendingRequest darkMode={darkMode} />
+              <RepairPendingRequest />
             </div>
           )}
-        
-
           {activeTab === 'vehicle' && (
             <div style={{ padding: '20px' }}>
-              <SearchVehicleDetails darkMode={darkMode} />
+              <SearchVehicleDetails />
             </div>
           )}
-          */}
-
           {activeTab === 'users' && (
             <div style={{ padding: '20px' }}>
-              
+              <VerifiedUsersTable />
             </div>
           )}
-          
+          {activeTab === 'escertif' && (
+            <div style={{ padding: '20px' }}>
+              <EssentialityCertificate />
+            </div>
+          )}
+          {activeTab === 'techcert' && (
+            <div style={{ padding: '20px' }}>
+              <TechnicalCertificate />
+            </div>
+          )}
         </div>
       </div>
     </div>
