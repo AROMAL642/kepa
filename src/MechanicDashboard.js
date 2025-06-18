@@ -36,17 +36,17 @@ function MechanicDashboard() {
 
   useEffect(() => {
     setMechanicData({
-      name: localStorage.getItem('fuelName') || '',
-      email: localStorage.getItem('fuelEmail') || '',
-      pen: localStorage.getItem('fuelPen') || '',
-      mobile: localStorage.getItem('fuelPhone') || '',
-      dob: (localStorage.getItem('fuelDob') || '').substring(0, 10),
-      licenseNo: localStorage.getItem('fuelLicenseNo') || '',
-      bloodGroup: localStorage.getItem('fuelBloodGroup') || '',
-      gender: localStorage.getItem('fuelGender') || '',
-      photo: localStorage.getItem('fuelPhoto') || '',
-      signature: localStorage.getItem('fuelSignature') || '',
-      role: localStorage.getItem('fuelRole') || ''
+      name: localStorage.getItem('repairName') || '',
+      email: localStorage.getItem('repairEmail') || '',
+      pen: localStorage.getItem('repairPen') || '',
+      mobile: localStorage.getItem('repairPhone') || '',
+      dob: (localStorage.getItem('repairDob') || '').substring(0, 10),
+      licenseNo: localStorage.getItem('repairLicenseNo') || '',
+      bloodGroup: localStorage.getItem('repairBloodGroup') || '',
+      gender: localStorage.getItem('repairGender') || '',
+      photo: localStorage.getItem('repairPhoto') || '',
+      signature: localStorage.getItem('repairSignature') || '',
+      role: localStorage.getItem('repairRole') || ''
     });
   }, []);
 
@@ -60,15 +60,13 @@ function MechanicDashboard() {
 
   return (
     <div>
-   
-        <ResponsiveAppBar
-          photo={mechanicData.photo} 
-        name={mechanicData.name} 
+      <ResponsiveAppBar
+        photo={mechanicData.photo}
+        name={mechanicData.name}
         role={mechanicData.role}
-          isDrawerOpen={isDrawerOpen}
-          onDrawerToggle={() => setIsDrawerOpen(!isDrawerOpen)}
-          onSelectTab={(tab) => setActiveTab(tab)}
-
+        isDrawerOpen={isDrawerOpen}
+        onDrawerToggle={() => setIsDrawerOpen(!isDrawerOpen)}
+        onSelectTab={(tab) => setActiveTab(tab)}
       />
 
       <button className="drawer-toggle-btn" onClick={() => setIsDrawerOpen(!isDrawerOpen)}>
@@ -77,12 +75,12 @@ function MechanicDashboard() {
 
       <div className={`dashboard ${isDrawerOpen ? 'drawer-open' : ''}`}>
         <div className={`drawer ${isDrawerOpen ? 'open' : ''}`}>
-          <h2>MECHANIC SECTION</h2>
+          <h2>REPAIR SECTION</h2>
           {mechanicData.role && (
-            <div className="role-badge" style={{ 
-              background: '#4CAF50', 
-              color: 'white', 
-              padding: '5px 10px', 
+            <div className="role-badge" style={{
+              background: '#4CAF50',
+              color: 'white',
+              padding: '5px 10px',
               borderRadius: '20px',
               marginBottom: '15px',
               fontSize: '0.9rem'
@@ -103,7 +101,8 @@ function MechanicDashboard() {
           {activeTab === 'profile' && (
             <div className="form-section">
               <div className="form-left">
-                {[{ label: 'Name', name: 'name' },
+                {[
+                  { label: 'Name', name: 'name' },
                   { label: 'PEN Number', name: 'pen', readOnly: true },
                   { label: 'Email', name: 'email' },
                   { label: 'Mobile Number', name: 'mobile' },
@@ -152,6 +151,11 @@ function MechanicDashboard() {
                           if (response.ok) {
                             alert('Profile updated successfully');
                             setEditMode(false);
+
+                            // Update localStorage
+                            Object.entries(mechanicData).forEach(([key, value]) => {
+                              localStorage.setItem(`repair${key.charAt(0).toUpperCase() + key.slice(1)}`, value);
+                            });
                           } else {
                             alert(data.message || 'Update failed');
                           }
@@ -184,7 +188,7 @@ function MechanicDashboard() {
           {activeTab === 'pending' && (
             <div style={{ padding: '20px' }}>
               <h2>Pending Requests</h2>
-              < MechanicRepairList />
+              <MechanicRepairList />
             </div>
           )}
 

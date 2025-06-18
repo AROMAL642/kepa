@@ -267,12 +267,16 @@ const reportRoutes = require('./routes/viewprintregisterRoutes');
 app.use('/api', reportRoutes);
 
 //app.use('/api/repair-request', repairRequestRoutes);
+
 const repairRequestRoutes = require('./routes/repairRequestRoutes');
 //const mechanicRepairRoutes = require('./routes/mechanicRepairRoutes');
 
+app.use('/api/repairRequestRoutes', require('./routes/repairRequestRoutes'));
+
+
 app.use('/api/repair-request', require('./routes/repairRequestRoutes'));
 //app.use('/api/mechanic-repair',require('./routes/mechanicRepairRoutes'));
-
+//const mechanicRepairRoutes = require('./routes/mechanicRepairRoutes');
 
 
 // Fetch all unverified users

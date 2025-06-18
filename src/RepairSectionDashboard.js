@@ -8,9 +8,9 @@ import RepairPendingRequest from './repairsectiondashboardcomponents/RepairPendi
 import './css/admindashboard.css';
 import './css/fueladmin.css';
 
-const RepairEntryReview = () => <div>Repair Entry Review Placeholder</div>;
-const EssentialityCertificate = () => <div>Essentiality Certificate Placeholder</div>;
-const TechnicalCertificate = () => <div>Technical Certificate Placeholder</div>;
+const RepairEntryReview = () => <div style={{ padding: '20px' }}>Repair Entry Review Placeholder</div>;
+const EssentialityCertificate = () => <div style={{ padding: '20px' }}>Essentiality Certificate Placeholder</div>;
+const TechnicalCertificate = () => <div style={{ padding: '20px' }}>Technical Certificate Placeholder</div>;
 
 function RepairDashboard() {
   const [loading, setLoading] = useState(true);
@@ -74,17 +74,14 @@ function RepairDashboard() {
       if (response.ok) {
         const updated = data.updatedUser;
 
-        localStorage.setItem('repairName', updated.name || '');
-        localStorage.setItem('repairPen', updated.pen || '');
-        localStorage.setItem('repairEmail', updated.email || '');
-        localStorage.setItem('repairPhone', updated.phone || '');
-        localStorage.setItem('repairDob', (updated.dob || '').substring(0, 10));
-        localStorage.setItem('repairLicenseNo', updated.licenseNo || '');
-        localStorage.setItem('repairBloodGroup', updated.bloodGroup || '');
-        localStorage.setItem('repairGender', updated.gender || '');
-        localStorage.setItem('repairPhoto', updated.photo || '');
-        localStorage.setItem('repairSignature', updated.signature || '');
-        localStorage.setItem('repairRole', updated.role || '');
+        // Update localStorage
+        Object.entries(updated).forEach(([key, value]) => {
+          if (key === 'dob') {
+            localStorage.setItem(`repair${capitalize(key)}`, (value || '').substring(0, 10));
+          } else {
+            localStorage.setItem(`repair${capitalize(key)}`, value || '');
+          }
+        });
 
         setRepairData(prev => ({
           ...prev,
@@ -103,6 +100,8 @@ function RepairDashboard() {
     }
   };
 
+  const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
+
   if (loading) {
     return <div style={{ padding: '40px' }}><SkeletonChildren /></div>;
   }
@@ -115,7 +114,7 @@ function RepairDashboard() {
         role={repairData.role}
         isDrawerOpen={isDrawerOpen}
         onDrawerToggle={() => setIsDrawerOpen(!isDrawerOpen)}
-        onSelectTab={(tab) => setActiveTab(tab)}
+        onSelectTab={setActiveTab}
       />
 
       <button className="drawer-toggle-btn" onClick={() => setIsDrawerOpen(!isDrawerOpen)}>☰</button>
@@ -196,25 +195,25 @@ function RepairDashboard() {
               <RepairPendingRequest />
             </div>
           )}
+
           {activeTab === 'vehicle' && (
             <div style={{ padding: '20px' }}>
               <SearchVehicleDetails />
             </div>
           )}
+
           {activeTab === 'users' && (
             <div style={{ padding: '20px' }}>
               <VerifiedUsersTable />
             </div>
           )}
+
           {activeTab === 'escertif' && (
-            <div style={{ padding: '20px' }}>
-              <EssentialityCertificate />
-            </div>
+            <EssentialityCertificate />
           )}
+
           {activeTab === 'techcert' && (
-            <div style={{ padding: '20px' }}>
-              <TechnicalCertificate />
-            </div>
+            <TechnicalCertificate />
           )}
         </div>
       </div>

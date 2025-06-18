@@ -25,7 +25,7 @@ function AppWrapper() {
   const hideHeaderPaths = [
     '/admin', '/user', '/fuel', '/mechanic',
     '/viewrequests', '/userdetails', '/admin/vehicles',
-    '/searchvehicle', '/repair-request'
+    '/searchvehicle', '/repair-request','/repair'
   ];
 
   // Check if current path matches any of the above (partial match)

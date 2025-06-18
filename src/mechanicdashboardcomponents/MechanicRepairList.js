@@ -1,203 +1,176 @@
 import React, { useEffect, useState } from 'react';
-import { DataGrid } from '@mui/x-data-grid';
-import axios from 'axios';
-import {
-  Box,
-  Button,
-  CircularProgress,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Typography,
-  TextField,
-  MenuItem,
-  IconButton
-} from '@mui/material';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 
-const MechanicRepairList = ({ darkMode }) => {
-  const [rows, setRows] = useState([]);
+function MechanicVerifiedRequests() {
+  const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [selectedRow, setSelectedRow] = useState(null);
-  const [statuses, setStatuses] = useState({});
-  const [workDone, setWorkDone] = useState({});
-
-  const fetchRequests = async () => {
-    try {
-      const res = await axios.get('http://localhost:5000/api/forwaded');
-      const data = res.data.map((req, index) => ({
-        ...req,
-        id: req._id,
-        slNo: index + 1,
-        dateString: new Date(req.date).toLocaleDateString(),
-      }));
-      setRows(data);
-
-      const initStatus = {};
-      const initWork = {};
-      data.forEach((req) => {
-        initStatus[req._id] = req.status || 'Pending';
-        initWork[req._id] = 'No';
-      });
-      setStatuses(initStatus);
-      setWorkDone(initWork);
-    } catch (error) {
-      console.error('Failed to fetch:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [feedback, setFeedback] = useState('');
+  const [needsParts, setNeedsParts] = useState(false);
+  const [partsList, setPartsList] = useState([{ item: '', quantity: 1 }]);
+  const [billFile, setBillFile] = useState(null);
 
   useEffect(() => {
-    fetchRequests();
+    fetch('http://localhost:5000/api/repairRequestRoutes/verified')
+      .then(res => res.json())
+      .then(data => {
+        setRequests(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Failed to fetch', err);
+        setLoading(false);
+      });
   }, []);
 
-  const handleStatusChange = (e, rowId) => {
-    setStatuses((prev) => ({
-      ...prev,
-      [rowId]: e.target.value,
-    }));
+  const handlePartChange = (index, field, value) => {
+    const updated = [...partsList];
+    updated[index][field] = value;
+    setPartsList(updated);
   };
 
-  const handleWorkDoneChange = (e, rowId) => {
-    const value = e.target.value;
-    setWorkDone((prev) => ({
-      ...prev,
-      [rowId]: value,
-    }));
+  const addPartRow = () => {
+    setPartsList([...partsList, { item: '', quantity: 1 }]);
+  };
 
-    if (value === 'Yes') {
-      alert('Message sent to user for verification');
-      setStatuses((prev) => ({ ...prev, [rowId]: 'Verification Pending' }));
+  const handleSubmitFeedback = async () => {
+    const requestId = selectedRequest._id;
+    const payload = {
+      mechanicFeedback: feedback,
+      needsParts,
+      partsList,
+    };
+
+    if (billFile) {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64 = reader.result.split(',')[1];
+        payload.billFile = {
+          data: base64,
+          contentType: billFile.type
+        };
+
+        await submitUpdate(requestId, payload);
+      };
+      reader.readAsDataURL(billFile);
     } else {
-      alert('Message sent to MTI to check again');
-      setStatuses((prev) => ({ ...prev, [rowId]: 'Check Again' }));
+      await submitUpdate(requestId, payload);
     }
   };
 
-  const columns = [
-    { field: 'slNo', headerName: 'Sl No', flex: 0.5 },
-    { field: 'vehicleNo', headerName: 'Vehicle No', flex: 1 },
-    { field: 'penNo', headerName: 'Pen No', flex: 1 },
-    { field: 'dateString', headerName: 'Request Date', flex: 1 },
-    {
-      field: 'billView',
-      headerName: 'Bill',
-      flex: 1,
-      renderCell: (params) =>
-        params.row.billUrl ? (
-          <IconButton onClick={() => window.open(params.row.billUrl, '_blank')} color="primary">
-            <VisibilityIcon />
-          </IconButton>
-        ) : (
-          <Typography variant="body2">N/A</Typography>
-        ),
-    },
-    {
-      field: 'workDone',
-      headerName: 'Work Done?',
-      flex: 1,
-      renderCell: (params) => (
-        <TextField
-          select
-          size="small"
-          value={workDone[params.row.id] || 'No'}
-          onChange={(e) => handleWorkDoneChange(e, params.row.id)}
-        >
-          <MenuItem value="Yes">Yes</MenuItem>
-          <MenuItem value="No">No</MenuItem>
-        </TextField>
-      ),
-    },
-    {
-      field: 'status',
-      headerName: 'Repair Status',
-      flex: 1.5,
-      renderCell: (params) => (
-        <TextField
-          select
-          size="small"
-          value={statuses[params.row.id] || 'Pending'}
-          onChange={(e) => handleStatusChange(e, params.row.id)}
-        >
-          <MenuItem value="Pending">Pending</MenuItem>
-          <MenuItem value="Repaired">Repaired</MenuItem>
-          <MenuItem value="Parts Required">Parts Required</MenuItem>
-          <MenuItem value="Check Again">Check Again</MenuItem>
-          <MenuItem value="Verification Pending">Verification Pending</MenuItem>
-          <MenuItem value="Verified">Verified</MenuItem>
-        </TextField>
-      ),
-    },
-    {
-      field: 'view',
-      headerName: 'Details',
-      flex: 1,
-      renderCell: (params) => (
-        <Button
-          variant="outlined"
-          onClick={() => {
-            setSelectedRow(params.row);
-            setOpenDialog(true);
-          }}
-        >
-          View
-        </Button>
-      ),
-    },
-  ];
+  const submitUpdate = async (id, payload) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/repairRequestRoutes/${id}/mechanic-update`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const updatedRequest = await res.json();
+      alert('Mechanic feedback submitted.');
+      setSelectedRequest(null);
+      setRequests(prev =>
+        prev.map(req => (req._id === updatedRequest._id ? updatedRequest : req))
+      );
+    } catch (err) {
+      console.error('Error submitting feedback:', err);
+      alert('Submission failed.');
+    }
+  };
+
+  if (loading) return <p>Loading...</p>;
 
   return (
-    <Box sx={{ p: 2 }}>
-      <Typography variant="h4" gutterBottom>
-        Mechanic Repair Tasks
-      </Typography>
-
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-          <CircularProgress />
-        </Box>
+    <div style={{ padding: '20px' }}>
+      <h2>Verified Repair Requests (Mechanic View)</h2>
+      {requests.length === 0 ? (
+        <p>No verified requests found.</p>
       ) : (
-        <Box sx={{ height: 600 }}>
-          <DataGrid
-            rows={rows}
-            columns={columns}
-            pageSize={10}
-            rowsPerPageOptions={[10, 25]}
-            disableSelectionOnClick
-            sx={{
-              '& .MuiDataGrid-columnHeaders': {
-                backgroundColor: darkMode ? '#333' : '#f5f5f5',
-              },
-            }}
-          />
-        </Box>
+        <table className="request-table" border="1" cellPadding="10" cellSpacing="0">
+          <thead>
+            <tr>
+              <th>Vehicle No</th>
+              <th>Date</th>
+              <th>Subject</th>
+              <th>Description</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {requests.map(req => (
+              <tr key={req._id}>
+                <td>{req.vehicleNo}</td>
+                <td>{req.date}</td>
+                <td>{req.subject}</td>
+                <td>{req.description}</td>
+                <td>{req.status}</td>
+                <td>
+                  <button onClick={() => setSelectedRequest(req)}>View</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
 
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Repair Request Details</DialogTitle>
-        <DialogContent dividers>
-          {selectedRow && (
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              <Typography><strong>Sl No:</strong> {selectedRow.slNo}</Typography>
-              <Typography><strong>Date:</strong> {selectedRow.dateString}</Typography>
-              <Typography><strong>Status:</strong> {selectedRow.status || 'Pending'}</Typography>
-              <Typography><strong>Vehicle No:</strong> {selectedRow.vehicleNo}</Typography>
-              <Typography><strong>Pen No:</strong> {selectedRow.penNo || 'N/A'}</Typography>
-              <Typography><strong>Description:</strong> {selectedRow.description}</Typography>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDialog(false)} color="primary">
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
-  );
-};
+      {selectedRequest && (
+        <div style={{
+          marginTop: '20px',
+          border: '1px solid #ccc',
+          padding: '20px',
+          backgroundColor: '#f9f9f9'
+        }}>
+          <h3>Update Repair Request: {selectedRequest.vehicleNo}</h3>
 
-export default MechanicRepairList;
+          <label>Mechanic Feedback:</label><br />
+          <textarea
+            rows={4}
+            cols={50}
+            value={feedback}
+            onChange={(e) => setFeedback(e.target.value)}
+          /><br /><br />
+
+          <label>
+            <input
+              type="checkbox"
+              checked={needsParts}
+              onChange={e => setNeedsParts(e.target.checked)}
+            />
+            Needs Parts
+          </label><br />
+
+          {needsParts && partsList.map((part, index) => (
+            <div key={index}>
+              <input
+                type="text"
+                placeholder="Item"
+                value={part.item}
+                onChange={e => handlePartChange(index, 'item', e.target.value)}
+              />
+              <input
+                type="number"
+                min="1"
+                value={part.quantity}
+                onChange={e => handlePartChange(index, 'quantity', e.target.value)}
+              />
+            </div>
+          ))}
+
+          {needsParts && <button onClick={addPartRow}>Add Part</button>}
+          <br /><br />
+
+          <label>Upload Final Bill (optional):</label><br />
+          <input type="file" accept="application/pdf,image/*" onChange={e => setBillFile(e.target.files[0])} />
+          <br /><br />
+
+          <button onClick={handleSubmitFeedback}>Submit Feedback</button>{' '}
+          <button onClick={() => setSelectedRequest(null)}>Cancel</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default MechanicVerifiedRequests;
