@@ -1,22 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom'; // for navigation
 
 const styles = {
   container: {
     position: 'relative',
-  },
-  trackButton: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    padding: '8px 16px',
-    fontSize: '14px',
-    borderRadius: '4px',
-    backgroundColor: '#28a745',
-    color: 'white',
-    border: 'none',
-    cursor: 'pointer',
   },
   form: {
     maxWidth: '900px',
@@ -69,13 +56,18 @@ const styles = {
 };
 
 const RepairRequestForm = ({ pen }) => {
-  const navigate = useNavigate(); // React Router hook
   const [vehicleNo, setVehicleNo] = useState('');
   const [vehicleStatus, setVehicleStatus] = useState('');
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
   const [billFile, setBillFile] = useState(null);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+
+  useEffect(() => {
+    if (pen) {
+      localStorage.setItem('pen', pen);
+    }
+  }, [pen]);
 
   const handleVehicleChange = async (e) => {
     const value = e.target.value.toUpperCase().trim();
@@ -99,8 +91,8 @@ const RepairRequestForm = ({ pen }) => {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file && file.size > 5 * 1024 * 1024) {
-      alert('File size exceeds 5MB. Please select a smaller file.');
+    if (file && file.size > 200 * 1024) {
+      alert('File size exceeds 200KB. Please select a smaller file.');
       e.target.value = '';
       setBillFile(null);
     } else {
@@ -137,19 +129,10 @@ const RepairRequestForm = ({ pen }) => {
 
   return (
     <div style={styles.container}>
-      {/* Track Requests Button */}
-      <button
-        style={styles.trackButton}
-        onClick={() => navigate('/trackrepairrequest')}
-      >
-        Track Requests
-      </button>
-
       <form onSubmit={handleSubmit} style={styles.form}>
         <h2 style={styles.title}>Repair Request Form</h2>
 
         <div style={styles.grid}>
-          {/* Left Column */}
           <div style={styles.column}>
             <label>Vehicle Number</label>
             <input
@@ -164,13 +147,13 @@ const RepairRequestForm = ({ pen }) => {
               <p style={{
                 color:
                   vehicleStatus === 'Valid' ? 'green' :
-                    vehicleStatus === 'Not Found' || vehicleStatus === 'Invalid Format' ? 'red' : 'orange'
+                  vehicleStatus === 'Not Found' || vehicleStatus === 'Invalid Format' ? 'red' : 'orange'
               }}>
                 {
                   vehicleStatus === 'Valid' ? '✅ Vehicle Number is Valid' :
-                    vehicleStatus === 'Not Found' ? '❌ Vehicle Not Found in Database' :
-                      vehicleStatus === 'Invalid Format' ? '❌ Invalid Vehicle Number Format' :
-                        'Error Checking Vehicle'
+                  vehicleStatus === 'Not Found' ? '❌ Vehicle Not Found in Database' :
+                  vehicleStatus === 'Invalid Format' ? '❌ Invalid Vehicle Number Format' :
+                  'Error Checking Vehicle'
                 }
               </p>
             )}
@@ -203,7 +186,6 @@ const RepairRequestForm = ({ pen }) => {
             />
           </div>
 
-          {/* Right Column */}
           <div style={styles.column}>
             <label>Description</label>
             <textarea
@@ -215,7 +197,7 @@ const RepairRequestForm = ({ pen }) => {
               required
             />
 
-            <label>Upload Bill (MAX 5 MB)</label>
+            <label>Upload image if Any (MAX 200 KB)</label>
             <input
               type="file"
               accept="image/*,.pdf"

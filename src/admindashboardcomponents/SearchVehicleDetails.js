@@ -12,6 +12,7 @@ function SearchVehicleDetails({ themeStyle, onBack }) {
   const [viewAll, setViewAll] = useState(false);
   const [editingStatusId, setEditingStatusId] = useState(null);
   const [newStatus, setNewStatus] = useState('');
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
 
   const handleSearch = async () => {
     if (!vehicleNo.trim()) {
@@ -110,6 +111,12 @@ function SearchVehicleDetails({ themeStyle, onBack }) {
     setVehicleNo(e.target.value.toUpperCase());
   };
 
+  const handleViewDetails = (row) => {
+    setSelectedVehicle(row);
+    setVehicleData(row);
+    setViewAll(false);
+  };
+
   const columns = [
     { field: 'number', headerName: 'Vehicle No', flex: 1.3 },
     { field: 'type', headerName: 'Type', flex: 1 },
@@ -118,7 +125,6 @@ function SearchVehicleDetails({ themeStyle, onBack }) {
     { field: 'status', headerName: 'Status', flex: 1.5 },
     { field: 'arrivedDate', headerName: 'Arrived Date', flex: 1 },
     { field: 'kmpl', headerName: 'KMPL', flex: 0.5 },
-    { field: 'currentDriver', headerName: 'Driver', flex: 1 },
     { field: 'createdAt', headerName: 'Created At', flex: 1.5 },
     {
       field: 'remove',
@@ -186,6 +192,26 @@ function SearchVehicleDetails({ themeStyle, onBack }) {
         )
       ),
     },
+    {
+      field: 'action',
+      headerName: 'Action',
+      flex: 1.5,
+      renderCell: (params) => (
+        <button
+          onClick={() => handleViewDetails(params.row)}
+          style={{
+            backgroundColor: '#0288d1',
+            color: 'white',
+            border: 'none',
+            borderRadius: '5px',
+            padding: '5px 10px',
+            cursor: 'pointer'
+          }}
+        >
+          View
+        </button>
+      ),
+    },
   ];
 
   return (
@@ -226,8 +252,56 @@ function SearchVehicleDetails({ themeStyle, onBack }) {
           <p><strong>Fuel Type:</strong> {vehicleData.fuelType}</p>
           <p><strong>Status:</strong> {vehicleData.status}</p>
           <p><strong>Arrived Date:</strong> {new Date(vehicleData.arrivedDate).toLocaleDateString()}</p>
-          <p><strong>Current Driver:</strong> {vehicleData.currentDriver}</p>
           <p><strong>Record Created At:</strong> {new Date(vehicleData.createdAt).toLocaleString()}</p>
+
+          {vehicleData.insurancePolicyNo && <p><strong>Insurance Policy No:</strong> {vehicleData.insurancePolicyNo}</p>}
+          {vehicleData.insuranceValidity && <p><strong>Insurance Validity:</strong> {new Date(vehicleData.insuranceValidity).toLocaleDateString()}</p>}
+
+          {vehicleData.insuranceFile && vehicleData.insuranceFile.buffer && (
+            <div>
+              <p><strong>Insurance Certificate:</strong></p>
+              {vehicleData.insuranceFile.mimetype.startsWith('image') ? (
+                <img
+                  src={`data:${vehicleData.insuranceFile.mimetype};base64,${vehicleData.insuranceFile.buffer}`}
+                  alt="Insurance Certificate"
+                  style={{ width: '300px', border: '1px solid #ccc', marginTop: '10px' }}
+                />
+              ) : vehicleData.insuranceFile.mimetype === 'application/pdf' ? (
+                <iframe
+                  src={`data:application/pdf;base64,${vehicleData.insuranceFile.buffer}`}
+                  title="Insurance PDF"
+                  width="100%"
+                  height="400px"
+                />
+              ) : (
+                <p>Unsupported file format</p>
+              )}
+            </div>
+          )}
+
+          {vehicleData.pollutionValidity && <p><strong>Pollution Validity:</strong> {new Date(vehicleData.pollutionValidity).toLocaleDateString()}</p>}
+
+          {vehicleData.pollutionFile && vehicleData.pollutionFile.buffer && (
+            <div>
+              <p><strong>Pollution Certificate:</strong></p>
+              {vehicleData.pollutionFile.mimetype.startsWith('image') ? (
+                <img
+                  src={`data:${vehicleData.pollutionFile.mimetype};base64,${vehicleData.pollutionFile.buffer}`}
+                  alt="Pollution Certificate"
+                  style={{ width: '300px', border: '1px solid #ccc', marginTop: '10px' }}
+                />
+              ) : vehicleData.pollutionFile.mimetype === 'application/pdf' ? (
+                <iframe
+                  src={`data:application/pdf;base64,${vehicleData.pollutionFile.buffer}`}
+                  title="Pollution PDF"
+                  width="100%"
+                  height="400px"
+                />
+              ) : (
+                <p>Unsupported file format</p>
+              )}
+            </div>
+          )}
         </div>
       )}
 

@@ -11,6 +11,7 @@ import AccidentReportForm from './userdashboardcomponents/AccidentReportForm';
 import './css/accidentreportform.css';
 import EyeTestReport from './userdashboardcomponents/EyeTestReport';
 import ResponsiveAppBar from './admindashboardcomponents/ResponsiveAppBar';
+import TrackRepairRequests from './userdashboardcomponents/trackrepairrequest';
 
 function UserDashboard() {
   const [activeTab, setActiveTab] = useState('profile');
@@ -33,14 +34,10 @@ function UserDashboard() {
     signature: '',
   });
 
-  
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
     if (user) {
-      const formattedDOB = user.dob
-        ? user.dob.split('T')[0]  // Format: YYYY-MM-DD
-        : '';
-
+      const formattedDOB = user.dob ? user.dob.split('T')[0] : '';
       setFormData({
         name: user.name,
         pen: user.pen,
@@ -58,6 +55,14 @@ function UserDashboard() {
     }
   }, []);
 
+  useEffect(() => {
+    const handleTabSwitch = (e) => {
+      setActiveTab(e.detail);
+    };
+    window.addEventListener('switchTab', handleTabSwitch);
+    return () => window.removeEventListener('switchTab', handleTabSwitch);
+  }, []);
+
   const handleLogout = () => {
     localStorage.clear();
     navigate('/');
@@ -66,7 +71,8 @@ function UserDashboard() {
   const tabMap = [
     { key: 'profile', label: 'Profile' },
     { key: 'fuel', label: 'Fuel' },
-    { key: 'repair', label: 'Repair' },
+    { key: 'repair', label: 'Request for Repair' },
+    { key: 'trackrepair', label: 'Track Repair Requests' },
     { key: 'movement', label: 'Movement' },
     { key: 'eyetest', label: 'Eye Test' },
     { key: 'accident', label: 'Accident' },
@@ -110,13 +116,12 @@ function UserDashboard() {
           {activeTab === 'profile' && (
             <div className="form-section">
               <div className="form-left">
-                {[
-                  { label: 'Name', name: 'name' },
+                {[{ label: 'Name', name: 'name' },
                   { label: 'PEN number', name: 'pen', readOnly: true },
                   { label: 'General Number', name: 'generalNo', readOnly: true },
                   { label: 'Email', name: 'email' },
                   { label: 'Mobile Number', name: 'mobile' },
-                  { label: 'DOB', name: 'dob', type: 'date' },  // Editable DOB
+                  { label: 'DOB', name: 'dob', type: 'date' },
                   { label: 'Licence Number', name: 'licenseNo' },
                   { label: 'Blood Group', name: 'bloodGroup', readOnly: true },
                   { label: 'Gender', name: 'gender', readOnly: true },
@@ -128,9 +133,7 @@ function UserDashboard() {
                       name={field.name}
                       value={formData[field.name] || ''}
                       readOnly={field.readOnly || !editMode}
-                      onChange={e =>
-                        setFormData(prev => ({ ...prev, [field.name]: e.target.value }))
-                      }
+                      onChange={e => setFormData(prev => ({ ...prev, [field.name]: e.target.value }))}
                     />
                   </div>
                 ))}
@@ -145,9 +148,7 @@ function UserDashboard() {
                         try {
                           const response = await fetch('http://localhost:5000/api/users/update', {
                             method: 'PUT',
-                            headers: {
-                              'Content-Type': 'application/json',
-                            },
+                            headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(formData),
                           });
 
@@ -171,37 +172,33 @@ function UserDashboard() {
                   </>
                 )}
               </div>
-
-            <div className="form-right">
-              <div className="upload-section">
-                <img
-                  src={formData.profilePic || 'https://via.placeholder.com/100'}
-                  alt="Profile"
-
-                  className="upload-icon"
-                />
-                <p>Profile Photo</p>
-              </div>
-              <div className="upload-section">
-                <img
-                  src={formData.signature || 'https://via.placeholder.com/100'}
-                  alt="Signature"
-                  className="upload-icon"
-                />
-                <p>Signature</p>
+              <div className="form-right">
+                <div className="upload-section">
+                  <img
+                    src={formData.profilePic || 'https://via.placeholder.com/100'}
+                    alt="Profile"
+                    className="upload-icon"
+                  />
+                  <p>Profile Photo</p>
+                </div>
+                <div className="upload-section">
+                  <img
+                    src={formData.signature || 'https://via.placeholder.com/100'}
+                    alt="Signature"
+                    className="upload-icon"
+                  />
+                  <p>Signature</p>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-          {/* Movement Tab */}
           {activeTab === 'movement' && (
             <div className="movement-section">
               <MovementRegister />
             </div>
           )}
 
-          {/* Vehicle Details Tab */}
           {activeTab === 'vehicle details' && (
             <div className="vehicle-details-section">
               <SearchVehicleDetails />
@@ -212,10 +209,15 @@ function UserDashboard() {
             <FuelRegister pen={formData.pen} />
           )}
 
-          {/* Repair Tab */}
           {activeTab === 'repair' && (
             <div className="repair-request-section">
               <RepairRequestForm pen={formData.pen} />
+            </div>
+          )}
+
+          {activeTab === 'trackrepair' && (
+            <div className="trackrepair-section">
+              <TrackRepairRequests />
             </div>
           )}
 

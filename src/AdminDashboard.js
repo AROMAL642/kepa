@@ -287,7 +287,7 @@ function AdminDashboard() {
 
           {activeTab === 'VehicleDetails' && vehicleTab === 'main' && (
             <div className="vehicle-box">
-              <button className="vehicle-btn" onClick={() => setVehicleTab('addremove')}>Add/Remove Vehicle</button>
+              <button className="vehicle-btn" onClick={() => setVehicleTab('addremove')}>Add Vehicle</button>
               <button className="vehicle-btn" onClick={() => setVehicleTab('search')}>Search Vehicle Details</button>
               <button className="vehicle-btn">Expense Details</button>
               <button className="vehicle-btn" onClick={() => setVehicleTab('viewassign')}>View/Assign Vehicle</button>

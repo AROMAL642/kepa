@@ -15,33 +15,34 @@ import {
 function TrackRepairRequests() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const pen = localStorage.getItem('pen'); // ⬅️ Get current user PEN
+  const pen = localStorage.getItem('pen'); 
 
   useEffect(() => {
-    if (!pen) {
-      console.warn('PEN not found in localStorage.');
+  if (!pen) {
+    console.warn('PEN not found in localStorage.');
+    setRequests([]);
+    setLoading(false);
+    return;
+  }
+
+  fetch(`http://localhost:5000/api/repairs/by-pen/${pen}`)
+    .then(res => res.json())
+    .then(data => {
+      console.log('Fetched repair data:', data); // 👈 Check this in browser console
+      if (Array.isArray(data)) {
+        setRequests(data);
+      } else {
+        console.warn('Expected array but received:', data);
+        setRequests([]);
+      }
+      setLoading(false);
+    })
+    .catch(err => {
+      console.error('Error fetching repair requests:', err);
       setRequests([]);
       setLoading(false);
-      return;
-    }
-
-    fetch(`http://localhost:5000/api/repairs/by-pen/${pen}`)
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          setRequests(data);
-        } else {
-          console.warn('Expected array but received:', data);
-          setRequests([]);
-        }
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Error fetching repair requests:', err);
-        setRequests([]);
-        setLoading(false);
-      });
-  }, [pen]);
+    });
+}, [pen]);
 
   const renderStatusChip = (value, label) => (
     <Chip
@@ -74,7 +75,7 @@ function TrackRepairRequests() {
                 <TableCell>Vehicle No</TableCell>
                 <TableCell>Status</TableCell>
                 <TableCell>Work Done</TableCell>
-                <TableCell>Forwarded</TableCell>
+                <TableCell>Forwarded By MTI</TableCell>
                 <TableCell>Mechanic Feedback</TableCell>
                 <TableCell>Repair Status</TableCell>
                 <TableCell>Sanctioned</TableCell>
