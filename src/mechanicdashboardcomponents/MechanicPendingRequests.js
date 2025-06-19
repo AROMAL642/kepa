@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { DataGrid } from '@mui/x-data-grid';
+import {
+  DataGrid
+} from '@mui/x-data-grid';
 import {
   CircularProgress,
   Button,
@@ -8,6 +10,10 @@ import {
   DialogContent,
   DialogActions,
   Typography,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  TextField
 } from '@mui/material';
 
 function MechanicPendingRequests() {
@@ -15,6 +21,9 @@ function MechanicPendingRequests() {
   const [loading, setLoading] = useState(true);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [workDoneChoice, setWorkDoneChoice] = useState('');
+  const [partsList, setPartsList] = useState([{ slNo: '', partName: '', qty: '' }]);
+  const [billFile, setBillFile] = useState(null);
 
   useEffect(() => {
     fetch('http://localhost:5000/api/repairs/verified')
@@ -44,6 +53,9 @@ function MechanicPendingRequests() {
 
   const handleReviewClick = (row) => {
     setSelectedRequest(row);
+    setWorkDoneChoice('');
+    setPartsList([{ slNo: '', partName: '', qty: '' }]);
+    setBillFile(null);
     setModalOpen(true);
   };
 
@@ -52,24 +64,65 @@ function MechanicPendingRequests() {
     setSelectedRequest(null);
   };
 
-  const handleWorkCompleted = (id) => {
-  fetch(`http://localhost:5000/api/repairs/${id}/complete`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ workDone: 'Yes' }),
-  })
-    .then((res) => res.json())
-    .then((updated) => {
-      // Optional: Update the frontend state
-      setRequests((prev) =>
-        prev.map((r) => (r.id === id ? { ...r, workDone: 'Yes' } : r))
-      );
-    })
-    .catch((err) => console.error('Error updating workDone:', err));
-};
+  const handleWorkCompleted = async () => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/repairs/${selectedRequest.id}/complete`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workDone: 'Yes' })
+      });
+      await res.json();
+      setRequests(prev => prev.map(r => (r.id === selectedRequest.id ? { ...r, workDone: 'Yes' } : r)));
+      setModalOpen(false);
+    } catch (err) {
+      console.error('Error marking work done:', err);
+    }
+  };
 
+  const handlePartsSubmit = async () => {
+    const payload = {
+      mechanicFeedback: '',
+      needsParts: true,
+      partsList,
+    };
+
+    if (billFile) {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        payload.billFile = {
+          data: reader.result.split(',')[1],
+          contentType: billFile.type
+        };
+
+        await fetch(`http://localhost:5000/api/repairs/${selectedRequest.id}/mechanic-update`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        setModalOpen(false);
+      };
+      reader.readAsDataURL(billFile);
+    } else {
+      await fetch(`http://localhost:5000/api/repairs/${selectedRequest.id}/mechanic-update`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      setModalOpen(false);
+    }
+  };
+
+  const handlePartChange = (index, key, value) => {
+    const updated = [...partsList];
+    updated[index][key] = value;
+    setPartsList(updated);
+  };
+
+  const addPartRow = () => {
+    setPartsList([...partsList, { slNo: '', partName: '', qty: '' }]);
+  };
 
   const columns = [
     { field: 'serial', headerName: '#', width: 50 },
@@ -112,27 +165,68 @@ function MechanicPendingRequests() {
         />
       )}
 
-      {/* Modal for Review */}
-      <Dialog open={modalOpen} onClose={handleCloseModal}>
+      <Dialog open={modalOpen} onClose={handleCloseModal} fullWidth maxWidth="md">
         <DialogTitle>Repair Review</DialogTitle>
         <DialogContent>
           {selectedRequest && (
             <>
               <Typography><strong>Vehicle No:</strong> {selectedRequest.vehicleNo}</Typography>
               <Typography><strong>Description:</strong> {selectedRequest.description}</Typography>
-              <Typography><strong>Work Done:</strong> {selectedRequest.workDone}</Typography>
+
+              <Typography sx={{ mt: 2 }}><strong>Is Work Done?</strong></Typography>
+              <RadioGroup
+                row
+                value={workDoneChoice}
+                onChange={(e) => setWorkDoneChoice(e.target.value)}
+              >
+                <FormControlLabel value="yes" control={<Radio />} label="Yes" />
+                <FormControlLabel value="no" control={<Radio />} label="No" />
+              </RadioGroup>
+
+              {workDoneChoice === 'no' && (
+                <>
+                  <Typography sx={{ mt: 2 }}><strong>Parts Required</strong></Typography>
+                  {partsList.map((part, idx) => (
+                    <div key={idx} style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+                      <TextField
+                        label="Sl No"
+                        size="small"
+                        value={part.slNo}
+                        onChange={(e) => handlePartChange(idx, 'slNo', e.target.value)}
+                      />
+                      <TextField
+                        label="Part Name"
+                        size="small"
+                        value={part.partName}
+                        onChange={(e) => handlePartChange(idx, 'partName', e.target.value)}
+                      />
+                      <TextField
+                        label="Quantity"
+                        size="small"
+                        type="number"
+                        value={part.qty}
+                        onChange={(e) => handlePartChange(idx, 'qty', e.target.value)}
+                      />
+                    </div>
+                  ))}
+                  <Button sx={{ mt: 1 }} onClick={addPartRow}>+ Add More</Button>
+                  <Typography sx={{ mt: 2 }}><strong>Upload Bill</strong></Typography>
+                  <input type="file" onChange={(e) => setBillFile(e.target.files[0])} />
+                </>
+              )}
             </>
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseModal}>Close</Button>
-          {selectedRequest?.workDone !== 'Yes' && (
-            <Button
-              variant="contained"
-              color="success"
-              onClick={handleWorkCompleted}
-            >
+          {workDoneChoice === 'yes' && (
+            <Button variant="contained" color="success" onClick={handleWorkCompleted}>
               Work Completed
+            </Button>
+          )}
+          {workDoneChoice === 'no' && (
+            <Button variant="contained" color="warning" onClick={handlePartsSubmit}>
+              Submit Parts Request
             </Button>
           )}
         </DialogActions>

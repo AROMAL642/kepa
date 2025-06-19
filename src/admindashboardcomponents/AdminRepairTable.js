@@ -15,6 +15,13 @@ const RepairAdminTable = ({ themeStyle }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedRepair, setSelectedRepair] = useState(null);
 
+  // New mechanic request-related states
+  const [mechanicRequests, setMechanicRequests] = useState([]);
+  const [showMechanicTab, setShowMechanicTab] = useState(false);
+  const [mechanicDialogOpen, setMechanicDialogOpen] = useState(false);
+  const [selectedMechanicRequest, setSelectedMechanicRequest] = useState(null);
+
+  // Fetch repair requests
   const fetchRepairs = useCallback(async () => {
     try {
       const res = await fetch('http://localhost:5000/api/repair-request');
@@ -47,6 +54,15 @@ const RepairAdminTable = ({ themeStyle }) => {
     fetchRepairs();
   }, [fetchRepairs]);
 
+  // Fetch mechanic requests
+  useEffect(() => {
+    fetch('http://localhost:5000/api/repair-request/forwarded')
+
+      .then(res => res.json())
+      .then(data => setMechanicRequests(data))
+      .catch(err => console.error('Failed to load mechanic requests:', err));
+  }, []);
+
   const handleViewDetails = (row) => {
     setSelectedRepair(row);
     setDialogOpen(true);
@@ -55,6 +71,16 @@ const RepairAdminTable = ({ themeStyle }) => {
   const handleClose = () => {
     setDialogOpen(false);
     setSelectedRepair(null);
+  };
+
+  const handleViewMechanicRequest = (row) => {
+    setSelectedMechanicRequest(row);
+    setMechanicDialogOpen(true);
+  };
+
+  const handleCloseMechanicDialog = () => {
+    setMechanicDialogOpen(false);
+    setSelectedMechanicRequest(null);
   };
 
   const updateStatus = async (id, status) => {
@@ -99,7 +125,7 @@ const RepairAdminTable = ({ themeStyle }) => {
     { field: 'slNo', headerName: 'Sl. No', width: 90 },
     { field: 'vehicleNo', headerName: 'Vehicle No', width: 130 },
     { field: 'pen', headerName: 'PEN', width: 100 },
-    { field: 'subject', headerName: 'Subject', width: 180, disableColumnMenu: true, sortable: false },
+    { field: 'subject', headerName: 'Subject', width: 180 },
     {
       field: 'status',
       headerName: 'Status',
@@ -168,18 +194,67 @@ const RepairAdminTable = ({ themeStyle }) => {
   ];
 
   return (
-    <div style={{ height: 600, width: '100%', ...themeStyle }}>
-      <h2>Repair Requests</h2>
-      <DataGrid
-        rows={rows}
-        columns={columns}
-        loading={loading}
-        pageSize={5}
-        rowsPerPageOptions={[5, 10]}
-        style={{ background: themeStyle.background, color: themeStyle.color }}
-      />
+    <div style={{ width: '100%', ...themeStyle }}>
+      <h2>{showMechanicTab ? 'Mechanic Requests' : 'Repair Requests'}</h2>
 
-      {/* 👇 Repair Details Dialog */}
+      <div style={{ marginBottom: 10 }}>
+        <Button
+          variant={!showMechanicTab ? 'contained' : 'outlined'}
+          onClick={() => setShowMechanicTab(false)}
+          style={{ marginRight: 10 }}
+        >
+          Repair Requests
+        </Button>
+        <Button
+          variant={showMechanicTab ? 'contained' : 'outlined'}
+          onClick={() => setShowMechanicTab(true)}
+        >
+          Mechanic Requests
+        </Button>
+      </div>
+
+      {!showMechanicTab ? (
+  <div style={{ height: 600 }}>
+    <DataGrid
+      rows={rows}
+      columns={columns}
+      loading={loading}
+      pageSize={5}
+      rowsPerPageOptions={[5, 10]}
+      style={{ background: themeStyle.background, color: themeStyle.color }}
+    />
+  </div>
+) : (
+  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+    <thead>
+      <tr>
+        <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>Sl No</th>
+        <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>Vehicle No</th>
+        <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>PEN</th>
+        <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>Date</th>
+        <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {mechanicRequests
+        .filter(req => req.status === 'sent_to_repair_admin')
+        .map((req, index) => (
+          <tr key={req._id}>
+            <td style={{ padding: 10 }}>{index + 1}</td>
+            <td style={{ padding: 10 }}>{req.vehicleNo}</td>
+            <td style={{ padding: 10 }}>{req.pen}</td>
+            <td style={{ padding: 10 }}>{req.date}</td>
+            <td style={{ padding: 10 }}>
+              <Button variant="outlined" onClick={() => handleViewMechanicRequest(req)}>View</Button>
+            </td>
+          </tr>
+        ))}
+    </tbody>
+  </table>
+)}
+
+
+      {/* Repair Request Dialog */}
       <Dialog open={dialogOpen} onClose={handleClose} fullWidth maxWidth="sm">
         <DialogTitle>Repair Request Details</DialogTitle>
         <DialogContent>
@@ -206,6 +281,75 @@ const RepairAdminTable = ({ themeStyle }) => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose} variant="contained">Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Mechanic Request Dialog */}
+      <Dialog open={mechanicDialogOpen} onClose={handleCloseMechanicDialog} fullWidth maxWidth="md">
+        <DialogTitle>Mechanic Request Details</DialogTitle>
+        <DialogContent>
+          {selectedMechanicRequest && selectedMechanicRequest.partsList?.length > 0 ? (
+            <>
+              <Typography><strong>Vehicle No:</strong> {selectedMechanicRequest.vehicleNo}</Typography>
+              <Typography><strong>Work Done:</strong> {selectedMechanicRequest.workDone}</Typography>
+
+              <Typography variant="h6" style={{ marginTop: '16px' }}>Parts Required</Typography>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr>
+                    <th style={{ borderBottom: '1px solid #ccc', padding: '6px' }}>Sl No</th>
+                    <th style={{ borderBottom: '1px solid #ccc', padding: '6px' }}>Part Name</th>
+                    <th style={{ borderBottom: '1px solid #ccc', padding: '6px' }}>Quantity</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedMechanicRequest.partsList.map((part, idx) => (
+                    <tr key={idx}>
+                      <td style={{ padding: '6px' }}>{part.slNo}</td>
+                      <td style={{ padding: '6px' }}>{part.partName}</td>
+                      <td style={{ padding: '6px' }}>{part.quantity}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {selectedMechanicRequest.billFile ? (
+                <>
+                  <Typography variant="h6" style={{ marginTop: '16px' }}>Uploaded Bill</Typography>
+                  <iframe
+                    src={selectedMechanicRequest.billFile}
+                    title="Bill"
+                    style={{ width: '100%', height: '400px', border: 'none' }}
+                  />
+                </>
+              ) : (
+                <Typography color="textSecondary">No Bill Uploaded</Typography>
+              )}
+            </>
+          ) : (
+            <Typography>No mechanic request details available.</Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseMechanicDialog}>Close</Button>
+          <Button
+            variant="contained"
+            color="success"
+            onClick={async () => {
+              const res = await fetch(`http://localhost:5000/api/repair-request/${selectedMechanicRequest._id}/forward-to-repair`, {
+                method: 'PUT',
+              });
+              if (res.ok) {
+                alert('Request forwarded to Repair Section');
+                fetchRepairs();
+                handleCloseMechanicDialog();
+              } else {
+                alert('Failed to forward request');
+              }
+            }}
+          >
+            Forward to Repair Section
+          </Button>
         </DialogActions>
       </Dialog>
     </div>

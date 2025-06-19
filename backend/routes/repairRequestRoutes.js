@@ -185,6 +185,17 @@ router.put('/:id/mechanic-update', async (req, res) => {
   }
 });
 
+
+// GET: All forwarded requests (seen by MTI)
+router.get('/forwarded', async (req, res) => {
+  try {
+    const requests = await RepairRequest.find({ forwardedToMechanic: true }).populate('user', 'name pen');
+    res.json(requests);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch forwarded requests' });
+  }
+});
+
 /**
  * POST: Mechanic marks as done and sends for user verification
  */
