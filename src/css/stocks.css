@@ -19,6 +19,12 @@
   border: none;
   cursor: pointer;
   font-weight: bold;
+   transition: background 0.3s ease;
+}
+
+.form-grid button:hover {
+  background: #0d47a1;
+
 }
 
 .table-container {
@@ -40,4 +46,36 @@ th, td {
   padding: 8px;
   border: 1px solid #ccc;
   text-align: center;
+}
+td button {
+  padding: 5px 12px;
+  margin: 0 4px;
+  border: none;
+  border-radius: 5px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+td button:hover {
+  opacity: 0.9;
+}
+
+td button:nth-child(1) {
+  background-color: yellowgreen;
+  color: #333;
+}
+
+td button:nth-child(1):hover {
+  background-color: yellowgreen;
+}
+
+
+td button:nth-child(2) {
+  background-color: #ef5350; 
+  color: #fff;
+}
+
+td button:nth-child(2):hover {
+  background-color: #e53935;
 }
