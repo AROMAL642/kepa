@@ -266,15 +266,20 @@ app.use('/api/eye-test', eyeTestRoutes);
 const reportRoutes = require('./routes/viewprintregisterRoutes');
 app.use('/api', reportRoutes);
 
-//user repair request form
+//repair requests
 
 const repairRequestRoutes = require('./routes/repairRequestRoutes');
+app.use('/api/repairRequestRoutes', require('./routes/repairRequestRoutes'));
 app.use('/api/repair-request', require('./routes/repairRequestRoutes'));
 
 // mechanic repair section
-const mechanicRepairRoutes = require('./routes/mechanicRepairRoutes');
-app.use('/api', mechanicRepairRoutes);
 
+//const mechanicRepairRoutes = require('./routes/mechanicRepairRoutes');
+//app.use('/api', mechanicRepairRoutes);
+
+//stock register
+const stockRoutes = require('./routes/stockRoutes');
+app.use('/api/stocks', stockRoutes);
 
 
 // Fetch all unverified users
