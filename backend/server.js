@@ -8,8 +8,11 @@ const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const app = express(); 
-const repairRequestRoutes = require('./routes/repairRequestRoutes');
-const mechanicRoutes = require('./routes/mechanicRoutes');
+
+
+
+
+
 
 
 // Middleware
@@ -17,9 +20,6 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 app.use('/uploads', express.static(UPLOADS_DIR));
-//app.use('/api/repair-request', repairRequestRoutes);
-app.use('/api/repair-request', require('./routes/repairRequestRoutes'));
-app.use('/api/mechanic', mechanicRoutes);
 
 
 // MongoDB Connection
@@ -265,6 +265,14 @@ app.use('/api/eye-test', eyeTestRoutes);
 
 const reportRoutes = require('./routes/viewprintregisterRoutes');
 app.use('/api', reportRoutes);
+
+//app.use('/api/repair-request', repairRequestRoutes);
+const repairRequestRoutes = require('./routes/repairRequestRoutes');
+//const mechanicRepairRoutes = require('./routes/mechanicRepairRoutes');
+
+app.use('/api/repair-request', require('./routes/repairRequestRoutes'));
+//app.use('/api/mechanic-repair',require('./routes/mechanicRepairRoutes'));
+
 
 
 // Fetch all unverified users

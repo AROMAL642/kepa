@@ -88,46 +88,6 @@ router.post('/report/:type/json', async (req, res) => {
         break;
       }
       
-      case 'fuel-consumption': {
-        const fuelDocs = vehicleOption === 'all'
-          ? await VehicleFuel.find()
-          : await VehicleFuel.find({ vehicleNo: vehicleNumber });
-
-        const groupedFuel = {};
-
-        fuelDocs.forEach(doc => {
-          const entriesInRange = doc.fuelEntries.filter(entry => {
-            const entryDate = new Date(entry.date);
-            return entryDate >= from && entryDate <= to;
-          });
-
-          if (entriesInRange.length > 0) {
-            if (!groupedFuel[doc.vehicleNo]) groupedFuel[doc.vehicleNo] = [];
-            groupedFuel[doc.vehicleNo].push(...entriesInRange);
-          }
-         });
-
-          result = Object.entries(groupedFuel).map(([vehicleNo, entries]) => {
-            entries.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-            const startKm = entries[0].previousKm || 0;
-            const endKm = entries[entries.length - 1].presentKm || 0;
-            const totalKm = endKm - startKm;
-            const totalFuel = entries.reduce((sum, e) => sum + parseFloat(e.quantity || 0), 0);
-            const averageKMPL = totalFuel ? (totalKm / totalFuel).toFixed(2) : 0;
-
-            return {
-              vehicleNo,
-              startKm,
-              endKm,
-              totalKm,
-              totalFuel: totalFuel.toFixed(2),
-              averageKMPL
-            };
-          });
-
-          break;
-      }
 
       case 'movement': {
         const moveDocs = vehicleOption === 'all'
