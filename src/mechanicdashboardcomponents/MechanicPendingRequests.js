@@ -15,6 +15,8 @@ function MechanicPendingRequests() {
   const [loading, setLoading] = useState(true);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [filePreviewOpen, setFilePreviewOpen] = useState(false);
+  const [fileToPreview, setFileToPreview] = useState(null);
 
   useEffect(() => {
     fetch('http://localhost:5000/api/repairs/verified')
@@ -32,6 +34,12 @@ function MechanicPendingRequests() {
           repairStatus: req.repairStatus,
           mechanicFeedback: req.mechanicFeedback,
           workDone: req.workDone || 'No',
+          billImage: req.billFile
+            ? {
+                url: `data:${req.billFile.contentType};base64,${req.billFile.data}`,
+                type: req.billFile.contentType
+              }
+            : null
         }));
         setRequests(formatted);
         setLoading(false);
@@ -53,23 +61,49 @@ function MechanicPendingRequests() {
   };
 
   const handleWorkCompleted = (id) => {
-  fetch(`http://localhost:5000/api/repairs/${id}/complete`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ workDone: 'Yes' }),
-  })
-    .then((res) => res.json())
-    .then((updated) => {
-      // Optional: Update the frontend state
-      setRequests((prev) =>
-        prev.map((r) => (r.id === id ? { ...r, workDone: 'Yes' } : r))
-      );
+    fetch(`http://localhost:5000/api/repairs/${id}/complete`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ workDone: 'Yes' }),
     })
-    .catch((err) => console.error('Error updating workDone:', err));
-};
+      .then((res) => res.json())
+      .then((updated) => {
+        if (!updated || !updated._id) {
+          alert('Update failed.');
+          return;
+        }
 
+        setRequests((prev) =>
+          prev.map((r) =>
+            r.id === id
+              ? {
+                  ...r,
+                  workDone: 'Yes',
+                  repairStatus: 'completed',
+                }
+              : r
+          )
+        );
+
+        handleCloseModal();
+      })
+      .catch((err) => {
+        console.error('Error updating workDone:', err);
+        alert('Failed to mark as completed.');
+      });
+  };
+
+  const handleViewFile = (file) => {
+    setFileToPreview(file);
+    setFilePreviewOpen(true);
+  };
+
+  const handleCloseFilePreview = () => {
+    setFileToPreview(null);
+    setFilePreviewOpen(false);
+  };
 
   const columns = [
     { field: 'serial', headerName: '#', width: 50 },
@@ -79,7 +113,34 @@ function MechanicPendingRequests() {
     { field: 'subject', headerName: 'Subject', width: 150 },
     { field: 'description', headerName: 'Description', width: 200 },
     { field: 'repairStatus', headerName: 'Repair Status', width: 140 },
+    {
+      field: 'workDone',
+      headerName: 'Work Done',
+      width: 110,
+      renderCell: (params) => (
+        <strong style={{ color: params.value === 'Yes' ? 'green' : 'red' }}>
+          {params.value}
+        </strong>
+      )
+    },
     { field: 'userName', headerName: 'Requested By', width: 130 },
+    {
+      field: 'billImage',
+      headerName: 'Bill',
+      width: 100,
+      renderCell: (params) =>
+        params.value ? (
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => handleViewFile(params.value)}
+          >
+            View
+          </Button>
+        ) : (
+          'N/A'
+        ),
+    },
     {
       field: 'review',
       headerName: 'Review',
@@ -112,7 +173,7 @@ function MechanicPendingRequests() {
         />
       )}
 
-      {/* Modal for Review */}
+      {/* Review Dialog */}
       <Dialog open={modalOpen} onClose={handleCloseModal}>
         <DialogTitle>Repair Review</DialogTitle>
         <DialogContent>
@@ -130,11 +191,36 @@ function MechanicPendingRequests() {
             <Button
               variant="contained"
               color="success"
-              onClick={handleWorkCompleted}
+              onClick={() => handleWorkCompleted(selectedRequest.id)}
             >
               Work Completed
             </Button>
           )}
+        </DialogActions>
+      </Dialog>
+
+      {/* File Preview Dialog */}
+      <Dialog open={filePreviewOpen} onClose={handleCloseFilePreview} maxWidth="md" fullWidth>
+        <DialogTitle>Bill File Preview</DialogTitle>
+        <DialogContent dividers>
+          {fileToPreview?.type?.includes('pdf') ? (
+            <iframe
+              src={fileToPreview.url}
+              title="PDF Preview"
+              width="100%"
+              height="500px"
+              style={{ border: 'none' }}
+            />
+          ) : (
+            <img
+              src={fileToPreview?.url}
+              alt="Bill File"
+              style={{ maxWidth: '100%', maxHeight: 500, borderRadius: 6 }}
+            />
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseFilePreview}>Close</Button>
         </DialogActions>
       </Dialog>
     </div>

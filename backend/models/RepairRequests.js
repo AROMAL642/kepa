@@ -1,4 +1,3 @@
-// Updated RepairRequest Schema (backend/models/RepairRequests.js)
 const mongoose = require('mongoose');
 
 const repairRequestsSchema = new mongoose.Schema({
@@ -11,16 +10,33 @@ const repairRequestsSchema = new mongoose.Schema({
     data: Buffer,
     contentType: String
   },
-  status: { type: String, default: 'pending' },
-  workDone: { type: String, default: 'No' },
+  status: {
+    type: String,
+    enum: ['pending', 'forwarded', 'repaired', 'verification pending', 'verified', 'rejected'],
+    default: 'pending'
+  },
+  workDone: {
+    type: String,
+    enum: ['Yes', 'No'],
+    default: 'No'
+  },
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 
-  // Extended fields for full workflow
+  // Workflow Fields
   forwardedToMechanic: { type: Boolean, default: false },
   mechanicFeedback: { type: String, default: '' },
-  repairStatus: { type: String, enum: ['not started', 'in progress', 'completed'], default: 'not started' },
+  repairStatus: {
+    type: String,
+    enum: ['not started', 'in progress', 'completed'],
+    default: 'not started'
+  },
   needsParts: { type: Boolean, default: false },
-  partsList: [{ item: String, quantity: Number }],
+  partsList: [
+    {
+      item: String,
+      quantity: Number
+    }
+  ],
   certificates: {
     essentiality: { type: Boolean, default: false },
     replacement: { type: Boolean, default: false }
