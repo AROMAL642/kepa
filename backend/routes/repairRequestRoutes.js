@@ -127,14 +127,33 @@ router.patch('/:id/complete', async (req, res) => {
 /**
  * GET: Forwarded to mechanic (optional view if using `forwardedToMechanic`)
  */
-router.get('/forwarded', async (req, res) => {
+
+router.put('/:id/forward-to-mechanic', async (req, res) => {
   try {
-    const requests = await RepairRequest.find({ forwardedToMechanic: true }).populate('user', 'name pen');
-    res.json(requests);
+    const updatedRequest = await RepairRequest.findByIdAndUpdate(
+      req.params.id,
+      {
+        status: 'forwarded',
+        forwardedToMechanic: true,
+        repairStatus: 'not started'
+      },
+      { new: true }
+    );
+
+    if (!updatedRequest) {
+      return res.status(404).json({ message: 'Request not found' });
+    }
+
+    res.json(updatedRequest);
   } catch (err) {
-    res.status(500).json({ message: 'Failed to fetch forwarded requests' });
+    console.error('Error forwarding to mechanic:', err);
+    res.status(500).json({ message: 'Error forwarding to mechanic' });
   }
 });
+
+
+
+
 
 /**
  * PUT: Mechanic updates work details (progress update)
