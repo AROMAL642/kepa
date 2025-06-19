@@ -12,6 +12,7 @@ const repairRequestsSchema = new mongoose.Schema({
     contentType: String
   },
   status: { type: String, default: 'pending' },
+  workDone: { type: String, default: 'No' },
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 
   // Extended fields for full workflow

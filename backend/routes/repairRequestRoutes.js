@@ -2,21 +2,19 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const RepairRequest = require('../models/RepairRequests');
-const User = require('../models/User'); 
+const User = require('../models/User');
 
+// Configure multer
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
-
-// Configure multer for memory storage (buffer, not disk)
-const storage = multer.memoryStorage();
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 } // Max 5 MB
-});
-
-// ✅ POST: Create new repair request
+/**
+ * POST: Create new repair request (User submits form)
+ */
 router.post('/', upload.single('billFile'), async (req, res) => {
   try {
     const { vehicleNo, pen, date, subject, description } = req.body;
+    const user = await User.findOne({ pen });
+    if (!user) return res.status(400).json({ message: `No user found with PEN ${pen}` });
 
     const repairData = {
       vehicleNo,
@@ -25,26 +23,8 @@ router.post('/', upload.single('billFile'), async (req, res) => {
       subject,
       description,
       status: 'pending',
-      //user: user._id,
-      
+      user: user._id
     };
-
-    // newly added delete
-
-    const user = await User.findOne({ pen });
-    if (!user) {
-  return res.status(400).json({ message: `No user found with PEN ${pen}` });
-}
-
-
-
-
-
-
-
-
-
-
 
     if (req.file) {
       repairData.billFile = {
@@ -53,81 +33,118 @@ router.post('/', upload.single('billFile'), async (req, res) => {
       };
     }
 
-    const newRepair = new RepairRequest(repairData);
-    await newRepair.save();
-
+    const newRequest = new RepairRequest(repairData);
+    await newRequest.save();
     res.status(201).json({ message: 'Repair request submitted successfully' });
   } catch (err) {
-    console.error('Error saving repair request:', err);
+    console.error(err);
     res.status(500).json({ message: 'Failed to submit repair request' });
   }
 });
 
-// ✅ GET: Get all repair requests
+/**
+ * GET: Admin fetch all repair requests
+ */
 router.get('/', async (req, res) => {
   try {
-    const repairs = await RepairRequest.find();
-    const formattedRepairs = repairs.map(req => ({
-      _id: req._id,
-      vehicleNo: req.vehicleNo,
-      pen: req.pen,
-      date: req.date,
-      subject: req.subject,
-      description: req.description,
-      status: req.status || 'pending',
-      //userName: req.user?.name || 'Unknown',
-      billFile: req.billFile?.data
-        ? {
-            data: req.billFile.data.toString('base64'),
-            contentType: req.billFile.contentType
-          }
-        : null
+    const requests = await RepairRequest.find().populate('user', 'name pen');
+    const formatted = requests.map(r => ({
+      ...r.toObject(),
+      billFile: r.billFile?.data ? {
+        data: r.billFile.data.toString('base64'),
+        contentType: r.billFile.contentType
+      } : null
     }));
-
-    res.json(formattedRepairs);
+    res.json(formatted);
   } catch (err) {
-    console.error('Error fetching repair requests:', err);
-    res.status(500).json({ message: 'Failed to fetch repair requests' });
+    console.error(err);
+    res.status(500).json({ message: 'Failed to fetch all repair requests' });
   }
 });
 
-// ✅ PUT: Update repair request status
+/**
+ * PUT: Admin changes status
+ */
 router.put('/:id/status', async (req, res) => {
-  const { id } = req.params;
-  const { status } = req.body;
-
   try {
-    const updated = await RepairRequest.findByIdAndUpdate(id, { status }, { new: true });
-    if (!updated) {
-      return res.status(404).json({ message: 'Repair request not found' });
-    }
+    const updated = await RepairRequest.findByIdAndUpdate(req.params.id, { status: req.body.status }, { new: true });
+    if (!updated) return res.status(404).json({ message: 'Repair request not found' });
     res.json(updated);
   } catch (err) {
-    console.error('PUT /status error:', err);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Error updating request status' });
+  }
+});
+
+/**
+ * GET: Mechanic view all verified repair requests
+ */
+router.get('/verified', async (req, res) => {
+  try {
+    const requests = await RepairRequest.find({ status: 'forwarded' }).lean();
+    const users = await User.find({}, 'pen name email').lean();
+
+    const penToUserMap = {};
+    users.forEach(user => {
+      penToUserMap[user.pen?.trim()] = {
+        name: user.name,
+        email: user.email
+      };
+    });
+
+    const requestsWithUser = requests.map(req => {
+      const pen = req.pen?.trim();
+      const userInfo = penToUserMap[pen] || { name: 'N/A', email: 'N/A' };
+      return {
+        ...req,
+        userName: userInfo.name,
+        userEmail: userInfo.email
+      };
+    });
+
+    res.json(requestsWithUser);
+  } catch (err) {
+    console.error('Error fetching verified repair requests:', err);
+    res.status(500).json({ message: 'Failed to fetch verified repair requests' });
+  }
+});
+//complete work status update by mechanic
+
+router.patch('/:id/complete', async (req, res) => {
+  try {
+    const updated = await RepairRequest.findByIdAndUpdate(
+      req.params.id,
+      { workDone: 'Yes' },
+      { new: true }
+    );
+    res.json(updated);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to update repair status' });
   }
 });
 
 
-
-// ✅ Mechanic: Get all requests forwarded to them
-router.get('/pending', async (req, res) => {
+/**
+ * GET: Forwarded to mechanic (optional view if using `forwardedToMechanic`)
+ */
+router.get('/forwarded', async (req, res) => {
   try {
-    const requests = await RepairRequest.find({ status: 'forwarded' });
+    const requests = await RepairRequest.find({ forwardedToMechanic: true }).populate('user', 'name pen');
     res.json(requests);
   } catch (err) {
-    console.error('Error fetching forwarded requests:', err);
-    res.status(500).json({ message: 'Internal error' });
+    res.status(500).json({ message: 'Failed to fetch forwarded requests' });
   }
 });
 
-// ✅ Mechanic: View completed / needs work status
+/**
+ * PUT: Mechanic updates work details (progress update)
+ */
 router.put('/:id/mechanic-update', async (req, res) => {
-  const { workDone, needsParts, partsList, billFile } = req.body;
-
   try {
+    const { mechanicFeedback, needsParts, partsList, billFile } = req.body;
+
     const update = {
-      mechanicFeedback: workDone,
+      mechanicFeedback,
       needsParts,
       partsList: needsParts ? partsList : [],
       repairStatus: 'in progress',
@@ -144,55 +161,57 @@ router.put('/:id/mechanic-update', async (req, res) => {
     const result = await RepairRequest.findByIdAndUpdate(req.params.id, update, { new: true });
     res.json(result);
   } catch (err) {
-    res.status(500).json({ message: 'Mechanic update failed' });
+    console.error(err);
+    res.status(500).json({ message: 'Failed to update mechanic info' });
   }
 });
 
-// ✅ Mechanic -> Work Done → Send for user verification
+/**
+ * POST: Mechanic marks as done and sends for user verification
+ */
 router.post('/verify/:id', async (req, res) => {
   try {
-    const repair = await RepairRequest.findById(req.params.id);
-    if (!repair) return res.status(404).json({ message: 'Repair not found' });
+    const request = await RepairRequest.findById(req.params.id);
+    if (!request) return res.status(404).json({ message: 'Repair not found' });
 
-    repair.status = 'Pending User Verification';
-    await repair.save();
+    request.status = 'Pending User Verification';
+    await request.save();
     res.json({ message: 'Sent for user verification' });
   } catch (err) {
-    console.error('Error in verify route:', err);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: 'Failed to verify repair' });
   }
 });
 
-// ✅ Mechanic -> Work Not Done → Notify MTI
+/**
+ * POST: Notify MTI for rechecking
+ */
 router.post('/notify-mti/:id', async (req, res) => {
   try {
-    const repair = await RepairRequest.findById(req.params.id);
-    if (!repair) return res.status(404).json({ message: 'Repair not found' });
+    const request = await RepairRequest.findById(req.params.id);
+    if (!request) return res.status(404).json({ message: 'Repair not found' });
 
-    repair.status = 'Check Again';
-    await repair.save();
-    res.json({ message: 'MTI notified to check again' });
+    request.status = 'Check Again';
+    await request.save();
+    res.json({ message: 'MTI notified' });
   } catch (err) {
-    console.error('Error in notify-mti route:', err);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: 'Failed to notify MTI' });
   }
 });
 
-// ✅ Mechanic completes final repair
+/**
+ * PUT: Final repair marked done by admin/MTI
+ */
 router.put('/:id/final-repair-done', async (req, res) => {
   try {
-    const result = await RepairRequest.findByIdAndUpdate(
+    const request = await RepairRequest.findByIdAndUpdate(
       req.params.id,
       { status: 'final_work_done_sent_to_user' },
       { new: true }
     );
-    res.json(result);
+    res.json(request);
   } catch (err) {
-    res.status(500).json({ message: 'Final repair update failed' });
+    res.status(500).json({ message: 'Failed to mark final repair done' });
   }
 });
 
 module.exports = router;
-
-
-
