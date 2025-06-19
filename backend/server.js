@@ -266,12 +266,14 @@ app.use('/api/eye-test', eyeTestRoutes);
 const reportRoutes = require('./routes/viewprintregisterRoutes');
 app.use('/api', reportRoutes);
 
-//app.use('/api/repair-request', repairRequestRoutes);
-const repairRequestRoutes = require('./routes/repairRequestRoutes');
-//const mechanicRepairRoutes = require('./routes/mechanicRepairRoutes');
+//user repair request form
 
+const repairRequestRoutes = require('./routes/repairRequestRoutes');
 app.use('/api/repair-request', require('./routes/repairRequestRoutes'));
-//app.use('/api/mechanic-repair',require('./routes/mechanicRepairRoutes'));
+
+// mechanic repair section
+const mechanicRepairRoutes = require('./routes/mechanicRepairRoutes');
+app.use('/api', mechanicRepairRoutes);
 
 
 

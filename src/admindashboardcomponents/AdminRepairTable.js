@@ -15,7 +15,6 @@ const RepairAdminTable = ({ themeStyle }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedRepair, setSelectedRepair] = useState(null);
 
-  // 🔄 Fetch repair data from backend
   const fetchRepairs = useCallback(async () => {
     try {
       const res = await fetch('http://localhost:5000/api/repair-request');
@@ -58,7 +57,6 @@ const RepairAdminTable = ({ themeStyle }) => {
     setSelectedRepair(null);
   };
 
-  // ✅ Update status endpoint
   const updateStatus = async (id, status) => {
     try {
       const res = await fetch(`http://localhost:5000/api/repair-request/${id}/status`, {
@@ -78,11 +76,10 @@ const RepairAdminTable = ({ themeStyle }) => {
     }
   };
 
-  // ✅ Forward verified request to mechanic
   const forwardToMechanic = async (id) => {
     try {
       const res = await fetch(`http://localhost:5000/api/repair-request/${id}/forward-to-mechanic`, {
-        method: 'PUT',
+        method: 'PUT'
       });
 
       if (res.ok) {
@@ -106,14 +103,14 @@ const RepairAdminTable = ({ themeStyle }) => {
     {
       field: 'status',
       headerName: 'Status',
-      width: 140,
+      width: 160,
       renderCell: (params) => {
         const colorMap = {
           verified: 'green',
           rejected: 'red',
           pending: 'gray',
           forwarded: 'blue',
-          sent_to_repair_admin: 'orange'
+          'sent_to_repair_admin': 'orange'
         };
         return (
           <strong style={{ color: colorMap[params.value] || 'gray' }}>
@@ -127,7 +124,10 @@ const RepairAdminTable = ({ themeStyle }) => {
       headerName: 'Actions',
       width: 300,
       renderCell: (params) => {
-        const isVerifiedOrBeyond = ['verified', 'forwarded', 'sent_to_repair_admin', 'user_approved'].includes(params.row.status);
+        const status = params.row.status;
+        const isVerified = status === 'verified';
+        const isForwarded = status === 'forwarded';
+        const isRejected = status === 'rejected';
 
         return (
           <>
@@ -147,7 +147,7 @@ const RepairAdminTable = ({ themeStyle }) => {
                 await updateStatus(params.row._id, 'verified');
                 await forwardToMechanic(params.row._id);
               }}
-              disabled={isVerifiedOrBeyond}
+              disabled={isVerified || isForwarded}
               style={{ marginRight: 4 }}
             >
               Verify
@@ -157,7 +157,7 @@ const RepairAdminTable = ({ themeStyle }) => {
               color="error"
               size="small"
               onClick={() => updateStatus(params.row._id, 'rejected')}
-              disabled={params.row.status === 'rejected'}
+              disabled={isRejected}
             >
               Reject
             </Button>

@@ -113,11 +113,7 @@ const handleSubmit = async (e) => {
   if (billFile) {
     formDataToSend.append('billFile', billFile);
   }
-   console.log('📋 FormData contents:');
-for (let [key, value] of formDataToSend.entries()) {
 
-  console.log(`- ${key}:`, value);
-}
   try {
     await axios.post('http://localhost:5000/api/repair-request', formDataToSend, {
       headers: {
@@ -126,11 +122,25 @@ for (let [key, value] of formDataToSend.entries()) {
     });
 
     alert('Request submitted successfully');
+
+    // ✅ Clear form fields here
+    setVehicleNo('');
+    setVehicleStatus('');
+    setDate(new Date().toISOString().split('T')[0]);
+    setSubject('');
+    setDescription('');
+    setBillFile(null);
+
+    // Optional: Reset file input field manually
+    document.querySelector('input[type="file"]').value = '';
+
   } catch (err) {
     console.error('Error submitting form:', err.response?.data || err.message);
     alert('Error submitting form.');
   }
 };
+
+
 
 
 
@@ -207,10 +217,13 @@ for (let [key, value] of formDataToSend.entries()) {
 
           <label>Upload Bill (MAX 5 MB)</label>
           <input
-            type="file"
-            accept="image/*,.pdf"
-            onChange={handleFileChange}
-            style={styles.input}
+  type="file"
+  id="billFileInput" // <-- Add this line
+  accept="image/*,.pdf"
+  onChange={handleFileChange}
+  style={styles.input}
+
+
           />
         </div>
       </div>
