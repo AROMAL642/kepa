@@ -151,6 +151,23 @@ router.put('/:id/forward-to-mechanic', async (req, res) => {
   }
 });
 
+//track status by user
+router.get('/by-pen/:pen', async (req, res) => {
+  try {
+    const { pen } = req.params;
+
+    if (!pen) {
+      return res.status(400).json({ error: 'PEN not provided' });
+    }
+
+    const repairs = await RepairRequest.find({ pen });
+
+    res.json(repairs);
+  } catch (err) {
+    console.error('Error fetching by pen:', err);
+    res.status(500).json({ error: 'Failed to fetch data' });
+  }
+});
 
 
 
