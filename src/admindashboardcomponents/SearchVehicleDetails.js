@@ -12,7 +12,10 @@ function SearchVehicleDetails({ themeStyle, onBack }) {
   const [viewAll, setViewAll] = useState(false);
   const [editingStatusId, setEditingStatusId] = useState(null);
   const [newStatus, setNewStatus] = useState('');
-  const [selectedVehicle, setSelectedVehicle] = useState(null);
+
+  const handleInputChange = (e) => {
+    setVehicleNo(e.target.value.toUpperCase());
+  };
 
   const handleSearch = async () => {
     if (!vehicleNo.trim()) {
@@ -49,7 +52,12 @@ function SearchVehicleDetails({ themeStyle, onBack }) {
 
       const formattedData = data.map((v, index) => ({
         id: v._id || index,
-        ...v,
+        number: v.number,
+        type: v.type,
+        model: v.model,
+        fuelType: v.fuelType,
+        status: v.status,
+        kmpl: v.kmpl,
         arrivedDate: v.arrivedDate ? new Date(v.arrivedDate).toLocaleDateString() : '',
         createdAt: v.createdAt ? new Date(v.createdAt).toLocaleString() : '',
       }));
@@ -60,6 +68,17 @@ function SearchVehicleDetails({ themeStyle, onBack }) {
       setError(err.message || 'Error loading vehicle list');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleViewDetails = async (row) => {
+    setViewAll(false);
+    try {
+      const res = await fetch(`http://localhost:5000/searchvehicle?number=${row.number}`);
+      const data = await res.json();
+      setVehicleData(data);
+    } catch (err) {
+      setError('Failed to load vehicle details');
     }
   };
 
@@ -107,14 +126,37 @@ function SearchVehicleDetails({ themeStyle, onBack }) {
     }
   };
 
-  const handleInputChange = (e) => {
-    setVehicleNo(e.target.value.toUpperCase());
-  };
+  const renderBase64Button = (base64, mimetype, label) => {
+    if (!base64 || !mimetype) return null;
 
-  const handleViewDetails = (row) => {
-    setSelectedVehicle(row);
-    setVehicleData(row);
-    setViewAll(false);
+    try {
+      const byteArray = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+      const blob = new Blob([byteArray], { type: mimetype });
+      const url = URL.createObjectURL(blob);
+
+      return (
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            padding: '6px 12px',
+            marginTop: '10px',
+            marginRight: '10px',
+            backgroundColor: '#444',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '4px',
+            textDecoration: 'none',
+            display: 'inline-block',
+          }}
+        >
+          View {label}
+        </a>
+      );
+    } catch (e) {
+      return <p>Failed to render {label}</p>;
+    }
   };
 
   const columns = [
@@ -153,10 +195,7 @@ function SearchVehicleDetails({ themeStyle, onBack }) {
       renderCell: (params) => (
         editingStatusId === params.row.id ? (
           <div style={{ display: 'flex', gap: '5px' }}>
-            <select
-              value={newStatus}
-              onChange={(e) => setNewStatus(e.target.value)}
-            >
+            <select value={newStatus} onChange={(e) => setNewStatus(e.target.value)}>
               <option value="Active">Active</option>
               <option value="Inactive">Inactive</option>
               <option value="Decommissioned">Decommissioned</option>
@@ -229,8 +268,6 @@ function SearchVehicleDetails({ themeStyle, onBack }) {
             onChange={handleInputChange}
             className="vehicle-input"
             placeholder="e.g. KL01AB1234"
-            pattern="[A-Z]{2}\d{2}[A-Z]{1,2}\d{4}"
-            title="Format: XX00XX0000 (e.g., KL01AB1234)"
             maxLength={10}
           />
         </div>
@@ -252,56 +289,14 @@ function SearchVehicleDetails({ themeStyle, onBack }) {
           <p><strong>Fuel Type:</strong> {vehicleData.fuelType}</p>
           <p><strong>Status:</strong> {vehicleData.status}</p>
           <p><strong>Arrived Date:</strong> {new Date(vehicleData.arrivedDate).toLocaleDateString()}</p>
-          <p><strong>Record Created At:</strong> {new Date(vehicleData.createdAt).toLocaleString()}</p>
+          <p><strong>Created At:</strong> {new Date(vehicleData.createdAt).toLocaleString()}</p>
 
           {vehicleData.insurancePolicyNo && <p><strong>Insurance Policy No:</strong> {vehicleData.insurancePolicyNo}</p>}
           {vehicleData.insuranceValidity && <p><strong>Insurance Validity:</strong> {new Date(vehicleData.insuranceValidity).toLocaleDateString()}</p>}
-
-          {vehicleData.insuranceFile && vehicleData.insuranceFile.buffer && (
-            <div>
-              <p><strong>Insurance Certificate:</strong></p>
-              {vehicleData.insuranceFile.mimetype.startsWith('image') ? (
-                <img
-                  src={`data:${vehicleData.insuranceFile.mimetype};base64,${vehicleData.insuranceFile.buffer}`}
-                  alt="Insurance Certificate"
-                  style={{ width: '300px', border: '1px solid #ccc', marginTop: '10px' }}
-                />
-              ) : vehicleData.insuranceFile.mimetype === 'application/pdf' ? (
-                <iframe
-                  src={`data:application/pdf;base64,${vehicleData.insuranceFile.buffer}`}
-                  title="Insurance PDF"
-                  width="100%"
-                  height="400px"
-                />
-              ) : (
-                <p>Unsupported file format</p>
-              )}
-            </div>
-          )}
+          {renderBase64Button(vehicleData.insuranceFile?.buffer, vehicleData.insuranceFile?.mimetype, 'Insurance Certificate')}
 
           {vehicleData.pollutionValidity && <p><strong>Pollution Validity:</strong> {new Date(vehicleData.pollutionValidity).toLocaleDateString()}</p>}
-
-          {vehicleData.pollutionFile && vehicleData.pollutionFile.buffer && (
-            <div>
-              <p><strong>Pollution Certificate:</strong></p>
-              {vehicleData.pollutionFile.mimetype.startsWith('image') ? (
-                <img
-                  src={`data:${vehicleData.pollutionFile.mimetype};base64,${vehicleData.pollutionFile.buffer}`}
-                  alt="Pollution Certificate"
-                  style={{ width: '300px', border: '1px solid #ccc', marginTop: '10px' }}
-                />
-              ) : vehicleData.pollutionFile.mimetype === 'application/pdf' ? (
-                <iframe
-                  src={`data:application/pdf;base64,${vehicleData.pollutionFile.buffer}`}
-                  title="Pollution PDF"
-                  width="100%"
-                  height="400px"
-                />
-              ) : (
-                <p>Unsupported file format</p>
-              )}
-            </div>
-          )}
+          {renderBase64Button(vehicleData.pollutionFile?.buffer, vehicleData.pollutionFile?.mimetype, 'Pollution Certificate')}
         </div>
       )}
 
@@ -313,10 +308,7 @@ function SearchVehicleDetails({ themeStyle, onBack }) {
             pageSize={10}
             rowsPerPageOptions={[5, 10, 20]}
             disableSelectionOnClick
-            sx={{
-              backgroundColor: themeStyle?.backgroundColor || '#fff',
-              color: themeStyle?.color || '#000',
-            }}
+            sx={{ backgroundColor: themeStyle?.backgroundColor || '#fff', color: themeStyle?.color || '#000' }}
           />
         </div>
       )}

@@ -20,6 +20,8 @@ function AddRemoveVehicleForm({ onBack }) {
   const insuranceFileRef = useRef(null);
   const pollutionFileRef = useRef(null);
 
+  const MAX_FILE_SIZE = 100 * 1024; // 100 KB
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     const newValue = name === 'number' ? value.toUpperCase() : value;
@@ -28,6 +30,20 @@ function AddRemoveVehicleForm({ onBack }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const insuranceFile = insuranceFileRef.current?.files[0];
+    const pollutionFile = pollutionFileRef.current?.files[0];
+
+    // File size validation
+    if (insuranceFile && insuranceFile.size > MAX_FILE_SIZE) {
+      alert('Insurance file exceeds 100KB size limit.');
+      return;
+    }
+
+    if (pollutionFile && pollutionFile.size > MAX_FILE_SIZE) {
+      alert('Pollution file exceeds 100KB size limit.');
+      return;
+    }
 
     const formData = new FormData();
 
@@ -39,11 +55,12 @@ function AddRemoveVehicleForm({ onBack }) {
     formData.append('insuranceValidity', insuranceValidity);
     formData.append('pollutionValidity', pollutionValidity);
 
-    if (insuranceFileRef.current?.files[0]) {
-      formData.append('insuranceFile', insuranceFileRef.current.files[0]);
+    if (insuranceFile) {
+      formData.append('insuranceFile', insuranceFile);
     }
-    if (pollutionFileRef.current?.files[0]) {
-      formData.append('pollutionFile', pollutionFileRef.current.files[0]);
+
+    if (pollutionFile) {
+      formData.append('pollutionFile', pollutionFile);
     }
 
     try {
@@ -55,6 +72,7 @@ function AddRemoveVehicleForm({ onBack }) {
 
       alert('Vehicle added successfully');
 
+      // Reset form
       setVehicle({
         number: '',
         model: '',
@@ -64,12 +82,11 @@ function AddRemoveVehicleForm({ onBack }) {
         arrivedDate: new Date().toISOString().split('T')[0],
         kmpl: '',
       });
-
       setInsurancePolicyNo('');
       setInsuranceValidity('');
       setPollutionValidity('');
-      insuranceFileRef.current.value = '';
-      pollutionFileRef.current.value = '';
+      if (insuranceFileRef.current) insuranceFileRef.current.value = '';
+      if (pollutionFileRef.current) pollutionFileRef.current.value = '';
     } catch (error) {
       console.error(error);
       const errorMsg = error.response?.data?.error;
@@ -176,7 +193,7 @@ function AddRemoveVehicleForm({ onBack }) {
           />
         </div>
 
-        {/* Insurance Certificate Section */}
+        {/* Insurance Section */}
         <div className="form-group">
           <label>Insurance Policy Number</label>
           <input
@@ -196,7 +213,7 @@ function AddRemoveVehicleForm({ onBack }) {
         </div>
 
         <div className="form-group">
-          <label>Upload Insurance Certificate (Optional)</label>
+          <label>Upload Insurance Certificate (Max 100KB)</label>
           <input
             type="file"
             ref={insuranceFileRef}
@@ -204,7 +221,7 @@ function AddRemoveVehicleForm({ onBack }) {
           />
         </div>
 
-        {/* Pollution Certificate Section */}
+        {/* Pollution Section */}
         <div className="form-group">
           <label>Pollution Validity</label>
           <input
@@ -215,7 +232,7 @@ function AddRemoveVehicleForm({ onBack }) {
         </div>
 
         <div className="form-group">
-          <label>Upload Pollution Certificate (Optional)</label>
+          <label>Upload Pollution Certificate (Max 100KB)</label>
           <input
             type="file"
             ref={pollutionFileRef}

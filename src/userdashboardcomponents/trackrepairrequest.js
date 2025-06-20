@@ -15,34 +15,34 @@ import {
 function TrackRepairRequests() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const pen = localStorage.getItem('pen'); 
+  const pen = localStorage.getItem('pen');
 
   useEffect(() => {
-  if (!pen) {
-    console.warn('PEN not found in localStorage.');
-    setRequests([]);
-    setLoading(false);
-    return;
-  }
-
-  fetch(`http://localhost:5000/api/repairs/by-pen/${pen}`)
-    .then(res => res.json())
-    .then(data => {
-      console.log('Fetched repair data:', data); // 👈 Check this in browser console
-      if (Array.isArray(data)) {
-        setRequests(data);
-      } else {
-        console.warn('Expected array but received:', data);
-        setRequests([]);
-      }
-      setLoading(false);
-    })
-    .catch(err => {
-      console.error('Error fetching repair requests:', err);
+    if (!pen) {
+      console.warn('PEN not found in localStorage.');
       setRequests([]);
       setLoading(false);
-    });
-}, [pen]);
+      return;
+    }
+
+    fetch(`http://localhost:5000/api/repairs/by-pen/${pen}`)
+      .then(res => res.json())
+      .then(data => {
+        console.log('Fetched repair data:', data);
+        if (Array.isArray(data)) {
+          setRequests(data);
+        } else {
+          console.warn('Expected array but received:', data);
+          setRequests([]);
+        }
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Error fetching repair requests:', err);
+        setRequests([]);
+        setLoading(false);
+      });
+  }, [pen]);
 
   const renderStatusChip = (value, label) => (
     <Chip
@@ -50,6 +50,10 @@ function TrackRepairRequests() {
       color={value ? 'success' : 'default'}
       variant={value ? 'filled' : 'outlined'}
       size="small"
+      sx={{
+        pointerEvents: 'none', // disables any click/hover
+        cursor: 'default',     // disables hand cursor
+      }}
     />
   );
 

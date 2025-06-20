@@ -17,6 +17,8 @@ import AccidentReportTable from './admindashboardcomponents/AccidentReportTable'
 import RegisterPage from './admindashboardcomponents/RegisterPage';
 import AdminRepairTable from './admindashboardcomponents/AdminRepairTable';
 import ViewPrintRegisters from './admindashboardcomponents/ViewPrintRegisters';
+import AddUpdateCertificate from './admindashboardcomponents/AddUpdateCertificate';
+import './css/addupdatecertificate.css';
 
 import dayjs from 'dayjs';
 
@@ -190,38 +192,34 @@ function AdminDashboard() {
           {activeTab === 'profile' && (
             <div className="form-section">
               <div className="form-left">
-                
-
-              {Object.entries(fieldLabels).map(([key, label]) => (
-  <div className="form-group" key={key}>
-    <label>{label}</label>
-    {key === 'dob' && isEditing ? (
-      <input
-        type="date"
-        value={editedProfile.dob ? dayjs(editedProfile.dob).format('YYYY-MM-DD') : ''}
-        onChange={(e) => setEditedProfile(prev => ({ ...prev, dob: e.target.value }))}
-        style={themeStyle}
-      />
-    ) : (
-      <input
-        type="text"
-        value={
-          isEditing
-            ? editedProfile[key] || ''
-            : key === 'dob' && adminData.dob
-              ? dayjs(adminData.dob).format('DD-MM-YYYY')
-              : adminData[key] || ''
-        }
-        readOnly={!isEditing || ['pen', 'generalNo', 'role', 'gender', 'bloodGroup'].includes(key)}
-        onChange={(e) => setEditedProfile(prev => ({ ...prev, [key]: e.target.value }))}
-        style={themeStyle}
-        className={key === 'role' ? 'role-field' : ''}
-      />
-    )}
-  </div>
-))}
-
-
+                {Object.entries(fieldLabels).map(([key, label]) => (
+                  <div className="form-group" key={key}>
+                    <label>{label}</label>
+                    {key === 'dob' && isEditing ? (
+                      <input
+                        type="date"
+                        value={editedProfile.dob ? dayjs(editedProfile.dob).format('YYYY-MM-DD') : ''}
+                        onChange={(e) => setEditedProfile(prev => ({ ...prev, dob: e.target.value }))}
+                        style={themeStyle}
+                      />
+                    ) : (
+                      <input
+                        type="text"
+                        value={
+                          isEditing
+                            ? editedProfile[key] || ''
+                            : key === 'dob' && adminData.dob
+                              ? dayjs(adminData.dob).format('DD-MM-YYYY')
+                              : adminData[key] || ''
+                        }
+                        readOnly={!isEditing || ['pen', 'generalNo', 'role', 'gender', 'bloodGroup'].includes(key)}
+                        onChange={(e) => setEditedProfile(prev => ({ ...prev, [key]: e.target.value }))}
+                        style={themeStyle}
+                        className={key === 'role' ? 'role-field' : ''}
+                      />
+                    )}
+                  </div>
+                ))}
 
                 <div style={{ marginTop: '15px' }}>
                   {!isEditing ? (
@@ -291,18 +289,19 @@ function AdminDashboard() {
               <button className="vehicle-btn" onClick={() => setVehicleTab('search')}>Search Vehicle Details</button>
               <button className="vehicle-btn">Expense Details</button>
               <button className="vehicle-btn" onClick={() => setVehicleTab('viewassign')}>View/Assign Vehicle</button>
+              <button className="vehicle-btn" onClick={() => setVehicleTab('certificate')}>View and Update Certificates</button>
             </div>
           )}
           {activeTab === 'VehicleDetails' && vehicleTab === 'addremove' && <AddRemoveVehicleForm onBack={() => setVehicleTab('main')} themeStyle={themeStyle} />}
           {activeTab === 'VehicleDetails' && vehicleTab === 'search' && <SearchVehicleDetails onBack={() => setVehicleTab('main')} themeStyle={themeStyle} />}
           {activeTab === 'VehicleDetails' && vehicleTab === 'viewassign' && <ViewAssignVehicle onBack={() => setVehicleTab('main')} themeStyle={themeStyle} />}
+          {activeTab === 'VehicleDetails' && vehicleTab === 'certificate' && <AddUpdateCertificate onBack={() => setVehicleTab('main')} themeStyle={themeStyle} />}
           {activeTab === 'Request' && <ViewRequests themeStyle={themeStyle} />}
           {activeTab === 'Movement' && <MovementAdmin themeStyle={themeStyle} />}
           {activeTab === 'Accident' && <AccidentReportTable themeStyle={themeStyle} />}
           {activeTab === 'Repair' && <AdminRepairTable themeStyle={themeStyle} />}
           {activeTab === 'AddUser' && <RegisterPage themeStyle={themeStyle} />}
           {activeTab === 'PrintRegisters' && <ViewPrintRegisters />}
-
         </div>
       </div>
     </div>
