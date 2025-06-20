@@ -12,7 +12,7 @@ import './css/accidentreportform.css';
 import EyeTestReport from './userdashboardcomponents/EyeTestReport';
 import ResponsiveAppBar from './admindashboardcomponents/ResponsiveAppBar';
 import TrackRepairRequests from './userdashboardcomponents/trackrepairrequest';
-
+import AddUpdateCertificate from './admindashboardcomponents/AddUpdateCertificate'; 
 function UserDashboard() {
   const [activeTab, setActiveTab] = useState('profile');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -76,7 +76,8 @@ function UserDashboard() {
     { key: 'movement', label: 'Movement' },
     { key: 'eyetest', label: 'Eye Test' },
     { key: 'accident', label: 'Accident' },
-    { key: 'vehicle details', label: 'Vehicle Details' }
+    { key: 'vehicle details', label: 'Vehicle Details' },
+    { key: 'certificates', label: 'Vehicle Certificates' }, // ✅ Added here
   ];
 
   return (
@@ -102,7 +103,7 @@ function UserDashboard() {
               <button
                 key={key}
                 className={`sidebar-btn ${activeTab === key ? 'active' : ''}`}
-                onClick={() => setActiveTab(key)}
+                onClick={() => setActiveTab(key)} // ✅ Just switch tab
               >
                 {label}
               </button>
@@ -117,14 +118,14 @@ function UserDashboard() {
             <div className="form-section">
               <div className="form-left">
                 {[{ label: 'Name', name: 'name' },
-                  { label: 'PEN number', name: 'pen', readOnly: true },
-                  { label: 'General Number', name: 'generalNo', readOnly: true },
-                  { label: 'Email', name: 'email' },
-                  { label: 'Mobile Number', name: 'mobile' },
-                  { label: 'DOB', name: 'dob', type: 'date' },
-                  { label: 'Licence Number', name: 'licenseNo' },
-                  { label: 'Blood Group', name: 'bloodGroup', readOnly: true },
-                  { label: 'Gender', name: 'gender', readOnly: true },
+                { label: 'PEN number', name: 'pen', readOnly: true },
+                { label: 'General Number', name: 'generalNo', readOnly: true },
+                { label: 'Email', name: 'email' },
+                { label: 'Mobile Number', name: 'mobile' },
+                { label: 'DOB', name: 'dob', type: 'date' },
+                { label: 'Licence Number', name: 'licenseNo' },
+                { label: 'Blood Group', name: 'bloodGroup', readOnly: true },
+                { label: 'Gender', name: 'gender', readOnly: true },
                 ].map(field => (
                   <div className="form-group" key={field.name}>
                     <label>{field.label}</label>
@@ -230,6 +231,12 @@ function UserDashboard() {
           {activeTab === 'eyetest' && (
             <div className="eyetest-section">
               <EyeTestReport pen={formData.pen} />
+            </div>
+          )}
+
+          {activeTab === 'certificates' && (
+            <div className="certificates-section">
+              <AddUpdateCertificate />
             </div>
           )}
         </div>

@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
-import CircularProgress from '@mui/material/CircularProgress';
-import Button from '@mui/material/Button';
-import Box from '@mui/material/Box';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import MenuItem from '@mui/material/MenuItem';
-import Select from '@mui/material/Select';
-import FormControl from '@mui/material/FormControl';
+import {
+  CircularProgress,
+  Button,
+  Box,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  MenuItem,
+  Select,
+  FormControl,
+  Typography
+} from '@mui/material';
 
 const VerifiedUsersTable = ({ themeStyle }) => {
   const [users, setUsers] = useState([]);
@@ -179,13 +182,11 @@ const VerifiedUsersTable = ({ themeStyle }) => {
             size="small"
             onClick={() => handleAssignRole(params.row._id)}
             disabled={updatingRole === params.row._id}
-            sx={{
-              backgroundColor: '#1976d2',
-              color: '#fff',
-              whiteSpace: 'nowrap',
-            }}
+            sx={{ backgroundColor: '#1976d2', color: '#fff', whiteSpace: 'nowrap' }}
           >
-            {updatingRole === params.row._id ? 'Updating...' : 'Assign'}
+            <Typography variant="button">
+              {updatingRole === params.row._id ? 'Updating...' : 'Assign'}
+            </Typography>
           </Button>
         </Box>
       ),
@@ -201,13 +202,9 @@ const VerifiedUsersTable = ({ themeStyle }) => {
           variant="contained"
           size="small"
           onClick={() => handleViewProfile(params.row._id)}
-          sx={{
-            backgroundColor: '#1976d2',
-            color: '#fff',
-            whiteSpace: 'nowrap',
-          }}
+          sx={{ backgroundColor: '#1976d2', color: '#fff', whiteSpace: 'nowrap' }}
         >
-          View Profile
+          <Typography variant="button">View Profile</Typography>
         </Button>
       ),
     },
@@ -222,16 +219,7 @@ const VerifiedUsersTable = ({ themeStyle }) => {
   }
 
   return (
-    <Box
-      sx={{
-        flex: 1,
-        minWidth: 0,
-        overflow: 'hidden',
-        p: 2,
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
+    <Box sx={{ flex: 1, minWidth: 0, overflow: 'hidden', p: 2, display: 'flex', flexDirection: 'column' }}>
       <h2 style={{ color: themeStyle.color, marginBottom: '20px' }}>Verified Users</h2>
 
       <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -247,9 +235,7 @@ const VerifiedUsersTable = ({ themeStyle }) => {
             width: '100%',
             maxWidth: '100%',
             color: themeStyle.color,
-            '& .MuiDataGrid-cell': {
-              borderColor: themeStyle.borderColor,
-            },
+            '& .MuiDataGrid-cell': { borderColor: themeStyle.borderColor },
             '& .MuiDataGrid-columnHeaders': {
               backgroundColor: themeStyle.background === '#121212' ? '#333' : '#f5f5f5',
               color: themeStyle.color,
@@ -273,24 +259,12 @@ const VerifiedUsersTable = ({ themeStyle }) => {
                 <img
                   src={selectedUser.photo || 'https://via.placeholder.com/150'}
                   alt="User"
-                  style={{
-                    width: '150px',
-                    height: '150px',
-                    objectFit: 'contain',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px',
-                  }}
+                  style={{ width: '150px', height: '150px', objectFit: 'contain', border: '1px solid #ddd', borderRadius: '4px' }}
                 />
                 <img
                   src={selectedUser.signature || 'https://via.placeholder.com/150'}
                   alt="Signature"
-                  style={{
-                    width: '150px',
-                    height: '150px',
-                    objectFit: 'contain',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px',
-                  }}
+                  style={{ width: '150px', height: '150px', objectFit: 'contain', border: '1px solid #ddd', borderRadius: '4px' }}
                 />
               </Box>
               <Box sx={{ flex: 1, color: themeStyle.color }}>
@@ -319,18 +293,16 @@ const VerifiedUsersTable = ({ themeStyle }) => {
         >
           <Box sx={{ display: 'flex', gap: 2 }}>
             <Button onClick={handleViewEyeTestReport} variant="outlined" disabled={eyeTestLoading}>
-              {eyeTestLoading ? 'Loading...' : 'View Eye Test Report'}
+              <Typography variant="button">
+                {eyeTestLoading ? 'Loading...' : 'View Eye Test Report'}
+              </Typography>
             </Button>
-            <Button
-              onClick={handleRemoveUser}
-              variant="contained"
-              color="error"
-            >
-              Remove User
+            <Button onClick={handleRemoveUser} variant="contained" color="error">
+              <Typography variant="button">Remove User</Typography>
             </Button>
           </Box>
           <Button onClick={() => setOpenDialog(false)} style={{ color: themeStyle.color }}>
-            Close
+            <Typography variant="button">Close</Typography>
           </Button>
         </DialogActions>
       </Dialog>

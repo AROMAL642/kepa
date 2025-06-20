@@ -16,6 +16,8 @@ import MechanicDashboard from './MechanicDashboard';
 import ResetPassword from './ResetPassword';
 import NotFound from './404';
 import TrackRepairRequest from './userdashboardcomponents/trackrepairrequest';
+import AddUpdateCertificate from './admindashboardcomponents/AddUpdateCertificate';
+
 
 import './App.css';
 
@@ -58,6 +60,7 @@ function AppWrapper() {
         <Route path="/fuel-admin2" element={<FuelAdmin2 />} />
         <Route path="/repair" element={<RepairDashboard />} />
         <Route path="/trackrepairrequest" element={<TrackRepairRequest />} />
+        <Route path="/vehicle-certificates" element={<AddUpdateCertificate />} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>
