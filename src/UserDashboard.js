@@ -12,6 +12,10 @@ import './css/accidentreportform.css';
 import EyeTestReport from './userdashboardcomponents/EyeTestReport';
 import ResponsiveAppBar from './admindashboardcomponents/ResponsiveAppBar';
 
+// ✅ New Imports
+import Stocks from './mechanicdashboardcomponents/Stocks';
+import ViewAllStocks from './mechanicdashboardcomponents/ViewAllStocks';
+
 function UserDashboard() {
   const [activeTab, setActiveTab] = useState('profile');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -36,10 +40,7 @@ function UserDashboard() {
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
     if (user) {
-      const formattedDOB = user.dob
-        ? user.dob.split('T')[0]  // Format: YYYY-MM-DD
-        : '';
-
+      const formattedDOB = user.dob ? user.dob.split('T')[0] : '';
       setFormData({
         name: user.name,
         pen: user.pen,
@@ -69,7 +70,9 @@ function UserDashboard() {
     { key: 'movement', label: 'Movement' },
     { key: 'eyetest', label: 'Eye Test' },
     { key: 'accident', label: 'Accident' },
-    { key: 'vehicle details', label: 'Vehicle Details' }
+    { key: 'vehicle details', label: 'Vehicle Details' },
+    { key: 'stocks', label: 'Stocks' },              // ✅ New tab
+    { key: 'viewalltocks', label: 'View All Stock ' },     // ✅ New tab
   ];
 
   return (
@@ -80,16 +83,14 @@ function UserDashboard() {
         role={formData.role}
         isDrawerOpen={isDrawerOpen}
         onDrawerToggle={() => setIsDrawerOpen(!isDrawerOpen)}
-        onSelectTab={(tab) => setActiveTab(tab)}
+        onSelectTab={setActiveTab}
       />
-      <button className="drawer-toggle-btn" onClick={() => setIsDrawerOpen(!isDrawerOpen)}>
-        ☰
-      </button>
+
+      <button className="drawer-toggle-btn" onClick={() => setIsDrawerOpen(!isDrawerOpen)}>☰</button>
 
       <div className={`dashboard ${isDrawerOpen ? 'drawer-open' : ''}`}>
         <div className={`drawer ${isDrawerOpen ? 'open' : ''}`}>
           <h2>Welcome {formData.name || 'User'}!</h2>
-
           <div className="sidebar-buttons">
             {tabMap.map(({ key, label }) => (
               <button
@@ -101,7 +102,6 @@ function UserDashboard() {
               </button>
             ))}
           </div>
-
           <button className="logout-btn" onClick={handleLogout}>🚪 Logout</button>
         </div>
 
@@ -115,7 +115,7 @@ function UserDashboard() {
                   { label: 'General Number', name: 'generalNo', readOnly: true },
                   { label: 'Email', name: 'email' },
                   { label: 'Mobile Number', name: 'mobile' },
-                  { label: 'DOB', name: 'dob', type: 'date' },  // Editable DOB
+                  { label: 'DOB', name: 'dob', type: 'date' },
                   { label: 'Licence Number', name: 'licenseNo' },
                   { label: 'Blood Group', name: 'bloodGroup', readOnly: true },
                   { label: 'Gender', name: 'gender', readOnly: true },
@@ -144,9 +144,7 @@ function UserDashboard() {
                         try {
                           const response = await fetch('http://localhost:5000/api/users/update', {
                             method: 'PUT',
-                            headers: {
-                              'Content-Type': 'application/json',
-                            },
+                            headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(formData),
                           });
 
@@ -192,39 +190,21 @@ function UserDashboard() {
             </div>
           )}
 
-          {activeTab === 'movement' && (
-            <div className="movement-section">
-              <MovementRegister />
-            </div>
-          )}
+          {activeTab === 'movement' && <MovementRegister />}
+          {activeTab === 'vehicle details' && <SearchVehicleDetails />}
+          {activeTab === 'fuel' && <FuelRegister pen={formData.pen} />}
+          {activeTab === 'repair' && <RepairRequestForm pen={formData.pen} />}
+          {activeTab === 'accident' && <AccidentReportForm pen={formData.pen} />}
+          {activeTab === 'eyetest' && <EyeTestReport pen={formData.pen} />}
 
-          {activeTab === 'vehicle details' && (
-            <div className="vehicle-details-section">
-              <SearchVehicleDetails />
-            </div>
-          )}
+         {activeTab === 'stocks' && (
+  <Stocks onViewAll={() => setActiveTab('viewallstocks')} />
+)}
 
-          {activeTab === 'fuel' && (
-            <FuelRegister pen={formData.pen} />
-          )}
+{activeTab === 'viewallstocks' && (
+  <ViewAllStocks onBack={() => setActiveTab('stocks')} />
+)}
 
-          {activeTab === 'repair' && (
-            <div className="repair-request-section">
-              <RepairRequestForm pen={formData.pen} />
-            </div>
-          )}
-
-          {activeTab === 'accident' && (
-            <div className="accident-section">
-              <AccidentReportForm pen={formData.pen} />
-            </div>
-          )}
-
-          {activeTab === 'eyetest' && (
-            <div className="eyetest-section">
-              <EyeTestReport pen={formData.pen} />
-            </div>
-          )}
         </div>
       </div>
     </>

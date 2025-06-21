@@ -5,15 +5,19 @@ import SearchVehicleDetails from './repairsectiondashboardcomponents/SearchVehic
 import VerifiedUsersTable from './fuelsectiondashboardcomponents/VerifiedUsersTable';
 import MechanicPendingRequests from './mechanicdashboardcomponents/MechanicPendingRequests';
 import Stocks from './mechanicdashboardcomponents/Stocks'; // ✅ NEW IMPORT
+import ViewAllStocks from './mechanicdashboardcomponents/ViewAllStocks'; // ✅ ADDED THIS
 
 import './css/admindashboard.css';
 import './css/fueladmin.css';
+
+
 
 const MechanicEntryReview = () => <div style={{ padding: '20px' }}>Mechanic Entry Review Placeholder</div>;
 const EssentialityCertificate = () => <div style={{ padding: '20px' }}>Essentiality Certificate Placeholder</div>;
 const TechnicalCertificate = () => <div style={{ padding: '20px' }}>Technical Certificate Placeholder</div>;
 
 function MechanicDashboard() {
+  const [stocks, setStocks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('pending');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -132,7 +136,11 @@ function MechanicDashboard() {
             <button className={`sidebar-btn ${activeTab === 'repair' ? 'active' : ''}`} onClick={() => setActiveTab('repair')}>Mechanic Entry Review</button>
             <button className={`sidebar-btn ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>Profile</button>
             <button className={`sidebar-btn ${activeTab === 'pending' ? 'active' : ''}`} onClick={() => setActiveTab('pending')}>Pending Requests</button>
-            <button className={`sidebar-btn ${activeTab === 'stocks' ? 'active' : ''}`} onClick={() => setActiveTab('stocks')}>Stocks</button> {/* ✅ NEW BUTTON */}
+            <button className={`sidebar-btn ${activeTab === 'stocks' ? 'active' : ''}`} onClick={() => setActiveTab('stocks')}>Stocks</button> 
+              <button className={`sidebar-btn ${activeTab === 'viewallstocks' ? 'active' : ''}`} onClick={() => setActiveTab('viewallstocks')}>
+    View All Stocks
+  </button>
+
             <button className={`sidebar-btn ${activeTab === 'vehicle' ? 'active' : ''}`} onClick={() => setActiveTab('vehicle')}>Vehicle Details</button>
             <button className={`sidebar-btn ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>Users Details</button>
             <button className={`sidebar-btn ${activeTab === 'escertif' ? 'active' : ''}`} onClick={() => setActiveTab('escertif')}>Essentiality Certificate</button>
@@ -197,11 +205,19 @@ function MechanicDashboard() {
             </div>
           )}
 
-          {activeTab === 'stocks' && ( // ✅ NEW TAB CONDITION
-            <div style={{ padding: '20px' }}>
-              <Stocks />
-            </div>
-          )}
+         {activeTab === 'stocks' && (
+  <div style={{ padding: '20px' }}>
+    <Stocks onViewAll={() => setActiveTab('viewallstocks')} />
+  </div>
+)}
+
+{activeTab === 'viewallstocks' && (
+  <div style={{ padding: '20px' }}>
+    <ViewAllStocks onBack={() => setActiveTab('stocks')} />
+  </div>
+)}
+
+
 
           {activeTab === 'vehicle' && (
             <div style={{ padding: '20px' }}>
@@ -209,11 +225,13 @@ function MechanicDashboard() {
             </div>
           )}
 
+        
           {activeTab === 'users' && (
             <div style={{ padding: '20px' }}>
               <VerifiedUsersTable />
             </div>
           )}
+
 
           {activeTab === 'escertif' && <EssentialityCertificate />}
           {activeTab === 'techcert' && <TechnicalCertificate />}

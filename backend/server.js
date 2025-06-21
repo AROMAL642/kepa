@@ -9,12 +9,6 @@ const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const app = express(); 
 
-
-
-
-
-
-
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
@@ -89,8 +83,6 @@ app.post('/register', async (req, res) => {
   }
 });
 
-
-
 // Login Route for User, Admin, and Fuel Section
 
 app.post('/login', async (req, res) => {
@@ -153,10 +145,6 @@ app.post('/login', async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
-
-
-
-
 
 //  Get User by Email 
 app.get('/api/user/:email', async (req, res) => {
@@ -279,7 +267,9 @@ app.use('/api/repairs', repairRoutes);
 
 //stock register
 const stockRoutes = require('./routes/stockRoutes');
-app.use('/api/stocks', stockRoutes);
+app.use('/api/stockroutes', stockRoutes);
+
+
 
 
 // Fetch all unverified users
@@ -323,10 +313,6 @@ app.get('/api/users/:id', async (req, res) => {
     res.status(500).json({ message: 'Error fetching user' });
   }
 });
-
-
-
-
 
 
 // Start server (only once)
