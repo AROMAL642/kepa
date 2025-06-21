@@ -134,7 +134,7 @@ const ViewAllStocks = ({ onBack }) => {
         <DialogContent>
           <TextField label="Item Type" name="itemType" value={editData.itemType || ''} onChange={handleEditChange} fullWidth margin="dense" />
           <TextField label="Item Name" name="itemName" value={editData.itemName || ''} onChange={handleEditChange} fullWidth margin="dense" />
-          <TextField label="Serial No" name="serialNo" value={editData.serialNo || ''} onChange={handleEditChange} fullWidth margin="dense" />
+          
           <TextField label="Quantity" name="quantity" type="number" value={editData.quantity || ''} onChange={handleEditChange} fullWidth margin="dense" />
           <TextField select label="Condition" name="condition" value={editData.condition || ''} onChange={handleEditChange} fullWidth margin="dense">
             <MenuItem value="New">New</MenuItem>

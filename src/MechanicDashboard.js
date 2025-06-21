@@ -6,6 +6,7 @@ import VerifiedUsersTable from './fuelsectiondashboardcomponents/VerifiedUsersTa
 import MechanicPendingRequests from './mechanicdashboardcomponents/MechanicPendingRequests';
 import Stocks from './mechanicdashboardcomponents/Stocks'; // ✅ NEW IMPORT
 import ViewAllStocks from './mechanicdashboardcomponents/ViewAllStocks';
+import Purchase from './mechanicdashboardcomponents/Purchase';
  
 
 import './css/admindashboard.css';
