@@ -20,7 +20,6 @@ import SearchVehicleDetails from './userdashboardcomponents/SearchVehicleDetails
 import RepairRequestForm from './userdashboardcomponents/RepairRequestForm';
 
 import Stocks from './mechanicdashboardcomponents/Stocks';
-import ViewAllStocks from './mechanicdashboardcomponents/ViewAllStocks';
 import TrackRepairRequest from './userdashboardcomponents/trackrepairrequest';
 import AddUpdateCertificate from './admindashboardcomponents/AddUpdateCertificate';
 import './App.css';
@@ -74,8 +73,7 @@ function AppWrapper() {
 
         {/* Stock Routes */}
         <Route path="/admin/stocks" element={<Stocks />} /> {/* ✅ FIXED: added route */}
-        <Route path="/view-all-stock" element={<ViewAllStocks />} />
-
+        
         {/* 404 Fallback */}
         <Route path="*" element={<NotFound />} />
       </Routes>

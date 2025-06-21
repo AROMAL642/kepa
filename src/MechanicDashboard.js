@@ -5,10 +5,8 @@ import SearchVehicleDetails from './repairsectiondashboardcomponents/SearchVehic
 import VerifiedUsersTable from './fuelsectiondashboardcomponents/VerifiedUsersTable';
 import MechanicPendingRequests from './mechanicdashboardcomponents/MechanicPendingRequests';
 import Stocks from './mechanicdashboardcomponents/Stocks'; // ✅ NEW IMPORT
-import Purchase from './mechanicdashboardcomponents/Purchase';
-
-
-import ViewAllStocks from './mechanicdashboardcomponents/ViewAllStocks'; // ✅ ADDED THIS
+import ViewAllStocks from './mechanicdashboardcomponents/ViewAllStocks';
+ 
 
 import './css/admindashboard.css';
 import './css/fueladmin.css';
