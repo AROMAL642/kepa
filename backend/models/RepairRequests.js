@@ -12,7 +12,14 @@ const repairRequestsSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'forwarded', 'repaired', 'verification pending', 'verified', 'rejected'],
+    enum: ['pending', 'forwarded', 'repaired', 'verification pending', 'verified', 'rejected' , 'sent_to_repair_admin' ,   'pending',
+    
+    
+    'forwarded_to_repair_section', // ✅ Add this
+    'completed',
+    'Pending User Verification',
+    'Check Again',
+    'final_work_done_sent_to_user'],
     default: 'pending'
   },
   workDone: {

@@ -233,11 +233,12 @@ const RepairAdminTable = ({ themeStyle }) => {
         <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>PEN</th>
         <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>Date</th>
         <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>Actions</th>
+        
       </tr>
     </thead>
     <tbody>
-      {mechanicRequests
-        .filter(req => req.status === 'sent_to_repair_admin')
+      {mechanicRequests.filter(req => req.forwardedToMechanic === true)
+
         .map((req, index) => (
           <tr key={req._id}>
             <td style={{ padding: 10 }}>{index + 1}</td>
@@ -292,39 +293,64 @@ const RepairAdminTable = ({ themeStyle }) => {
             <>
               <Typography><strong>Vehicle No:</strong> {selectedMechanicRequest.vehicleNo}</Typography>
               <Typography><strong>Work Done:</strong> {selectedMechanicRequest.workDone}</Typography>
+              <Typography><strong>Date:</strong> {selectedMechanicRequest.date}</Typography>
+              <Typography><strong>Subject:</strong> {selectedMechanicRequest.subject}</Typography>
 
               <Typography variant="h6" style={{ marginTop: '16px' }}>Parts Required</Typography>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr>
                     <th style={{ borderBottom: '1px solid #ccc', padding: '6px' }}>Sl No</th>
-                    <th style={{ borderBottom: '1px solid #ccc', padding: '6px' }}>Part Name</th>
+                    <th style={{ borderBottom: '1px solid #ccc', padding: '6px' }}>Item</th>
                     <th style={{ borderBottom: '1px solid #ccc', padding: '6px' }}>Quantity</th>
                   </tr>
                 </thead>
                 <tbody>
                   {selectedMechanicRequest.partsList.map((part, idx) => (
-                    <tr key={idx}>
-                      <td style={{ padding: '6px' }}>{part.slNo}</td>
-                      <td style={{ padding: '6px' }}>{part.partName}</td>
-                      <td style={{ padding: '6px' }}>{part.quantity}</td>
-                    </tr>
-                  ))}
+  <tr key={idx}>
+    <td style={{ padding: '6px' }}>{idx + 1}</td> {/* Serial number */}
+    <td style={{ padding: '6px' }}>{part.item}</td>
+    <td style={{ padding: '6px' }}>{part.quantity}</td>
+  </tr>
+))}
+
                 </tbody>
               </table>
 
-              {selectedMechanicRequest.billFile ? (
-                <>
-                  <Typography variant="h6" style={{ marginTop: '16px' }}>Uploaded Bill</Typography>
-                  <iframe
-                    src={selectedMechanicRequest.billFile}
-                    title="Bill"
-                    style={{ width: '100%', height: '400px', border: 'none' }}
-                  />
-                </>
-              ) : (
-                <Typography color="textSecondary">No Bill Uploaded</Typography>
-              )}
+              {selectedMechanicRequest.finalBillFile ? (
+  <>
+    <Typography variant="h6" style={{ marginTop: '16px' }}>Uploaded Bill</Typography>
+    {selectedMechanicRequest.finalBillFile.contentType.includes('pdf') ? (
+      <iframe
+        src={`data:${selectedMechanicRequest.finalBillFile.contentType};base64,${selectedMechanicRequest.finalBillFile.data}`}
+        title="Bill Preview"
+        style={{
+          width: '100%',
+          maxHeight: '500px',
+          border: '1px solid #ccc',
+          borderRadius: 4
+        }}
+      />
+    ) : (
+      <img
+        src={`data:${selectedMechanicRequest.finalBillFile.contentType};base64,${selectedMechanicRequest.finalBillFile.data}`}
+        alt="Bill"
+        style={{
+          maxWidth: '100%',
+          maxHeight: '500px',
+          display: 'block',
+          margin: 'auto',
+          objectFit: 'contain',
+          borderRadius: 6,
+          border: '1px solid #ddd'
+        }}
+      />
+    )}
+  </>
+) : (
+  <Typography color="textSecondary">No Bill Uploaded</Typography>
+)}
+
             </>
           ) : (
             <Typography>No mechanic request details available.</Typography>
@@ -336,16 +362,29 @@ const RepairAdminTable = ({ themeStyle }) => {
             variant="contained"
             color="success"
             onClick={async () => {
-              const res = await fetch(`http://localhost:5000/api/repair-request/${selectedMechanicRequest._id}/forward-to-repair`, {
-                method: 'PUT',
-              });
-              if (res.ok) {
-                alert('Request forwarded to Repair Section');
-                fetchRepairs();
-                handleCloseMechanicDialog();
-              } else {
-                alert('Failed to forward request');
-              }
+              try {
+  const res = await fetch(`http://localhost:5000/api/repair-request/forward-to-repair`, {
+    method: 'PUT',
+     headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({ id: selectedMechanicRequest._id }) // ✅ pass the id here
+  });
+
+  const result = await res.json();
+
+  if (res.ok) {
+    alert('✅ Request forwarded to Repair Section');
+    fetchRepairs(); // refresh table
+    handleCloseMechanicDialog(); // close modal/dialog
+  } else {
+    alert(`❌ Failed: ${result.message || 'Unable to forward request'}`);
+  }
+} catch (err) {
+  console.error('Fetch error:', err);
+  alert('❌ Error while forwarding the request. Please try again.');
+}
+
             }}
           >
             Forward to Repair Section

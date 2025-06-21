@@ -33,6 +33,7 @@ function UserDashboard() {
     signature: '',
   });
 
+  
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
     if (user) {
@@ -171,33 +172,36 @@ function UserDashboard() {
                 )}
               </div>
 
-              <div className="form-right">
-                <div className="upload-section">
-                  <img
-                    src={formData.profilePic || 'https://via.placeholder.com/100'}
-                    alt="Profile"
-                    className="upload-icon"
-                  />
-                  <p>Profile Photo</p>
-                </div>
-                <div className="upload-section">
-                  <img
-                    src={formData.signature || 'https://via.placeholder.com/100'}
-                    alt="Signature"
-                    className="upload-icon"
-                  />
-                  <p>Signature</p>
-                </div>
+            <div className="form-right">
+              <div className="upload-section">
+                <img
+                  src={formData.profilePic || 'https://via.placeholder.com/100'}
+                  alt="Profile"
+
+                  className="upload-icon"
+                />
+                <p>Profile Photo</p>
+              </div>
+              <div className="upload-section">
+                <img
+                  src={formData.signature || 'https://via.placeholder.com/100'}
+                  alt="Signature"
+                  className="upload-icon"
+                />
+                <p>Signature</p>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
+          {/* Movement Tab */}
           {activeTab === 'movement' && (
             <div className="movement-section">
               <MovementRegister />
             </div>
           )}
 
+          {/* Vehicle Details Tab */}
           {activeTab === 'vehicle details' && (
             <div className="vehicle-details-section">
               <SearchVehicleDetails />
@@ -208,6 +212,7 @@ function UserDashboard() {
             <FuelRegister pen={formData.pen} />
           )}
 
+          {/* Repair Tab */}
           {activeTab === 'repair' && (
             <div className="repair-request-section">
               <RepairRequestForm pen={formData.pen} />

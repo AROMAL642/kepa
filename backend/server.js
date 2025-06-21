@@ -286,6 +286,10 @@ app.use('/api/repairs', repairRoutes);
 const stockRoutes = require('./routes/stockRoutes');
 app.use('/api/stocks', stockRoutes);
 
+//Purchase
+const purchaseRoutes = require('./routes/purchaseRoutes');
+app.use('/api/purchases', purchaseRoutes);
+
 
 // Fetch all unverified users
 app.get('/api/unverified-users', async (req, res) => {

@@ -23,7 +23,8 @@ router.post('/', upload.single('billFile'), async (req, res) => {
       subject,
       description,
       status: 'pending',
-      user: user._id
+      
+      //user: user.name,
     };
 
     if (req.file) {
@@ -151,6 +152,23 @@ router.put('/:id/forward-to-mechanic', async (req, res) => {
   }
 });
 
+//track status by user
+router.get('/by-pen/:pen', async (req, res) => {
+  try {
+    const { pen } = req.params;
+
+    if (!pen) {
+      return res.status(400).json({ error: 'PEN not provided' });
+    }
+
+    const repairs = await RepairRequest.find({ pen });
+
+    res.json(repairs);
+  } catch (err) {
+    console.error('Error fetching by pen:', err);
+    res.status(500).json({ error: 'Failed to fetch data' });
+  }
+});
 
 
 
@@ -167,7 +185,7 @@ router.put('/:id/mechanic-update', async (req, res) => {
       needsParts,
       partsList: needsParts ? partsList : [],
       repairStatus: 'in progress',
-      status: needsParts ? 'awaiting_parts_approval' : 'work_done_sent_to_user'
+      status: 'sent_to_repair_admin' // ✅ <-- this is the key change
     };
 
     if (billFile) {
@@ -186,15 +204,55 @@ router.put('/:id/mechanic-update', async (req, res) => {
 });
 
 
-// GET: All forwarded requests (seen by MTI)
+
+// GET: Only mechanic requests forwarded and needing parts (for admin/MTI view)
 router.get('/forwarded', async (req, res) => {
   try {
-    const requests = await RepairRequest.find({ forwardedToMechanic: true }).populate('user', 'name pen');
-    res.json(requests);
+    const requests = await RepairRequest.find({
+      forwardedToMechanic: true,
+      workDone: 'No',
+      needsParts: true,
+      status: 'sent_to_repair_admin',
+      partsList: { $exists: true, $not: { $size: 0 } }
+    }).populate('user', 'name pen');
+
+    const formatted = requests.map(r => ({
+      ...r.toObject(),
+      finalBillFile: r.finalBillFile?.data
+        ? {
+            data: r.finalBillFile.data.toString('base64'),
+            contentType: r.finalBillFile.contentType
+          }
+        : null
+    }));
+
+    res.json(formatted);
   } catch (err) {
-    res.status(500).json({ message: 'Failed to fetch forwarded requests' });
+    console.error('Error fetching mechanic part requests:', err);
+    res.status(500).json({ message: 'Failed to fetch mechanic requests' });
   }
 });
+
+
+// ❌ This is wrong - it's GET but your frontend sends PUT
+// router.get('/:id/forward-to-repair', async (req, res) => {
+
+router.put('/forward-to-repair', async (req, res) => {
+  try {
+    const request = await RepairRequest.findById(req.body.id);
+    if (!request) return res.status(404).json({ message: 'Repair not found' });
+
+    request.status = 'forwarded_to_repair_section';
+    await request.save();
+
+    res.json({ message: 'Request forwarded to Repair Section' });
+  } catch (err) {
+    console.error('Error forwarding to repair section:', err);
+    res.status(500).json({ message: 'Failed to forward to repair section' });
+  }
+});
+
+
 
 /**
  * POST: Mechanic marks as done and sends for user verification

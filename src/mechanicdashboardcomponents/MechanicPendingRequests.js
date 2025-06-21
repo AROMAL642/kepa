@@ -21,8 +21,10 @@ function MechanicPendingRequests() {
   const [loading, setLoading] = useState(true);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [filePreviewOpen, setFilePreviewOpen] = useState(false);
+  const [fileToPreview, setFileToPreview] = useState(null);
   const [workDoneChoice, setWorkDoneChoice] = useState('');
-  const [partsList, setPartsList] = useState([{ slNo: '', partName: '', qty: '' }]);
+  const [partsList, setPartsList] = useState([{ item: '', quantity: '' }]);
   const [billFile, setBillFile] = useState(null);
 
   useEffect(() => {
@@ -41,6 +43,12 @@ function MechanicPendingRequests() {
           repairStatus: req.repairStatus,
           mechanicFeedback: req.mechanicFeedback,
           workDone: req.workDone || 'No',
+          billImage: req.billFile
+            ? {
+                url: `data:${req.billFile.contentType};base64,${req.billFile.data}`,
+                type: req.billFile.contentType
+              }
+            : null
         }));
         setRequests(formatted);
         setLoading(false);
@@ -54,7 +62,7 @@ function MechanicPendingRequests() {
   const handleReviewClick = (row) => {
     setSelectedRequest(row);
     setWorkDoneChoice('');
-    setPartsList([{ slNo: '', partName: '', qty: '' }]);
+    setPartsList([{ item: '', quantity: '' }]);
     setBillFile(null);
     setModalOpen(true);
   };
@@ -64,64 +72,106 @@ function MechanicPendingRequests() {
     setSelectedRequest(null);
   };
 
-  const handleWorkCompleted = async () => {
-    try {
-      const res = await fetch(`http://localhost:5000/api/repairs/${selectedRequest.id}/complete`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ workDone: 'Yes' })
+  const handleWorkCompleted = () => {
+    fetch(`http://localhost:5000/api/repairs/${selectedRequest.id}/complete`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ workDone: 'Yes' })
+    })
+      .then((res) => res.json())
+      .then((updated) => {
+        if (!updated || !updated._id) {
+          alert('Update failed.');
+          return;
+        }
+        setRequests((prev) =>
+          prev.map((r) =>
+            r.id === selectedRequest.id
+              ? {
+                  ...r,
+                  workDone: 'Yes',
+                  repairStatus: 'completed'
+                }
+              : r
+          )
+        );
+        handleCloseModal();
+      })
+      .catch((err) => {
+        console.error('Error updating workDone:', err);
+        alert('Failed to mark as completed.');
       });
-      await res.json();
-      setRequests(prev => prev.map(r => (r.id === selectedRequest.id ? { ...r, workDone: 'Yes' } : r)));
-      setModalOpen(false);
-    } catch (err) {
-      console.error('Error marking work done:', err);
-    }
   };
 
+  const handleViewFile = (file) => {
+    setFileToPreview(file);
+    setFilePreviewOpen(true);
+  };
+
+  const handleCloseFilePreview = () => {
+    setFileToPreview(null);
+    setFilePreviewOpen(false);
+  };
+
+  // ✅ Add Part Row Function
+  const addPartRow = () => {
+    setPartsList(prev => [...prev, {  item: '', quantity: '' }]);
+  };
+
+  // ✅ Handle Part Input Change
+  const handlePartChange = (index, field, value) => {
+    const updated = [...partsList];
+    updated[index][field] = value;
+    setPartsList(updated);
+  };
+
+  // ✅ Submit Parts Request Handler
   const handlePartsSubmit = async () => {
-    const payload = {
+    if (!selectedRequest) return;
+    const formData = {
       mechanicFeedback: '',
       needsParts: true,
-      partsList,
+       partsList: partsList.map(p => ({
+    item: p.item,          // ✅ correct field
+    quantity: parseInt(p.quantity)  // ✅ convert quantity to number
+  })),
+      billFile: null
     };
 
     if (billFile) {
       const reader = new FileReader();
-      reader.onloadend = async () => {
-        payload.billFile = {
-          data: reader.result.split(',')[1],
+      reader.onload = async () => {
+        const base64Data = reader.result.split(',')[1];
+        formData.billFile = {
+          data: base64Data,
           contentType: billFile.type
         };
 
-        await fetch(`http://localhost:5000/api/repairs/${selectedRequest.id}/mechanic-update`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        setModalOpen(false);
+        await sendPartsRequest(formData);
       };
       reader.readAsDataURL(billFile);
     } else {
-      await fetch(`http://localhost:5000/api/repairs/${selectedRequest.id}/mechanic-update`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      setModalOpen(false);
+      await sendPartsRequest(formData);
     }
   };
 
-  const handlePartChange = (index, key, value) => {
-    const updated = [...partsList];
-    updated[index][key] = value;
-    setPartsList(updated);
-  };
-
-  const addPartRow = () => {
-    setPartsList([...partsList, { slNo: '', partName: '', qty: '' }]);
+  const sendPartsRequest = async (formData) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/repair-request/${selectedRequest.id}/mechanic-update`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      if (res.ok) {
+        alert('Parts request submitted');
+        handleCloseModal();
+      } else {
+        alert('Failed to submit parts request');
+      }
+    } catch (err) {
+      console.error('Error submitting parts request:', err);
+      alert('Error submitting parts request');
+    }
   };
 
   const columns = [
@@ -132,7 +182,34 @@ function MechanicPendingRequests() {
     { field: 'subject', headerName: 'Subject', width: 150 },
     { field: 'description', headerName: 'Description', width: 200 },
     { field: 'repairStatus', headerName: 'Repair Status', width: 140 },
+    {
+      field: 'workDone',
+      headerName: 'Work Done',
+      width: 110,
+      renderCell: (params) => (
+        <strong style={{ color: params.value === 'Yes' ? 'green' : 'red' }}>
+          {params.value}
+        </strong>
+      )
+    },
     { field: 'userName', headerName: 'Requested By', width: 130 },
+    {
+      field: 'billImage',
+      headerName: 'Bill',
+      width: 100,
+      renderCell: (params) =>
+        params.value ? (
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => handleViewFile(params.value)}
+          >
+            View
+          </Button>
+        ) : (
+          'N/A'
+        )
+    },
     {
       field: 'review',
       headerName: 'Review',
@@ -146,7 +223,7 @@ function MechanicPendingRequests() {
           Review
         </Button>
       )
-    },
+    }
   ];
 
   return (
@@ -165,6 +242,7 @@ function MechanicPendingRequests() {
         />
       )}
 
+      {/* Modal for Review */}
       <Dialog open={modalOpen} onClose={handleCloseModal} fullWidth maxWidth="md">
         <DialogTitle>Repair Review</DialogTitle>
         <DialogContent>
@@ -188,28 +266,24 @@ function MechanicPendingRequests() {
                   <Typography sx={{ mt: 2 }}><strong>Parts Required</strong></Typography>
                   {partsList.map((part, idx) => (
                     <div key={idx} style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+                      
                       <TextField
-                        label="Sl No"
+                        label="Item"
                         size="small"
-                        value={part.slNo}
-                        onChange={(e) => handlePartChange(idx, 'slNo', e.target.value)}
-                      />
-                      <TextField
-                        label="Part Name"
-                        size="small"
-                        value={part.partName}
-                        onChange={(e) => handlePartChange(idx, 'partName', e.target.value)}
+                        value={part.item}
+                        onChange={(e) => handlePartChange(idx, 'item', e.target.value)}
                       />
                       <TextField
                         label="Quantity"
                         size="small"
                         type="number"
-                        value={part.qty}
-                        onChange={(e) => handlePartChange(idx, 'qty', e.target.value)}
+                        value={part.quantity}
+                        onChange={(e) => handlePartChange(idx, 'quantity', e.target.value)}
                       />
                     </div>
                   ))}
                   <Button sx={{ mt: 1 }} onClick={addPartRow}>+ Add More</Button>
+
                   <Typography sx={{ mt: 2 }}><strong>Upload Bill</strong></Typography>
                   <input type="file" onChange={(e) => setBillFile(e.target.files[0])} />
                 </>
@@ -219,7 +293,7 @@ function MechanicPendingRequests() {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseModal}>Close</Button>
-          {workDoneChoice === 'yes' && (
+          {selectedRequest?.workDone !== 'Yes' && (
             <Button variant="contained" color="success" onClick={handleWorkCompleted}>
               Work Completed
             </Button>
@@ -229,6 +303,31 @@ function MechanicPendingRequests() {
               Submit Parts Request
             </Button>
           )}
+        </DialogActions>
+      </Dialog>
+
+      {/* File Preview Dialog */}
+      <Dialog open={filePreviewOpen} onClose={handleCloseFilePreview} maxWidth="md" fullWidth>
+        <DialogTitle>Bill File Preview</DialogTitle>
+        <DialogContent dividers>
+          {fileToPreview?.type?.includes('pdf') ? (
+            <iframe
+              src={fileToPreview.url}
+              title="PDF Preview"
+              width="100%"
+              height="500px"
+              style={{ border: 'none' }}
+            />
+          ) : (
+            <img
+              src={fileToPreview?.url}
+              alt="Bill File"
+              style={{ maxWidth: '100%', maxHeight: 500, borderRadius: 6 }}
+            />
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseFilePreview}>Close</Button>
         </DialogActions>
       </Dialog>
     </div>

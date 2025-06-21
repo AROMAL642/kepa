@@ -14,15 +14,17 @@ const RepairSectionAdmin = () => {
   const [certificateGenerated, setCertificateGenerated] = useState(false);
 
   const fetchRequests = async () => {
-    try {
-      const res = await axios.get('http://localhost:5000/api/repair-requests/pending');
-      setRequests(res.data || []);
-    } catch (err) {
-      console.error('Error fetching repair requests:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    const res = await axios.get('http://localhost:5000/api/repair-request');
+    const filtered = res.data.filter(req => req.status === 'forwarded_to_repair_section');
+    setRequests(filtered);
+  } catch (err) {
+    console.error('Error fetching repair requests:', err);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   useEffect(() => {
     fetchRequests();
@@ -54,39 +56,98 @@ const RepairSectionAdmin = () => {
   const columns = [
     { field: 'id', headerName: 'Sl. No', flex: 0.5 },
     { field: 'pen', headerName: 'PEN No', flex: 1 },
-    { field: 'userName', headerName: 'User Name', flex: 1 },
-    {
-      field: 'viewBill',
-      headerName: 'View Bill',
-      flex: 1,
-      renderCell: (params) => (
-        <Button onClick={() => window.open(params.row.billUrl, '_blank')}>
-          View Bill
-        </Button>
-      )
-    },
+    { field: 'date', headerName: 'DATE', flex: 1 },
+    { field: 'subject', headerName: 'SUBJECT', flex: 1 },
+
+
+    // seperately viewing bill
+
+    
+    //{
+ // field: 'viewBill',
+//headerName: 'View Final Bill',
+//renderCell: (params) => (
+  //params.row.finalBillFile ? (
+    //<Button onClick={() => window.open(`data:${params.row.finalBillFile.contentType};base64,${params.row.finalBillFile.data}`, '_blank')}>
+      //View Bill
+    //</Button>
+  //) : 'Not Uploaded'
+//)
+  //  }
+,
+
     {
       field: 'status',
-      headerName: 'Status',
+     headerName: 'Status',
       flex: 1,
       renderCell: (params) => getStatusChip(params.value)
     },
     {
-      field: 'actions',
-      headerName: 'Actions',
-      flex: 1.5,
-      renderCell: (params) => (
-        <Button
-          variant="outlined"
-          onClick={() => {
-            setSelectedEntry(params.row);
-            setOpenDialog(true);
-          }}
-        >
-          Review & Generate
-        </Button>
-      )
-    }
+  field: 'actions',
+  headerName: 'Actions',
+  flex: 1.5,
+  renderCell: (params) => (
+    <Box sx={{ display: 'flex', gap: 1 }}>
+      {/* Review Button */}
+      <Button
+        variant="outlined"
+        color="info"
+        onClick={() => {
+          setSelectedEntry(params.row);
+          setOpenDialog(true); // This dialog will be for review
+        }}
+      >
+        Review
+      </Button>
+
+     
+    </Box>
+  )
+},
+{
+  field: 'essentialityCertificate',
+  headerName: 'Essentiality Certificate',
+  flex: 1,
+  renderCell: (params) =>
+    params.row.essentialityCertificate?.data ? (
+      <Button
+        variant="outlined"
+        onClick={() =>
+          window.open(
+            `data:${params.row.essentialityCertificate.contentType};base64,${params.row.essentialityCertificate.data}`,
+            '_blank'
+          )
+        }
+      >
+        View
+      </Button>
+    ) : (
+      'Pending'
+    )
+},
+{
+  field: 'technicalCertificate',
+  headerName: 'Technical Certificate',
+  flex: 1,
+  renderCell: (params) =>
+    params.row.technicalCertificate?.data ? (
+      <Button
+        variant="outlined"
+        onClick={() =>
+          window.open(
+            `data:${params.row.technicalCertificate.contentType};base64,${params.row.technicalCertificate.data}`,
+            '_blank'
+          )
+        }
+      >
+        View
+      </Button>
+    ) : (
+      'Pending'
+    )
+}
+
+
   ];
 
   if (loading) {
@@ -117,15 +178,64 @@ const RepairSectionAdmin = () => {
           {selectedEntry && (
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               <Typography><strong>PEN:</strong> {selectedEntry.pen}</Typography>
-              <Typography><strong>User Name:</strong> {selectedEntry.userName}</Typography>
-              <Typography><strong>Description:</strong> {selectedEntry.description}</Typography>
-              <Typography><strong>Status:</strong> {selectedEntry.status}</Typography>
-              {selectedEntry.billUrl && (
-                <Box sx={{ gridColumn: '1 / -1' }}>
-                  <Typography variant="subtitle1">Uploaded Bill:</Typography>
-                  <iframe src={selectedEntry.billUrl} width="100%" height="400px" title="Bill" />
-                </Box>
-              )}
+              <Typography><strong>DATE:</strong> {selectedEntry.date}</Typography>
+              <Typography><strong>SUBJECT:</strong> {selectedEntry.subject}</Typography>
+              <Typography><strong>STATUS:</strong> {selectedEntry.status}</Typography>
+              {selectedEntry?.partsList?.length > 0 && (
+  <Box sx={{ gridColumn: '1 / -1', mt: 2 }}>
+    <Typography variant="h6" gutterBottom>Parts Required</Typography>
+    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <thead>
+        <tr>
+          <th style={{ borderBottom: '1px solid #ccc', padding: '6px' }}>Sl No</th>
+          <th style={{ borderBottom: '1px solid #ccc', padding: '6px' }}>Item</th>
+          <th style={{ borderBottom: '1px solid #ccc', padding: '6px' }}>Quantity</th>
+        </tr>
+      </thead>
+      <tbody>
+        {selectedEntry.partsList.map((part, idx) => (
+          <tr key={idx}>
+            <td style={{ padding: '6px' }}>{idx + 1}</td>
+            <td style={{ padding: '6px' }}>{part.item}</td>
+            <td style={{ padding: '6px' }}>{part.quantity}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </Box>
+)}
+              {selectedEntry?.finalBillFile?.data && (
+  <Box sx={{ gridColumn: '1 / -1' }}>
+    <Typography variant="subtitle1" gutterBottom>
+      Uploaded Bill:
+    </Typography>
+    {selectedEntry.finalBillFile.contentType.includes('pdf') ? (
+      <iframe
+        src={`data:${selectedEntry.finalBillFile.contentType};base64,${selectedEntry.finalBillFile.data}`}
+        width="100%"
+        height="500px"
+        style={{ border: '1px solid #ccc', borderRadius: 4 }}
+        title="Bill Preview"
+      />
+    ) : (
+      <img
+        src={`data:${selectedEntry.finalBillFile.contentType};base64,${selectedEntry.finalBillFile.data}`}
+        alt="Final Bill"
+        style={{
+          maxWidth: '100%',
+          maxHeight: '500px',
+          display: 'block',
+          margin: '0 auto',
+          objectFit: 'contain',
+          borderRadius: '6px',
+          border: '1px solid #ccc'
+        }}
+      />
+    )}
+  </Box>
+)}
+
+
             </Box>
           )}
         </DialogContent>
@@ -136,7 +246,7 @@ const RepairSectionAdmin = () => {
             variant="contained"
             disabled={certificateGenerated}
           >
-            Generate Certificates
+            forward for approval
           </Button>
           <Button onClick={() => setOpenDialog(false)}>Close</Button>
         </DialogActions>
