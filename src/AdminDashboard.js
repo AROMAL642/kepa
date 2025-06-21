@@ -18,6 +18,7 @@ import RegisterPage from './admindashboardcomponents/RegisterPage';
 import AdminRepairTable from './admindashboardcomponents/AdminRepairTable';
 import ViewPrintRegisters from './admindashboardcomponents/ViewPrintRegisters';
 import AddUpdateCertificate from './admindashboardcomponents/AddUpdateCertificate';
+import PurchaseTable from './admindashboardcomponents/PurchaseTable';
 
 
 import dayjs from 'dayjs';
@@ -185,6 +186,9 @@ function AdminDashboard() {
             <button className={`sidebar-btn ${activeTab === 'VerifiedUsersTable' ? 'active' : ''}`} onClick={() => setActiveTab('VerifiedUsersTable')}>Users Details</button>
             <button className={`sidebar-btn ${activeTab === 'AddUser' ? 'active' : ''}`} onClick={() => setActiveTab('AddUser')}>Add Users</button>
             <button className={`sidebar-btn ${activeTab === 'PrintRegisters' ? 'active' : ''}`} onClick={() => setActiveTab('PrintRegisters')}>View/Print Registers</button>
+            <button className={`sidebar-btn ${activeTab === 'Purchases' ? 'active' : ''}`} onClick={() => setActiveTab('Purchases')} >Purchase</button>
+
+
           </div>
         </div>
 
@@ -302,6 +306,7 @@ function AdminDashboard() {
           {activeTab === 'Repair' && <AdminRepairTable themeStyle={themeStyle} />}
           {activeTab === 'AddUser' && <RegisterPage themeStyle={themeStyle} />}
           {activeTab === 'PrintRegisters' && <ViewPrintRegisters />}
+          {activeTab === 'Purchases' && <PurchaseTable isAdmin={true} themeStyle={themeStyle} />}
         </div>
       </div>
     </div>
