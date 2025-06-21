@@ -19,7 +19,7 @@ function MechanicPendingRequests() {
   const [fileToPreview, setFileToPreview] = useState(null);
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/repairs/:id/forward-to-mechanic')
+    fetch('http://localhost:5000/api/repairs')
       .then(res => res.json())
       .then(data => {
         const formatted = data.map((req, index) => ({
