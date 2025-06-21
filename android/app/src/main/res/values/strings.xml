@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">KEPA MTI</string>
+    <string name="title_activity_main">KEPA MTI</string>
+    <string name="package_name">com.kepa.kepamti</string>
+    <string name="custom_url_scheme">com.kepa.kepamti</string>
+</resources>

@@ -10,9 +10,18 @@ const LoginPage = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+     console.log('Login button clicked'); 
 
     try {
       const res = await axios.post('http://localhost:5000/login', { pen, password });
+    
+     // const res = await axios.post(`${process.env.REACT_APP_API_URL}/login`, {
+      //pen,
+      //password,
+    //});
+
+
+
       const { role } = res.data;
 
       if (role === 'admin') {
