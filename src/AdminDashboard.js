@@ -18,6 +18,7 @@ import RegisterPage from './admindashboardcomponents/RegisterPage';
 import AdminRepairTable from './admindashboardcomponents/AdminRepairTable';
 import ViewPrintRegisters from './admindashboardcomponents/ViewPrintRegisters';
 import AddUpdateCertificate from './admindashboardcomponents/AddUpdateCertificate';
+import AdminStocksView from './admindashboardcomponents/AdminStocksView';
 import PurchaseTable from './admindashboardcomponents/PurchaseTable';
 
 
@@ -183,6 +184,13 @@ function AdminDashboard() {
             <button className={`sidebar-btn notification-btn ${activeTab === 'Request' ? 'active' : ''}`} onClick={() => setActiveTab('Request')}>
               Non Verified Users {pendingCount > 0 && <span className="notification-badge">{pendingCount}</span>}
             </button>
+            <button
+  className={`sidebar-btn ${activeTab === 'stocks' ? 'active' : ''}`}
+  onClick={() => setActiveTab('stocks')}
+>
+  Stock
+</button>
+
             <button className={`sidebar-btn ${activeTab === 'VerifiedUsersTable' ? 'active' : ''}`} onClick={() => setActiveTab('VerifiedUsersTable')}>Users Details</button>
             <button className={`sidebar-btn ${activeTab === 'AddUser' ? 'active' : ''}`} onClick={() => setActiveTab('AddUser')}>Add Users</button>
             <button className={`sidebar-btn ${activeTab === 'PrintRegisters' ? 'active' : ''}`} onClick={() => setActiveTab('PrintRegisters')}>View/Print Registers</button>
@@ -306,6 +314,8 @@ function AdminDashboard() {
           {activeTab === 'Repair' && <AdminRepairTable themeStyle={themeStyle} />}
           {activeTab === 'AddUser' && <RegisterPage themeStyle={themeStyle} />}
           {activeTab === 'PrintRegisters' && <ViewPrintRegisters />}
+          {activeTab === 'stocks' && <AdminStocksView />}
+
           {activeTab === 'Purchases' && <PurchaseTable isAdmin={true} themeStyle={themeStyle} />}
         </div>
       </div>

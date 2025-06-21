@@ -13,6 +13,11 @@ import EyeTestReport from './userdashboardcomponents/EyeTestReport';
 import ResponsiveAppBar from './admindashboardcomponents/ResponsiveAppBar';
 import TrackRepairRequests from './userdashboardcomponents/trackrepairrequest';
 import AddUpdateCertificate from './admindashboardcomponents/AddUpdateCertificate'; 
+
+// ✅ New Imports
+import Stocks from './mechanicdashboardcomponents/Stocks';
+import ViewAllStocks from './mechanicdashboardcomponents/ViewAllStocks';
+
 function UserDashboard() {
   const [activeTab, setActiveTab] = useState('profile');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -78,6 +83,8 @@ function UserDashboard() {
     { key: 'accident', label: 'Accident' },
     { key: 'vehicle details', label: 'Vehicle Details' },
     { key: 'certificates', label: 'Vehicle Certificates' }, // ✅ Added here
+    { key: 'stocks', label: 'Stocks' },              // ✅ New tab
+    { key: 'viewalltocks', label: 'View All Stock ' },     // ✅ New tab
   ];
 
   return (
@@ -88,16 +95,14 @@ function UserDashboard() {
         role={formData.role}
         isDrawerOpen={isDrawerOpen}
         onDrawerToggle={() => setIsDrawerOpen(!isDrawerOpen)}
-        onSelectTab={(tab) => setActiveTab(tab)}
+        onSelectTab={setActiveTab}
       />
-      <button className="drawer-toggle-btn" onClick={() => setIsDrawerOpen(!isDrawerOpen)}>
-        ☰
-      </button>
+
+      <button className="drawer-toggle-btn" onClick={() => setIsDrawerOpen(!isDrawerOpen)}>☰</button>
 
       <div className={`dashboard ${isDrawerOpen ? 'drawer-open' : ''}`}>
         <div className={`drawer ${isDrawerOpen ? 'open' : ''}`}>
           <h2>Welcome {formData.name || 'User'}!</h2>
-
           <div className="sidebar-buttons">
             {tabMap.map(({ key, label }) => (
               <button
@@ -109,7 +114,6 @@ function UserDashboard() {
               </button>
             ))}
           </div>
-
           <button className="logout-btn" onClick={handleLogout}>🚪 Logout</button>
         </div>
 
@@ -117,15 +121,16 @@ function UserDashboard() {
           {activeTab === 'profile' && (
             <div className="form-section">
               <div className="form-left">
-                {[{ label: 'Name', name: 'name' },
-                { label: 'PEN number', name: 'pen', readOnly: true },
-                { label: 'General Number', name: 'generalNo', readOnly: true },
-                { label: 'Email', name: 'email' },
-                { label: 'Mobile Number', name: 'mobile' },
-                { label: 'DOB', name: 'dob', type: 'date' },
-                { label: 'Licence Number', name: 'licenseNo' },
-                { label: 'Blood Group', name: 'bloodGroup', readOnly: true },
-                { label: 'Gender', name: 'gender', readOnly: true },
+                {[
+                  { label: 'Name', name: 'name' },
+                  { label: 'PEN number', name: 'pen', readOnly: true },
+                  { label: 'General Number', name: 'generalNo', readOnly: true },
+                  { label: 'Email', name: 'email' },
+                  { label: 'Mobile Number', name: 'mobile' },
+                  { label: 'DOB', name: 'dob', type: 'date' },  // Editable DOB
+                  { label: 'Licence Number', name: 'licenseNo' },
+                  { label: 'Blood Group', name: 'bloodGroup', readOnly: true },
+                  { label: 'Gender', name: 'gender', readOnly: true },
                 ].map(field => (
                   <div className="form-group" key={field.name}>
                     <label>{field.label}</label>
@@ -215,8 +220,7 @@ function UserDashboard() {
               <RepairRequestForm pen={formData.pen} />
             </div>
           )}
-
-          {activeTab === 'trackrepair' && (
+           {activeTab === 'trackrepair' && (
             <div className="trackrepair-section">
               <TrackRepairRequests />
             </div>
@@ -233,12 +237,20 @@ function UserDashboard() {
               <EyeTestReport pen={formData.pen} />
             </div>
           )}
+          {activeTab === 'stocks' && (
+  <Stocks onViewAll={() => setActiveTab('viewallstocks')} />
+)}
 
-          {activeTab === 'certificates' && (
+{activeTab === 'viewallstocks' && (
+  <ViewAllStocks onBack={() => setActiveTab('stocks')} />
+
+)}
+{activeTab === 'certificates' && (
             <div className="certificates-section">
               <AddUpdateCertificate />
             </div>
           )}
+
         </div>
       </div>
     </>
