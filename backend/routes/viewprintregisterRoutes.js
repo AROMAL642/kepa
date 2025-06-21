@@ -87,6 +87,7 @@ router.post('/report/:type/json', async (req, res) => {
         });
         break;
       }
+      
 
       case 'movement': {
         const moveDocs = vehicleOption === 'all'

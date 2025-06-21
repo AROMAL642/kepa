@@ -63,6 +63,30 @@ router.get('/', async (req, res) => {
 });
 
 /**
+ * GET: Get single repair request by ID (used in admin view)
+ */
+router.get('/:id', async (req, res) => {
+  try {
+    const repair = await RepairRequest.findById(req.params.id);
+    if (!repair) return res.status(404).json({ message: 'Repair request not found' });
+
+    const formatted = {
+      ...repair.toObject(),
+      billFile: repair.billFile?.data ? {
+        data: repair.billFile.data.toString('base64'),
+        contentType: repair.billFile.contentType
+      } : null
+    };
+
+    res.json(formatted);
+  } catch (err) {
+    console.error('Error fetching repair by ID:', err);
+    res.status(500).json({ message: 'Failed to fetch repair request' });
+  }
+});
+
+
+/**
  * PUT: Admin changes status
  */
 router.put('/:id/status', async (req, res) => {
@@ -151,6 +175,23 @@ router.put('/:id/forward-to-mechanic', async (req, res) => {
   }
 });
 
+//track status by user
+router.get('/by-pen/:pen', async (req, res) => {
+  try {
+    const { pen } = req.params;
+
+    if (!pen) {
+      return res.status(400).json({ error: 'PEN not provided' });
+    }
+
+    const repairs = await RepairRequest.find({ pen });
+
+    res.json(repairs);
+  } catch (err) {
+    console.error('Error fetching by pen:', err);
+    res.status(500).json({ error: 'Failed to fetch data' });
+  }
+});
 
 
 

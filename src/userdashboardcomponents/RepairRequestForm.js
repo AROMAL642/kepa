@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-
 const styles = {
+  container: {
+    position: 'relative',
+  },
   form: {
     maxWidth: '900px',
     margin: '0 auto',
@@ -53,11 +55,6 @@ const styles = {
   }
 };
 
-
-
-
-
-
 const RepairRequestForm = ({ pen }) => {
   const [vehicleNo, setVehicleNo] = useState('');
   const [vehicleStatus, setVehicleStatus] = useState('');
@@ -66,14 +63,17 @@ const RepairRequestForm = ({ pen }) => {
   const [billFile, setBillFile] = useState(null);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
 
+  useEffect(() => {
+    if (pen) {
+      localStorage.setItem('pen', pen);
+    }
+  }, [pen]);
+
   const handleVehicleChange = async (e) => {
     const value = e.target.value.toUpperCase().trim();
     setVehicleNo(value);
-
     const vehicleRegex = /^[A-Z]{2}[0-9]{2}[A-Z]{1,2}[0-9]{4}$/;
-    ///^[A-Z]{2}\d{1,2}[A-Z]{0,2}\d{4}$/
 
-    
     if (!vehicleRegex.test(value)) {
       setVehicleStatus('Invalid Format');
       return;
@@ -91,8 +91,8 @@ const RepairRequestForm = ({ pen }) => {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file && file.size > 5 * 1024 * 1024) {
-      alert('File size exceeds 5MB. Please select a smaller file.');
+    if (file && file.size > 200 * 1024) {
+      alert('File size exceeds 200KB. Please select a smaller file.');
       e.target.value = '';
       setBillFile(null);
     } else {
@@ -100,123 +100,116 @@ const RepairRequestForm = ({ pen }) => {
     }
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+    const formDataToSend = new FormData();
+    formDataToSend.append('vehicleNo', vehicleNo);
+    formDataToSend.append('pen', pen);
+    formDataToSend.append('date', date);
+    formDataToSend.append('subject', subject);
+    formDataToSend.append('description', description);
+    if (billFile) {
+      formDataToSend.append('billFile', billFile);
+    }
 
-  const formDataToSend = new FormData();
-  formDataToSend.append('vehicleNo', vehicleNo);
-  formDataToSend.append('pen', pen);
-  formDataToSend.append('date', date);
-  formDataToSend.append('subject', subject);
-  formDataToSend.append('description', description);
-  if (billFile) {
-    formDataToSend.append('billFile', billFile);
-  }
-   console.log('📋 FormData contents:');
-for (let [key, value] of formDataToSend.entries()) {
+    try {
+      await axios.post('http://localhost:5000/api/repair-request', formDataToSend, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
 
-  console.log(`- ${key}:`, value);
-}
-  try {
-    await axios.post('http://localhost:5000/api/repair-request', formDataToSend, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
-
-    alert('Request submitted successfully');
-  } catch (err) {
-    console.error('Error submitting form:', err.response?.data || err.message);
-    alert('Error submitting form.');
-  }
-};
-
-
+      alert('Request submitted successfully');
+    } catch (err) {
+      console.error('Error submitting form:', err.response?.data || err.message);
+      alert('Error submitting form.');
+    }
+  };
 
   return (
-    <form onSubmit={handleSubmit} className="formContainer" style={styles.form}>
-      <h2 style={styles.title}>Repair Request Form</h2>
+    <div style={styles.container}>
+      <form onSubmit={handleSubmit} style={styles.form}>
+        <h2 style={styles.title}>Repair Request Form</h2>
 
-      <div style={styles.grid}>
-        {/* Left Column */}
-        <div style={styles.column}>
-          <label>Vehicle Number</label>
-          <input
-            type="text"
-            value={vehicleNo}
-            onChange={handleVehicleChange}
-            placeholder="Enter vehicle number"
-            style={styles.input}
-            required
-          />
-          {vehicleStatus && (
-            <p style={{
-              color:
-                vehicleStatus === 'Valid' ? 'green' :
-                vehicleStatus === 'Not Found' || vehicleStatus === 'Invalid Format' ? 'red' : 'orange'
-            }}>
-              {
-                vehicleStatus === 'Valid' ? '✅ Vehicle Number is Valid' :
-                vehicleStatus === 'Not Found' ? '❌ Vehicle Not Found in Database' :
-                vehicleStatus === 'Invalid Format' ? '❌ Invalid Vehicle Number Format' :
-                'Error Checking Vehicle'
-              }
-            </p>
-          )}
+        <div style={styles.grid}>
+          <div style={styles.column}>
+            <label>Vehicle Number</label>
+            <input
+              type="text"
+              value={vehicleNo}
+              onChange={handleVehicleChange}
+              placeholder="Enter vehicle number"
+              style={styles.input}
+              required
+            />
+            {vehicleStatus && (
+              <p style={{
+                color:
+                  vehicleStatus === 'Valid' ? 'green' :
+                  vehicleStatus === 'Not Found' || vehicleStatus === 'Invalid Format' ? 'red' : 'orange'
+              }}>
+                {
+                  vehicleStatus === 'Valid' ? '✅ Vehicle Number is Valid' :
+                  vehicleStatus === 'Not Found' ? '❌ Vehicle Not Found in Database' :
+                  vehicleStatus === 'Invalid Format' ? '❌ Invalid Vehicle Number Format' :
+                  'Error Checking Vehicle'
+                }
+              </p>
+            )}
 
-          <label>PEN Number</label>
-          <input
-            type="text"
-            value={pen}
-            readOnly
-            style={{ ...styles.input, backgroundColor: '#f0f0f0' }}
-          />
+            <label>PEN Number</label>
+            <input
+              type="text"
+              value={pen}
+              readOnly
+              style={{ ...styles.input, backgroundColor: '#f0f0f0' }}
+            />
 
-          <label>Date</label>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            style={styles.input}
-            required
-          />
+            <label>Date</label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              style={styles.input}
+              required
+            />
 
-          <label>Subject</label>
-          <input
-            type="text"
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            placeholder="Enter subject"
-            style={styles.input}
-            required
-          />
+            <label>Subject</label>
+            <input
+              type="text"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="Enter subject"
+              style={styles.input}
+              required
+            />
+          </div>
+
+          <div style={styles.column}>
+            <label>Description</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Describe the issue"
+              rows={5}
+              style={styles.textarea}
+              required
+            />
+
+            <label>Upload image if Any (MAX 200 KB)</label>
+            <input
+              type="file"
+              accept="image/*,.pdf"
+              onChange={handleFileChange}
+              style={styles.input}
+            />
+          </div>
         </div>
 
-        {/* Right Column */}
-        <div style={styles.column}>
-          <label>Description</label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Describe the issue"
-            rows={5}
-            style={styles.textarea}
-            required
-          />
-
-          <label>Upload Bill (MAX 5 MB)</label>
-          <input
-            type="file"
-            accept="image/*,.pdf"
-            onChange={handleFileChange}
-            style={styles.input}
-          />
-        </div>
-      </div>
-
-      <button type="submit" style={styles.button}>Submit Request</button>
-    </form>
+        <button type="submit" style={styles.button}>Submit Request</button>
+      </form>
+    </div>
   );
 };
 

@@ -7,6 +7,7 @@ import ResetPassword from './ResetPassword';
 import NotFound from './404';
 
 import AdminDashboard from './AdminDashboard';
+import MainAdminDashboard from './MainAdminDashboard';
 import UserDashboard from './UserDashboard';
 import MechanicDashboard from './MechanicDashboard';
 import FuelSectionDashboard from './FuelSectionDashboard';
@@ -20,7 +21,8 @@ import RepairRequestForm from './userdashboardcomponents/RepairRequestForm';
 
 import Stocks from './mechanicdashboardcomponents/Stocks';
 import ViewAllStocks from './mechanicdashboardcomponents/ViewAllStocks';
-
+import TrackRepairRequest from './userdashboardcomponents/trackrepairrequest';
+import AddUpdateCertificate from './admindashboardcomponents/AddUpdateCertificate';
 import './App.css';
 
 function AppWrapper() {
@@ -55,6 +57,7 @@ function AppWrapper() {
         {/* Dashboards */}
         <Route path="/admin" element={localStorage.getItem('adminData') ? <AdminDashboard /> : <Navigate to="/" />} />
         <Route path="/user" element={<UserDashboard />} />
+        <Route path="/mainadmin" element={<MainAdminDashboard />} />
         <Route path="/mechanic" element={<MechanicDashboard />} />
         <Route path="/fuel" element={<FuelSectionDashboard />} />
         <Route path="/fuel-admin2" element={<FuelAdmin2 />} />
@@ -65,6 +68,9 @@ function AppWrapper() {
         <Route path="/admin/vehicles" element={<AddRemoveVehicleForm />} />
         <Route path="/searchvehicle" element={<SearchVehicleDetails />} />
         <Route path="/repair-request" element={<RepairRequestForm />} />
+
+       <Route path="/trackrepairrequest" element={<TrackRepairRequest />} />
+        <Route path="/vehicle-certificates" element={<AddUpdateCertificate />} />
 
         {/* Stock Routes */}
         <Route path="/admin/stocks" element={<Stocks />} /> {/* ✅ FIXED: added route */}

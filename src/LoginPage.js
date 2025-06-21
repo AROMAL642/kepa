@@ -13,7 +13,6 @@ const LoginPage = () => {
 
     try {
       const res = await axios.post('http://localhost:5000/login', { pen, password });
-
       const { role } = res.data;
 
       if (role === 'admin') {
@@ -33,6 +32,26 @@ const LoginPage = () => {
         };
 
         localStorage.setItem('adminData', JSON.stringify(adminData));
+        navigate('/mainadmin');
+      }
+
+      else if (role === 'mti') {
+        const mtiData = {
+          name: res.data.name,
+          email: res.data.email,
+          pen: res.data.pen,
+          generalNo: res.data.generalNo,
+          phone: res.data.phone,
+          dob: res.data.dob,
+          licenseNo: res.data.licenseNo,
+          bloodGroup: res.data.bloodGroup,
+          gender: res.data.gender,
+          photo: res.data.photo,
+          signature: res.data.signature,
+          role: 'MTI'
+        };
+
+        localStorage.setItem('adminData', JSON.stringify(mtiData));
         navigate('/admin');
       }
 
@@ -69,13 +88,12 @@ const LoginPage = () => {
           role: res.data.role
         };
 
-        const prefix = role; // 'fuel', 'mechanic', or 'repair'
+        const prefix = role;
         Object.entries(commonData).forEach(([key, value]) => {
           const localStorageKey = `${prefix}${key.charAt(0).toUpperCase()}${key.slice(1)}`;
           localStorage.setItem(localStorageKey, value);
         });
 
-        // Navigate based on role
         navigate(`/${role}`);
       }
 

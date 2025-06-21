@@ -11,6 +11,8 @@ import AccidentReportForm from './userdashboardcomponents/AccidentReportForm';
 import './css/accidentreportform.css';
 import EyeTestReport from './userdashboardcomponents/EyeTestReport';
 import ResponsiveAppBar from './admindashboardcomponents/ResponsiveAppBar';
+import TrackRepairRequests from './userdashboardcomponents/trackrepairrequest';
+import AddUpdateCertificate from './admindashboardcomponents/AddUpdateCertificate'; 
 
 // ✅ New Imports
 import Stocks from './mechanicdashboardcomponents/Stocks';
@@ -58,6 +60,14 @@ function UserDashboard() {
     }
   }, []);
 
+  useEffect(() => {
+    const handleTabSwitch = (e) => {
+      setActiveTab(e.detail);
+    };
+    window.addEventListener('switchTab', handleTabSwitch);
+    return () => window.removeEventListener('switchTab', handleTabSwitch);
+  }, []);
+
   const handleLogout = () => {
     localStorage.clear();
     navigate('/');
@@ -66,11 +76,13 @@ function UserDashboard() {
   const tabMap = [
     { key: 'profile', label: 'Profile' },
     { key: 'fuel', label: 'Fuel' },
-    { key: 'repair', label: 'Repair' },
+    { key: 'repair', label: 'Request for Repair' },
+    { key: 'trackrepair', label: 'Track Repair Requests' },
     { key: 'movement', label: 'Movement' },
     { key: 'eyetest', label: 'Eye Test' },
     { key: 'accident', label: 'Accident' },
     { key: 'vehicle details', label: 'Vehicle Details' },
+    { key: 'certificates', label: 'Vehicle Certificates' }, // ✅ Added here
     { key: 'stocks', label: 'Stocks' },              // ✅ New tab
     { key: 'viewalltocks', label: 'View All Stock ' },     // ✅ New tab
   ];
@@ -96,7 +108,7 @@ function UserDashboard() {
               <button
                 key={key}
                 className={`sidebar-btn ${activeTab === key ? 'active' : ''}`}
-                onClick={() => setActiveTab(key)}
+                onClick={() => setActiveTab(key)} // ✅ Just switch tab
               >
                 {label}
               </button>
@@ -115,7 +127,7 @@ function UserDashboard() {
                   { label: 'General Number', name: 'generalNo', readOnly: true },
                   { label: 'Email', name: 'email' },
                   { label: 'Mobile Number', name: 'mobile' },
-                  { label: 'DOB', name: 'dob', type: 'date' },
+                  { label: 'DOB', name: 'dob', type: 'date' },  // Editable DOB
                   { label: 'Licence Number', name: 'licenseNo' },
                   { label: 'Blood Group', name: 'bloodGroup', readOnly: true },
                   { label: 'Gender', name: 'gender', readOnly: true },
@@ -127,9 +139,7 @@ function UserDashboard() {
                       name={field.name}
                       value={formData[field.name] || ''}
                       readOnly={field.readOnly || !editMode}
-                      onChange={e =>
-                        setFormData(prev => ({ ...prev, [field.name]: e.target.value }))
-                      }
+                      onChange={e => setFormData(prev => ({ ...prev, [field.name]: e.target.value }))}
                     />
                   </div>
                 ))}
@@ -168,7 +178,6 @@ function UserDashboard() {
                   </>
                 )}
               </div>
-
               <div className="form-right">
                 <div className="upload-section">
                   <img
@@ -190,20 +199,57 @@ function UserDashboard() {
             </div>
           )}
 
-          {activeTab === 'movement' && <MovementRegister />}
-          {activeTab === 'vehicle details' && <SearchVehicleDetails />}
-          {activeTab === 'fuel' && <FuelRegister pen={formData.pen} />}
-          {activeTab === 'repair' && <RepairRequestForm pen={formData.pen} />}
-          {activeTab === 'accident' && <AccidentReportForm pen={formData.pen} />}
-          {activeTab === 'eyetest' && <EyeTestReport pen={formData.pen} />}
+          {activeTab === 'movement' && (
+            <div className="movement-section">
+              <MovementRegister />
+            </div>
+          )}
 
-         {activeTab === 'stocks' && (
+          {activeTab === 'vehicle details' && (
+            <div className="vehicle-details-section">
+              <SearchVehicleDetails />
+            </div>
+          )}
+
+          {activeTab === 'fuel' && (
+            <FuelRegister pen={formData.pen} />
+          )}
+
+          {activeTab === 'repair' && (
+            <div className="repair-request-section">
+              <RepairRequestForm pen={formData.pen} />
+            </div>
+          )}
+           {activeTab === 'trackrepair' && (
+            <div className="trackrepair-section">
+              <TrackRepairRequests />
+            </div>
+          )}
+
+          {activeTab === 'accident' && (
+            <div className="accident-section">
+              <AccidentReportForm pen={formData.pen} />
+            </div>
+          )}
+
+          {activeTab === 'eyetest' && (
+            <div className="eyetest-section">
+              <EyeTestReport pen={formData.pen} />
+            </div>
+          )}
+          {activeTab === 'stocks' && (
   <Stocks onViewAll={() => setActiveTab('viewallstocks')} />
 )}
 
 {activeTab === 'viewallstocks' && (
   <ViewAllStocks onBack={() => setActiveTab('stocks')} />
+
 )}
+{activeTab === 'certificates' && (
+            <div className="certificates-section">
+              <AddUpdateCertificate />
+            </div>
+          )}
 
         </div>
       </div>

@@ -5,6 +5,9 @@ import SearchVehicleDetails from './repairsectiondashboardcomponents/SearchVehic
 import VerifiedUsersTable from './fuelsectiondashboardcomponents/VerifiedUsersTable';
 import MechanicPendingRequests from './mechanicdashboardcomponents/MechanicPendingRequests';
 import Stocks from './mechanicdashboardcomponents/Stocks'; // ✅ NEW IMPORT
+import Purchase from './mechanicdashboardcomponents/Purchase';
+
+
 import ViewAllStocks from './mechanicdashboardcomponents/ViewAllStocks'; // ✅ ADDED THIS
 
 import './css/admindashboard.css';
@@ -145,6 +148,7 @@ function MechanicDashboard() {
             <button className={`sidebar-btn ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>Users Details</button>
             <button className={`sidebar-btn ${activeTab === 'escertif' ? 'active' : ''}`} onClick={() => setActiveTab('escertif')}>Essentiality Certificate</button>
             <button className={`sidebar-btn ${activeTab === 'techcert' ? 'active' : ''}`} onClick={() => setActiveTab('techcert')}>Technical Certificate</button>
+            <button className={`sidebar-btn ${activeTab === 'purchase' ? 'active' : ''}`} onClick={() => setActiveTab('purchase')}>Purchase</button>
           </div>
         </div>
 
@@ -235,6 +239,13 @@ function MechanicDashboard() {
 
           {activeTab === 'escertif' && <EssentialityCertificate />}
           {activeTab === 'techcert' && <TechnicalCertificate />}
+
+          {activeTab === 'purchase' && (
+            <div style={{ padding: '20px' }}>
+            <Purchase />
+            </div>
+          )}
+
         </div>
       </div>
     </div>
