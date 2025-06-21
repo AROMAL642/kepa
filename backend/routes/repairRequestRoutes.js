@@ -63,6 +63,30 @@ router.get('/', async (req, res) => {
 });
 
 /**
+ * GET: Get single repair request by ID (used in admin view)
+ */
+router.get('/:id', async (req, res) => {
+  try {
+    const repair = await RepairRequest.findById(req.params.id);
+    if (!repair) return res.status(404).json({ message: 'Repair request not found' });
+
+    const formatted = {
+      ...repair.toObject(),
+      billFile: repair.billFile?.data ? {
+        data: repair.billFile.data.toString('base64'),
+        contentType: repair.billFile.contentType
+      } : null
+    };
+
+    res.json(formatted);
+  } catch (err) {
+    console.error('Error fetching repair by ID:', err);
+    res.status(500).json({ message: 'Failed to fetch repair request' });
+  }
+});
+
+
+/**
  * PUT: Admin changes status
  */
 router.put('/:id/status', async (req, res) => {

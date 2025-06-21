@@ -6,7 +6,8 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  Typography
+  Typography,
+  CircularProgress
 } from '@mui/material';
 
 const RepairAdminTable = ({ themeStyle }) => {
@@ -14,9 +15,10 @@ const RepairAdminTable = ({ themeStyle }) => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedRepair, setSelectedRepair] = useState(null);
+  const [dialogLoading, setDialogLoading] = useState(false);
 
-  // 🔄 Fetch repair data from backend
   const fetchRepairs = useCallback(async () => {
+    setLoading(true);
     try {
       const res = await fetch('http://localhost:5000/api/repair-request');
       const data = await res.json();
@@ -31,9 +33,6 @@ const RepairAdminTable = ({ themeStyle }) => {
         description: item.description,
         date: item.date,
         status: item.status || 'pending',
-        billFile: item.billFile?.data
-          ? `data:${item.billFile.contentType};base64,${item.billFile.data}`
-          : ''
       }));
 
       setRows(formatted);
@@ -48,9 +47,27 @@ const RepairAdminTable = ({ themeStyle }) => {
     fetchRepairs();
   }, [fetchRepairs]);
 
-  const handleViewDetails = (row) => {
-    setSelectedRepair(row);
+  // 👇 Load full repair details with billFile when needed
+  const handleViewDetails = async (row) => {
+    setDialogLoading(true);
     setDialogOpen(true);
+
+    try {
+      const res = await fetch(`http://localhost:5000/api/repair-request/${row._id}`);
+      const data = await res.json();
+
+      const billFile =
+        data.billFile?.data && data.billFile?.contentType
+          ? `data:${data.billFile.contentType};base64,${data.billFile.data}`
+          : '';
+
+      setSelectedRepair({ ...data, billFile });
+    } catch (err) {
+      console.error('Error fetching full repair details:', err);
+      alert('Failed to load full repair details');
+    } finally {
+      setDialogLoading(false);
+    }
   };
 
   const handleClose = () => {
@@ -58,7 +75,6 @@ const RepairAdminTable = ({ themeStyle }) => {
     setSelectedRepair(null);
   };
 
-  // ✅ Update status endpoint
   const updateStatus = async (id, status) => {
     try {
       const res = await fetch(`http://localhost:5000/api/repair-request/${id}/status`, {
@@ -78,7 +94,6 @@ const RepairAdminTable = ({ themeStyle }) => {
     }
   };
 
-  // ✅ Forward verified request to mechanic
   const forwardToMechanic = async (id) => {
     try {
       const res = await fetch(`http://localhost:5000/api/repair-request/${id}/forward-to-mechanic`, {
@@ -102,7 +117,7 @@ const RepairAdminTable = ({ themeStyle }) => {
     { field: 'slNo', headerName: 'Sl. No', width: 90 },
     { field: 'vehicleNo', headerName: 'Vehicle No', width: 130 },
     { field: 'pen', headerName: 'PEN', width: 100 },
-    { field: 'subject', headerName: 'Subject', width: 180, disableColumnMenu: true, sortable: false },
+    { field: 'subject', headerName: 'Subject', width: 180 },
     {
       field: 'status',
       headerName: 'Status',
@@ -179,11 +194,15 @@ const RepairAdminTable = ({ themeStyle }) => {
         style={{ background: themeStyle.background, color: themeStyle.color }}
       />
 
-      {/* 👇 Repair Details Dialog */}
+      {/* Repair Details Dialog */}
       <Dialog open={dialogOpen} onClose={handleClose} fullWidth maxWidth="sm">
         <DialogTitle>Repair Request Details</DialogTitle>
         <DialogContent>
-          {selectedRepair && (
+          {dialogLoading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
+              <CircularProgress />
+            </div>
+          ) : selectedRepair ? (
             <>
               <Typography><strong>Vehicle No:</strong> {selectedRepair.vehicleNo}</Typography>
               <Typography><strong>PEN:</strong> {selectedRepair.pen}</Typography>
@@ -202,6 +221,8 @@ const RepairAdminTable = ({ themeStyle }) => {
                 <Typography color="textSecondary">No Bill File Available</Typography>
               )}
             </>
+          ) : (
+            <Typography>No details available.</Typography>
           )}
         </DialogContent>
         <DialogActions>

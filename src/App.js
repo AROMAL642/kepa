@@ -5,6 +5,7 @@ import LoginPage from './LoginPage';
 import RepairDashboard from './RepairSectionDashboard';
 import RegisterPage from './RegisterPage';
 import AdminDashboard from './AdminDashboard';
+import MainAdminDashboard from './MainAdminDashboard';
 import UserDashboard from './UserDashboard';
 import ViewRequests from './ViewRequests';
 import AddRemoveVehicleForm from './admindashboardcomponents/AddRemoveVehicleForm';
@@ -16,6 +17,8 @@ import MechanicDashboard from './MechanicDashboard';
 import ResetPassword from './ResetPassword';
 import NotFound from './404';
 import TrackRepairRequest from './userdashboardcomponents/trackrepairrequest';
+import AddUpdateCertificate from './admindashboardcomponents/AddUpdateCertificate';
+
 
 import './App.css';
 
@@ -47,6 +50,7 @@ function AppWrapper() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/admin" element={localStorage.getItem('adminData') ? <AdminDashboard /> : <Navigate to="/" />} />
         <Route path="/user" element={<UserDashboard />} />
+        <Route path="/mainadmin" element={<MainAdminDashboard />} />
         <Route path="/viewrequests" element={<ViewRequests themeStyle={{ background: 'black', color: 'white' }} />} />
         
         <Route path="/admin/vehicles" element={<AddRemoveVehicleForm />} />
@@ -58,6 +62,7 @@ function AppWrapper() {
         <Route path="/fuel-admin2" element={<FuelAdmin2 />} />
         <Route path="/repair" element={<RepairDashboard />} />
         <Route path="/trackrepairrequest" element={<TrackRepairRequest />} />
+        <Route path="/vehicle-certificates" element={<AddUpdateCertificate />} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>

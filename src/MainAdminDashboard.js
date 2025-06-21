@@ -22,7 +22,7 @@ import AddUpdateCertificate from './admindashboardcomponents/AddUpdateCertificat
 
 import dayjs from 'dayjs';
 
-function AdminDashboard() {
+function MainAdminDashboard() {
   const [activeTab, setActiveTab] = useState('PrintRegisters');
   const [vehicleTab, setVehicleTab] = useState('main');
   const [pendingCount, setPendingCount] = useState(0);
@@ -308,4 +308,4 @@ function AdminDashboard() {
   );
 }
 
-export default AdminDashboard;
+export default MainAdminDashboard;

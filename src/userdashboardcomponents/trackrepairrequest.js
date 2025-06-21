@@ -15,7 +15,7 @@ import {
 function TrackRepairRequests() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const pen = localStorage.getItem('pen'); // ⬅️ Get current user PEN
+  const pen = localStorage.getItem('pen');
 
   useEffect(() => {
     if (!pen) {
@@ -28,6 +28,7 @@ function TrackRepairRequests() {
     fetch(`http://localhost:5000/api/repairs/by-pen/${pen}`)
       .then(res => res.json())
       .then(data => {
+        console.log('Fetched repair data:', data);
         if (Array.isArray(data)) {
           setRequests(data);
         } else {
@@ -49,6 +50,10 @@ function TrackRepairRequests() {
       color={value ? 'success' : 'default'}
       variant={value ? 'filled' : 'outlined'}
       size="small"
+      sx={{
+        pointerEvents: 'none', // disables any click/hover
+        cursor: 'default',     // disables hand cursor
+      }}
     />
   );
 
@@ -74,7 +79,7 @@ function TrackRepairRequests() {
                 <TableCell>Vehicle No</TableCell>
                 <TableCell>Status</TableCell>
                 <TableCell>Work Done</TableCell>
-                <TableCell>Forwarded</TableCell>
+                <TableCell>Forwarded By MTI</TableCell>
                 <TableCell>Mechanic Feedback</TableCell>
                 <TableCell>Repair Status</TableCell>
                 <TableCell>Sanctioned</TableCell>
