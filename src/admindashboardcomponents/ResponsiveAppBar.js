@@ -16,6 +16,7 @@ import { useNavigate } from 'react-router-dom';
 const pages = ['Notifications', 'Requests'];
 const settings = ['Profile', 'Dashboard', 'Logout'];
 const DRAWER_WIDTH = 240;
+const userName = JSON.parse(localStorage.getItem('loggedInUser'))?.name || 'User';
 
 function ResponsiveAppBar({ photo, name, isDrawerOpen, onDrawerToggle, onSelectTab }) {
   const [anchorElNav, setAnchorElNav] = React.useState(null);
