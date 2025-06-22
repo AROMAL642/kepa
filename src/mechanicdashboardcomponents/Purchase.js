@@ -21,23 +21,36 @@ const Purchase = () => {
   const [selectedPurchase, setSelectedPurchase] = useState(null);
 
   const [formData, setFormData] = useState({
+    pen: '',
     itemName: '',
     quantity: '',
     price: '',
     Firm: '',
     date: '',
     billNo: '',
-    billFile: null
+    billFile: null,
+    warrantyNumber: ''
   });
 
   useEffect(() => {
+    const storedUser = localStorage.getItem('adminData');
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      setFormData((prev) => ({ ...prev, pen: user.pen }));
+    }
     fetchPurchases();
   }, []);
 
   const fetchPurchases = async () => {
     try {
       const res = await axios.get('http://localhost:5000/api/purchases');
-      setPurchases(res.data.reverse());
+      const cleaned = res.data.map(p => {
+        delete p.createdAt;
+        delete p.updatedAt;
+        delete p.__v;
+        return p;
+      });
+      setPurchases(cleaned.reverse());
     } catch (err) {
       console.error('Failed to fetch purchases', err);
     }
@@ -53,23 +66,26 @@ const Purchase = () => {
   };
 
   const handleViewBill = async (purchaseId) => {
-  try {
-    const res = await axios.get(`http://localhost:5000/api/purchases/${purchaseId}/bill`, {
-      responseType: 'blob', // important for binary files
-    });
-
-    const blob = new Blob([res.data], { type: res.headers['content-type'] });
-    const url = URL.createObjectURL(blob);
-    setBillPreviewUrl(url);
-    setBillDialogOpen(true);
-  } catch (err) {
-    console.error('Failed to load bill file:', err);
-    alert('Failed to load bill file.');
-  }
-};
+    try {
+      const res = await axios.get(`http://localhost:5000/api/purchases/${purchaseId}/bill`, {
+        responseType: 'blob',
+      });
+      const blob = new Blob([res.data], { type: res.headers['content-type'] });
+      const url = URL.createObjectURL(blob);
+      setBillPreviewUrl(url);
+      setBillDialogOpen(true);
+    } catch (err) {
+      console.error('Failed to load bill file:', err);
+      alert('Failed to load bill file.');
+    }
+  };
 
   const handleEditClick = (purchase) => {
-    setSelectedPurchase(purchase);
+    setSelectedPurchase({
+      ...purchase,
+      date: purchase.date?.substring(0, 10),
+      billFile: null
+    });
     setEditDialogOpen(true);
   };
 
@@ -81,30 +97,27 @@ const Purchase = () => {
   const handleEditSubmit = async () => {
     try {
       const data = new FormData();
+      data.append('pen', selectedPurchase.pen);
       data.append('itemName', selectedPurchase.itemName);
       data.append('quantity', selectedPurchase.quantity);
       data.append('price', selectedPurchase.price);
       data.append('Firm', selectedPurchase.Firm);
       data.append('date', selectedPurchase.date);
       data.append('billNo', selectedPurchase.billNo);
-
+      data.append('warrantyNumber', selectedPurchase.warrantyNumber || '');
       if (selectedPurchase.billFile instanceof File) {
         data.append('billFile', selectedPurchase.billFile);
       }
 
-      await axios.put(
-        `http://localhost:5000/api/purchases/${selectedPurchase._id}`,
-        data,
-        {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        }
-      );
+      await axios.put(`http://localhost:5000/api/purchases/${selectedPurchase._id}`, data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
 
       alert('Purchase updated successfully');
       setEditDialogOpen(false);
       fetchPurchases();
     } catch (err) {
-      console.error('Failed to update purchase', err);
+      console.error('Failed to update purchase:', err);
       alert('Update failed');
     }
   };
@@ -122,24 +135,36 @@ const Purchase = () => {
   };
 
   const handleSubmit = async () => {
-    const { itemName, quantity, price, Firm, date, billNo, billFile } = formData;
+    const { pen, itemName, quantity, price, Firm, date, billNo, billFile, warrantyNumber } = formData;
     if (!itemName || !quantity || !price || !Firm || !date || !billNo) {
       return alert('Please fill all required fields.');
     }
 
     const data = new FormData();
+    data.append('pen', pen);
     data.append('itemName', itemName);
     data.append('quantity', quantity);
     data.append('price', price);
     data.append('Firm', Firm);
     data.append('date', date);
     data.append('billNo', billNo);
+    data.append('warrantyNumber', warrantyNumber);
     if (billFile) data.append('billFile', billFile);
 
     try {
       await axios.post('http://localhost:5000/api/purchases', data);
       alert('Purchase added successfully');
-      setFormData({ itemName: '', quantity: '', price: '', Firm: '', date: '', billNo: '', billFile: null });
+      setFormData({
+        pen,
+        itemName: '',
+        quantity: '',
+        price: '',
+        Firm: '',
+        date: '',
+        billNo: '',
+        billFile: null,
+        warrantyNumber: ''
+      });
       fetchPurchases();
     } catch (err) {
       console.error('Error adding purchase:', err);
@@ -148,25 +173,21 @@ const Purchase = () => {
   };
 
   const columns = [
+    { field: 'enteredBy', headerName: 'Entered By', flex: 1 },
     { field: 'itemName', headerName: 'Item Name', flex: 1 },
     { field: 'quantity', headerName: 'Quantity', flex: 1 },
     { field: 'price', headerName: 'Price (₹)', flex: 1 },
     { field: 'Firm', headerName: 'Firm', flex: 1 },
     { field: 'date', headerName: 'Date', flex: 1 },
     { field: 'billNo', headerName: 'Bill No', flex: 1 },
+    { field: 'warrantyNumber', headerName: 'Warranty Number', flex: 1 },
     {
       field: 'actions',
       headerName: 'Actions',
-      flex: 2,
+      flex: 3,
       renderCell: (params) => (
-        <>  
-          <Button
-        size="small"
-        variant="outlined"
-        onClick={() => handleViewBill(params.row._id)}
-      >View
-      </Button>
-
+        <>
+          <Button size="small" variant="outlined" onClick={() => handleViewBill(params.row._id)}>View</Button>
           <Button size="small" variant="outlined" onClick={() => handleEditClick(params.row)} style={{ marginLeft: '8px' }}>Edit</Button>
           <Button size="small" variant="outlined" color="error" onClick={() => handleDeleteClick(params.row)} style={{ marginLeft: '8px' }}>Delete</Button>
         </>
@@ -182,7 +203,6 @@ const Purchase = () => {
             <h2>All Purchase Entries</h2>
             <Button variant="outlined" onClick={() => setShowAll(false)}>Back to Purchase Form</Button>
           </div>
-
           <DataGrid
             rows={purchases.map(p => ({
               id: p._id,
@@ -209,36 +229,29 @@ const Purchase = () => {
             <input type="text" name="Firm" placeholder="Firm" value={formData.Firm} onChange={handleChange} />
             <input type="date" name="date" value={formData.date} onChange={handleChange} />
             <input type="text" name="billNo" placeholder="Bill Number" value={formData.billNo} onChange={handleChange} />
+            <input type="text" name="warrantyNumber" placeholder="Warranty Number (Optional)" value={formData.warrantyNumber} onChange={handleChange} />
             <input type="file" name="billFile" accept="application/pdf,image/*" onChange={handleChange} />
             <button onClick={handleSubmit}>Add Purchase</button>
           </div>
         </>
       )}
 
+      {/* View Bill Dialog */}
       <Dialog open={billDialogOpen} onClose={() => setBillDialogOpen(false)} fullWidth maxWidth="md">
-  <DialogTitle>Bill Preview</DialogTitle>
-  <DialogContent dividers>
-    {billPreviewUrl.endsWith('.pdf') ? (
-      <iframe
-        src={billPreviewUrl}
-        width="100%"
-        height="600px"
-        title="Bill Preview"
-      />
-    ) : (
-      <img
-        src={billPreviewUrl}
-        alt="Bill"
-        style={{ width: '100%', maxHeight: '600px', objectFit: 'contain' }}
-      />
-    )}
-  </DialogContent>
-  <DialogActions>
-    <Button onClick={() => setBillDialogOpen(false)}>Close</Button>
-  </DialogActions>
-</Dialog>
+        <DialogTitle>Bill Preview</DialogTitle>
+        <DialogContent dividers>
+          {billPreviewUrl.endsWith('.pdf') ? (
+            <iframe src={billPreviewUrl} width="100%" height="600px" title="Bill Preview" />
+          ) : (
+            <img src={billPreviewUrl} alt="Bill" style={{ width: '100%', maxHeight: '600px', objectFit: 'contain' }} />
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setBillDialogOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
 
-      {/* 🔧 Edit Dialog */}
+      {/* Edit Dialog */}
       <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} fullWidth>
         <DialogTitle>Edit Purchase</DialogTitle>
         <DialogContent>
@@ -248,21 +261,8 @@ const Purchase = () => {
           <input type="text" name="Firm" value={selectedPurchase?.Firm || ''} onChange={(e) => setSelectedPurchase({ ...selectedPurchase, Firm: e.target.value })} placeholder="Firm" />
           <input type="date" name="date" value={selectedPurchase?.date?.substring(0, 10) || ''} onChange={(e) => setSelectedPurchase({ ...selectedPurchase, date: e.target.value })} />
           <input type="text" name="billNo" value={selectedPurchase?.billNo || ''} onChange={(e) => setSelectedPurchase({ ...selectedPurchase, billNo: e.target.value })} placeholder="Bill No" />
-
-          {selectedPurchase?.billFile && !(selectedPurchase.billFile instanceof File) && (
-            <Typography variant="body2" color="textSecondary" style={{ marginTop: '8px' }}>
-              A bill file is already attached. Uploading a new file will replace it.
-            </Typography>
-          )}
-
-          <input
-            type="file"
-            name="billFile"
-            accept="application/pdf,image/*"
-            onChange={(e) =>
-              setSelectedPurchase({ ...selectedPurchase, billFile: e.target.files[0] })
-            }
-          />
+          <input type="text" name="warrantyNumber" value={selectedPurchase?.warrantyNumber || ''} onChange={(e) => setSelectedPurchase({ ...selectedPurchase, warrantyNumber: e.target.value })} placeholder="Warranty Number (Optional)" />
+          <input type="file" name="billFile" accept="application/pdf,image/*" onChange={(e) => setSelectedPurchase({ ...selectedPurchase, billFile: e.target.files[0] })} />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
@@ -270,7 +270,7 @@ const Purchase = () => {
         </DialogActions>
       </Dialog>
 
-      {/* ❌ Delete Dialog */}
+      {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>

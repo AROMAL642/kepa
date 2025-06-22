@@ -17,10 +17,10 @@ const ViewAllStocks = ({ onBack }) => {
 
   const fetchStocks = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/stockroutes')
+      const res = await axios.get('http://localhost:5000/api/stockroutes');
       const formatted = res.data.map((item, index) => ({
         ...item,
-        id: item._id,
+        id: item._id, // For DataGrid
         sl: index + 1,
       }));
       setRows(formatted);
@@ -30,48 +30,64 @@ const ViewAllStocks = ({ onBack }) => {
   };
 
   const handleDelete = async (_id) => {
-  console.log('🗑️ Deleting:', _id);
-  if (window.confirm('Delete this stock item?')) {
-    try {
-      await axios.delete(`http://localhost:5000/api/stockroutes/${_id}`);
-      alert('Deleted successfully');
-      fetchStocks(); // Refresh list
-    } catch (err) {
-      console.error('❌ Delete error:', err.message);
-      alert('Delete failed');
+    if (window.confirm('Delete this stock item?')) {
+      try {
+        await axios.delete(`http://localhost:5000/api/stockroutes/${_id}`);
+        alert('Deleted successfully');
+        fetchStocks();
+      } catch (err) {
+        console.error('❌ Delete error:', err.message);
+        alert('Delete failed');
+      }
     }
-  }
-};
-
+  };
 
   const handleEditClick = (item) => {
-    setEditData(item);
-    setOpen(true);
-  };
+  setEditData({ ...item, _id: item._id || item.id });
+  setOpen(true);
+};
+
 
   const handleEditChange = (e) => {
     const { name, value } = e.target;
-    const val = name === 'hasWarranty' ? value === 'true' : value;
-    setEditData((prev) => ({ ...prev, [name]: val }));
+    setEditData((prev) => ({
+      ...prev,
+      [name]: name === 'hasWarranty' ? value : value,
+    }));
   };
 
- const handleEditSave = async () => {
-  const id = editData._id || editData.id;
-  console.log(' Saving edit:', id, editData);
+  const handleEditSave = async () => {
+  const id = editData._id;
+
+  if (!id) {
+    console.error("❌ Cannot update stock: Missing ID", editData);
+    alert("Stock ID missing. Cannot update.");
+    return;
+  }
+
   try {
-    await axios.put(`http://localhost:5000/api/stockroutes/${id}`, editData);
-    alert('Stock updated successfully');
+    // Convert hasWarranty to boolean
+    const dataToSend = {
+      ...editData,
+      hasWarranty: editData.hasWarranty === 'true'
+    };
+
+    const url = `http://localhost:5000/api/stockroutes/${id}`;
+    console.log("🔁 Sending PUT to:", url, "with data:", dataToSend);
+
+    await axios.put(url, dataToSend);
+    alert('✅ Stock updated successfully');
     setOpen(false);
-    fetchStocks(); // Refresh the updated list
+    fetchStocks();
   } catch (err) {
     console.error('❌ Save error:', err.message);
-    alert('Update failed');
+    alert('Update failed: ' + err.message);
   }
 };
 
-
   const columns = [
     { field: 'sl', headerName: 'SL', width: 70 },
+    { field: 'enteredBy', headerName: 'Entered By', width: 200 },
     { field: 'itemType', headerName: 'Type', width: 130 },
     { field: 'itemName', headerName: 'Name', width: 150 },
     { field: 'serialNo', headerName: 'Serial No', width: 150 },
@@ -79,8 +95,10 @@ const ViewAllStocks = ({ onBack }) => {
     { field: 'condition', headerName: 'Condition', width: 100 },
     { field: 'status', headerName: 'Status', width: 100 },
     {
-      field: 'hasWarranty', headerName: 'Warranty', width: 100,
-      renderCell: (params) => (params.value ? "Yes" : "No")
+      field: 'hasWarranty',
+      headerName: 'Warranty',
+      width: 100,
+      renderCell: (params) => (params.value ? 'Yes' : 'No')
     },
     { field: 'warrantyNumber', headerName: 'Warranty No', width: 150 },
     {
@@ -89,21 +107,8 @@ const ViewAllStocks = ({ onBack }) => {
       width: 200,
       renderCell: (params) => (
         <div style={{ display: 'flex', gap: 8 }}>
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={() => handleEditClick(params.row)}
-          >
-            EDIT
-          </Button>
-          <Button
-            variant="outlined"
-            size="small"
-            color="error"
-            onClick={() => handleDelete(params.row._id)}
-          >
-            DELETE
-          </Button>
+          <Button variant="outlined" size="small" onClick={() => handleEditClick(params.row)}>EDIT</Button>
+          <Button variant="outlined" size="small" color="error" onClick={() => handleDelete(params.row._id)}>DELETE</Button>
         </div>
       )
     }
@@ -134,7 +139,6 @@ const ViewAllStocks = ({ onBack }) => {
         <DialogContent>
           <TextField label="Item Type" name="itemType" value={editData.itemType || ''} onChange={handleEditChange} fullWidth margin="dense" />
           <TextField label="Item Name" name="itemName" value={editData.itemName || ''} onChange={handleEditChange} fullWidth margin="dense" />
-          
           <TextField label="Quantity" name="quantity" type="number" value={editData.quantity || ''} onChange={handleEditChange} fullWidth margin="dense" />
           <TextField select label="Condition" name="condition" value={editData.condition || ''} onChange={handleEditChange} fullWidth margin="dense">
             <MenuItem value="New">New</MenuItem>
@@ -146,11 +150,11 @@ const ViewAllStocks = ({ onBack }) => {
             <MenuItem value="In Use">In Use</MenuItem>
             <MenuItem value="Damaged">Damaged</MenuItem>
           </TextField>
-          <TextField select label="Warranty" name="hasWarranty" value={editData.hasWarranty ? 'true' : 'false'} onChange={handleEditChange} fullWidth margin="dense">
+          <TextField select label="Warranty" name="hasWarranty" value={editData.hasWarranty || 'false'} onChange={handleEditChange} fullWidth margin="dense">
             <MenuItem value="true">Yes</MenuItem>
             <MenuItem value="false">No</MenuItem>
           </TextField>
-          {editData.hasWarranty && (
+          {editData.hasWarranty === 'true' && (
             <TextField label="Warranty Number" name="warrantyNumber" value={editData.warrantyNumber || ''} onChange={handleEditChange} fullWidth margin="dense" />
           )}
         </DialogContent>

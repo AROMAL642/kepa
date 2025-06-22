@@ -8,7 +8,10 @@ import {
   DialogContent,
   DialogActions,
   Typography,
+  useMediaQuery,
+  useTheme
 } from '@mui/material';
+import '../css/MechanicPendingRequests.css';
 
 function MechanicPendingRequests() {
   const [requests, setRequests] = useState([]);
@@ -17,6 +20,9 @@ function MechanicPendingRequests() {
   const [modalOpen, setModalOpen] = useState(false);
   const [filePreviewOpen, setFilePreviewOpen] = useState(false);
   const [fileToPreview, setFileToPreview] = useState(null);
+
+  const theme = useTheme();
+  const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
   useEffect(() => {
     fetch('http://localhost:5000/api/repairs')
@@ -106,7 +112,7 @@ function MechanicPendingRequests() {
   };
 
   const columns = [
-    { field: 'serial', headerName: '#', width: 50 },
+    { field: 'serial', headerName: '#', width: 60 },
     { field: 'vehicleNo', headerName: 'Vehicle No', width: 120 },
     { field: 'pen', headerName: 'PEN', width: 100 },
     { field: 'date', headerName: 'Date', width: 110 },
@@ -149,6 +155,7 @@ function MechanicPendingRequests() {
         <Button
           variant="contained"
           color="primary"
+          size="small"
           onClick={() => handleReviewClick(params.row)}
         >
           Review
@@ -158,29 +165,41 @@ function MechanicPendingRequests() {
   ];
 
   return (
-    <div style={{ height: 500, width: '100%' }}>
-      <h2>Verified Repair Requests</h2>
+    <div className="mechanic-container">
+      <h2 className="mechanic-title">Verified Repair Requests</h2>
+
       {loading ? (
         <div style={{ textAlign: 'center', padding: 20 }}>
           <CircularProgress />
         </div>
       ) : (
-        <DataGrid
-          rows={requests}
-          columns={columns}
-          pageSize={7}
-          rowsPerPageOptions={[7, 10, 20]}
-        />
+        <div className="mechanic-table-wrapper">
+          <div className="data-grid-wrapper">
+            <DataGrid
+              rows={requests}
+              columns={columns}
+              autoHeight
+              pageSize={7}
+              rowsPerPageOptions={[7, 10, 20]}
+            />
+          </div>
+        </div>
       )}
 
       {/* Review Dialog */}
-      <Dialog open={modalOpen} onClose={handleCloseModal}>
+      <Dialog
+        open={modalOpen}
+        onClose={handleCloseModal}
+        fullScreen={fullScreen}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Repair Review</DialogTitle>
-        <DialogContent>
+        <DialogContent dividers>
           {selectedRequest && (
             <>
-              <Typography><strong>Vehicle No:</strong> {selectedRequest.vehicleNo}</Typography>
-              <Typography><strong>Description:</strong> {selectedRequest.description}</Typography>
+              <Typography className="dialog-text"><strong>Vehicle No:</strong> {selectedRequest.vehicleNo}</Typography>
+              <Typography className="dialog-text"><strong>Description:</strong> {selectedRequest.description}</Typography>
               <Typography><strong>Work Done:</strong> {selectedRequest.workDone}</Typography>
             </>
           )}
@@ -193,14 +212,20 @@ function MechanicPendingRequests() {
               color="success"
               onClick={() => handleWorkCompleted(selectedRequest.id)}
             >
-              Work Completed
+              Mark as Completed
             </Button>
           )}
         </DialogActions>
       </Dialog>
 
       {/* File Preview Dialog */}
-      <Dialog open={filePreviewOpen} onClose={handleCloseFilePreview} maxWidth="md" fullWidth>
+      <Dialog
+        open={filePreviewOpen}
+        onClose={handleCloseFilePreview}
+        fullScreen={fullScreen}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>Bill File Preview</DialogTitle>
         <DialogContent dividers>
           {fileToPreview?.type?.includes('pdf') ? (

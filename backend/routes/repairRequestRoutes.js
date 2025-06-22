@@ -274,4 +274,15 @@ router.put('/:id/final-repair-done', async (req, res) => {
   }
 });
 
+router.get('/pending/count', async (req, res) => {
+  try {
+    const count = await RepairRequest.countDocuments({ status: 'pending' });
+    res.json({ count });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch count' });
+  }
+});
+
+
 module.exports = router;

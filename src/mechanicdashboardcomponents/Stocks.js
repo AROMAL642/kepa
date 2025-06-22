@@ -1,10 +1,10 @@
-// frontend/src/mechanicdashboardcomponents/Stocks.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../css/stocks.css';
 import axios from 'axios';
 
 const Stocks = ({ onViewAll }) => {
   const [formData, setFormData] = useState({
+    pen: '',
     itemType: '',
     itemName: '',
     serialNo: '',
@@ -13,23 +13,33 @@ const Stocks = ({ onViewAll }) => {
     status: '',
     warranty: '',
     warrantyNumber: '',
-    date: '', // ✅ Initialize date here
+    date: '',
   });
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('adminData');
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      setFormData((prev) => ({ ...prev, pen: user.pen }));
+    }
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
-      ...(name === 'warranty' && value === 'No' ? { warrantyNumber: '' } : {})
+      ...(name === 'warranty' && value === 'No' ? { warrantyNumber: '' } : {}),
     }));
   };
 
   const handleSubmit = async () => {
     const {
-      itemType, itemName, serialNo, quantity,
+      pen, itemType, itemName, serialNo, quantity,
       condition, status, warranty, warrantyNumber, date
     } = formData;
+    
+    console.log("🚨 Current form data:", formData);
 
     if (!itemType || !itemName || !serialNo || !quantity || !condition || !status || !warranty || (warranty === 'Yes' && !warrantyNumber) || !date) {
       alert("Please fill all required fields including Date");
@@ -38,6 +48,7 @@ const Stocks = ({ onViewAll }) => {
 
     try {
       await axios.post('http://localhost:5000/api/stockroutes', {
+        pen,
         itemType,
         itemName,
         serialNo,
@@ -46,12 +57,13 @@ const Stocks = ({ onViewAll }) => {
         status,
         hasWarranty: warranty === 'Yes',
         warrantyNumber: warranty === 'Yes' ? warrantyNumber : '',
-        date: new Date(date).toISOString() // ✅ Convert to ISO
+        date: new Date(date).toISOString()
       });
 
       alert("Stock item added successfully");
 
       setFormData({
+        pen,
         itemType: '',
         itemName: '',
         serialNo: '',
@@ -69,10 +81,10 @@ const Stocks = ({ onViewAll }) => {
   };
 
   return (
-    <div style={{ padding: '10px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <h2>Manage Spare Part Stocks</h2>
-        <button className="view-all-btn" onClick={onViewAll}>View Full Stock</button>
+    <div className="stock-form-container">
+      <div className="stock-form-header">
+        <h2>Manage Stock Register</h2>
+        <button className="view-all-btn" onClick={onViewAll}>📦 View All Stocks</button>
       </div>
 
       <div className="form-grid">
@@ -119,7 +131,7 @@ const Stocks = ({ onViewAll }) => {
           />
         )}
 
-        <button onClick={handleSubmit}>Add Stock</button>
+        <button onClick={handleSubmit}>➕ Add Stock</button>
       </div>
     </div>
   );

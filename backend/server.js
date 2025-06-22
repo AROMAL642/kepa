@@ -222,6 +222,8 @@ app.use('/api/assignvehicle', assignVehicleRoutes);
 
 const fuelRoutes = require('./routes/fuelregisterRoutes'); 
 app.use('/api/fuel', fuelRoutes); 
+app.use('/api', fuelRoutes);
+
 
 
 
@@ -242,7 +244,7 @@ app.use('/api/user-delete', userDetailsRoutes);
 //Accident Report
 const accidentRoutes = require('./routes/accidentreportRoutes');
 app.use('/api/accidents', accidentRoutes);
-
+app.use('/api', accidentRoutes);
 //eye test report
 const eyeTestRoutes = require('./routes/eyeTestRoutes');
 app.use('/api/eyetests', eyeTestRoutes);
@@ -264,16 +266,20 @@ app.use('/api/repair-request', require('./routes/repairRequestRoutes'));
 
 const repairRoutes = require('./routes/repairRequestRoutes');
 app.use('/api/repairs', repairRoutes);
+app.use('/api/repair', repairRoutes);
 
 //stock register
 const stockRoutes = require('./routes/stockRoutes');
 app.use('/api/stockroutes', stockRoutes);
-
-
+app.use('/api/stock', stockRoutes);
 
 //Purchase
 const purchaseRoutes = require('./routes/purchaseRoutes');
 app.use('/api/purchases', purchaseRoutes);
+
+//expense
+const fuelReportRoutes = require('./routes/expenseRoutes');
+app.use('/api/fuel', fuelReportRoutes);
 
 
 // Fetch all unverified users

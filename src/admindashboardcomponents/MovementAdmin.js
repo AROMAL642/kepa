@@ -29,6 +29,7 @@ const MovementAdmin = ({ darkMode }) => {
           ...movement,
           id: movement._id || index,
           vehicleNo: movement.vehicleno,
+          pen: movement.name ? `${movement.name} (${movement.pen})` : movement.pen,
           startDateString: movement.startingdate
             ? new Date(movement.startingdate).toLocaleDateString()
             : 'N/A',
@@ -55,7 +56,7 @@ const MovementAdmin = ({ darkMode }) => {
 
   const columns = [
     { field: 'vehicleNo', headerName: 'Vehicle No', flex: 1 },
-    { field: 'pen', headerName: 'PEN', flex: 1 },
+    { field: 'pen', headerName: 'Entered By', flex: 2 },
     { field: 'startDateString', headerName: 'Start Date', flex: 1 },
     { field: 'endDateString', headerName: 'End Date', flex: 1 },
     { field: 'destination', headerName: 'Destination', flex: 1 },
@@ -155,7 +156,7 @@ const MovementAdmin = ({ darkMode }) => {
                   <strong>Vehicle No:</strong> {selectedEntry.vehicleNo}
                 </Typography>
                 <Typography>
-                  <strong>PEN:</strong> {selectedEntry.pen}
+                  <strong>Entered By:</strong> {selectedEntry.pen}
                 </Typography>
                 <Typography>
                   <strong>Start Date:</strong> {selectedEntry.startDateString}

@@ -96,6 +96,7 @@ const LoginPage = () => {
           signature: res.data.signature,
           role: res.data.role
         };
+        localStorage.setItem('adminData', JSON.stringify(commonData));
 
         const prefix = role;
         Object.entries(commonData).forEach(([key, value]) => {

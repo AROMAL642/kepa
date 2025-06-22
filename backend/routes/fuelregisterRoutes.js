@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const VehicleFuel = require('../models/Fuel');
 const Vehicle = require('../models/Vehicle');
+const User = require('../models/User'); 
 
 // Configure multer
 const storage = multer.memoryStorage();
@@ -114,17 +115,24 @@ router.get('/vehicle/:vehicleNo', async (req, res) => {
 
 router.get('/', async (req, res) => {
   try {
-    const vehiclesRaw = await VehicleFuel.find().sort({ vehicleNo: 1 });
+    const vehiclesRaw = await VehicleFuel.find().sort({ vehicleNo: 1 }).lean();
     const vehicleNos = vehiclesRaw.map(v => v.vehicleNo);
+    const pens = vehiclesRaw.flatMap(v => v.fuelEntries.map(e => e.pen));
+    const uniquePens = [...new Set(pens)];
+
     const vehicleInfo = await Vehicle.find({ number: { $in: vehicleNos } });
     const fuelTypeMap = Object.fromEntries(vehicleInfo.map(v => [v.number, v.fuelType]));
+
+    const users = await User.find({ pen: { $in: uniquePens } }, 'pen name');
+    const penNameMap = Object.fromEntries(users.map(u => [u.pen, u.name]));
 
     const vehicles = vehiclesRaw.map(vehicle => ({
       _id: vehicle._id,
       vehicleNo: vehicle.vehicleNo,
       fuelEntries: vehicle.fuelEntries.map(e => ({
         ...mapFuelEntry(e),
-        fuelType: fuelTypeMap[vehicle.vehicleNo] || 'Unknown'
+        fuelType: fuelTypeMap[vehicle.vehicleNo] || 'Unknown',
+        nameWithPen: penNameMap[e.pen] ? `${penNameMap[e.pen]} (${e.pen})` : e.pen
       }))
     }));
 
@@ -170,5 +178,26 @@ router.put('/:vehicleNo/:entryId', async (req, res) => {
     res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 });
+
+// Route to count pending fuel entries
+router.get('/fuel-pending-count', async (req, res) => {
+  try {
+    const allVehicles = await VehicleFuel.find({}, 'fuelEntries');
+    
+    let pendingCount = 0;
+    allVehicles.forEach(vehicle => {
+      pendingCount += vehicle.fuelEntries.filter(entry => entry.status === 'pending').length;
+    });
+
+    res.status(200).json({ count: pendingCount });
+  } catch (err) {
+    console.error('Error fetching pending fuel count:', err.message);
+    res.status(500).json({ message: 'Error fetching pending fuel count' });
+  }
+});
+
+
+
+
 
 module.exports = router;

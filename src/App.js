@@ -28,7 +28,7 @@ function AppWrapper() {
   const location = useLocation();
 
   const hideHeaderPaths = [
-    '/admin', '/user', '/fuel', '/mechanic',
+    '/admin','/mainadmin', '/user', '/fuel', '/mechanic',
     '/viewrequests', '/userdetails', '/admin/vehicles',
     '/searchvehicle', '/repair-request', '/repair'
   ];
