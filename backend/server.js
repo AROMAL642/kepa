@@ -250,6 +250,9 @@ const eyeTestRoutes = require('./routes/eyeTestRoutes');
 app.use('/api/eyetests', eyeTestRoutes);
 app.use('/api/eye-test', eyeTestRoutes);
 
+//license
+const licenseRoutes = require('./routes/licenseRoutes');
+app.use('/api/license', licenseRoutes);
 
 //view print registerd
 

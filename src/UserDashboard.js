@@ -13,6 +13,8 @@ import EyeTestReport from './userdashboardcomponents/EyeTestReport';
 import ResponsiveAppBar from './admindashboardcomponents/ResponsiveAppBar';
 import TrackRepairRequests from './userdashboardcomponents/trackrepairrequest';
 import AddUpdateCertificate from './admindashboardcomponents/AddUpdateCertificate'; 
+import LicenseForm from './userdashboardcomponents/LicenseForm';
+
 
 // ✅ New Imports
 import Stocks from './mechanicdashboardcomponents/Stocks';
@@ -80,6 +82,7 @@ function UserDashboard() {
     { key: 'trackrepair', label: 'Track Repair Requests' },
     { key: 'movement', label: 'Movement' },
     { key: 'eyetest', label: 'Eye Test' },
+    { key: 'license', label: 'License' },
     { key: 'accident', label: 'Accident' },
     { key: 'vehicle details', label: 'Vehicle Details' },
     { key: 'certificates', label: 'Vehicle Certificates' }, // ✅ Added here
@@ -237,6 +240,12 @@ function UserDashboard() {
               <EyeTestReport pen={formData.pen} />
             </div>
           )}
+          {activeTab === 'license' && (
+  <div className="license-section">
+    <LicenseForm pen={formData.pen} />
+  </div>
+)}
+
           {activeTab === 'stocks' && (
   <Stocks onViewAll={() => setActiveTab('viewallstocks')} />
 )}

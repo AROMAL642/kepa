@@ -19,7 +19,7 @@ import AdminRepairTable from './admindashboardcomponents/AdminRepairTable';
 import ViewPrintRegisters from './admindashboardcomponents/ViewPrintRegisters';
 import AddUpdateCertificate from './admindashboardcomponents/AddUpdateCertificate';
 import AdminStocksView from './admindashboardcomponents/AdminStocksView';
-import PurchaseTable from './admindashboardcomponents/PurchaseTable';
+import Purchase from './mechanicdashboardcomponents/Purchase';
 import Expense from './admindashboardcomponents/Expense'; 
 
 import dayjs from 'dayjs';
@@ -338,7 +338,7 @@ const fetchRepairPendingCount = async () => {
           {activeTab === 'AddUser' && <RegisterPage themeStyle={themeStyle} />}
           {activeTab === 'PrintRegisters' && <ViewPrintRegisters />}
           {activeTab === 'stocks' && <AdminStocksView />}
-          {activeTab === 'Purchases' && <PurchaseTable isAdmin={true} themeStyle={themeStyle} />}
+          {activeTab === 'Purchases' && <Purchase isAdmin={true} themeStyle={themeStyle} />}
         </div>
       </div>
     </div>
