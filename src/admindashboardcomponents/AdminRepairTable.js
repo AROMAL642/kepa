@@ -23,6 +23,10 @@ const RepairAdminTable = ({ themeStyle }) => {
   const [certificateRequests, setCertificateRequests] = useState([]);
   const [certificateFilter, setCertificateFilter] = useState('all');
 
+  const [verifyDialogOpen, setVerifyDialogOpen] = useState(false);
+  const [verifyEntry, setVerifyEntry] = useState(null);
+
+
   
  
   const fetchRepairs = useCallback(async () => {
@@ -223,17 +227,25 @@ const generateCertificates = async (id) => {
 
 // newly added for verifying bill frpm repair section 
 
-const verifyFinalBill = async (id) => {
+const verifyFinalBill = (entry) => {
+  setVerifyEntry(entry);
+  setVerifyDialogOpen(true);
+};
+
+
+
+const handleConfirmVerification = async () => {
   try {
-    const res = await fetch(`http://localhost:5000/api/repair-request/${id}/verify-final-bill`, {
+    const res = await fetch(`http://localhost:5000/api/repair-request/${verifyEntry._id}/verify-and-send-to-mechanic`, {
       method: 'PUT'
     });
 
     const result = await res.json();
 
     if (res.ok) {
-      alert('✅ Final bill verified. Notification sent to mechanic.');
-      fetchCertificates(); // Refresh data
+      alert('✅ Request verified and sent to Mechanic');
+      setVerifyDialogOpen(false);
+      fetchCertificates(); // Refresh table
     } else {
       alert(`❌ Failed to verify: ${result.message || 'Unknown error'}`);
     }
@@ -242,7 +254,6 @@ const verifyFinalBill = async (id) => {
     alert('❌ Network error while verifying final bill.');
   }
 };
-
 
 
 
@@ -478,7 +489,7 @@ const verifyFinalBill = async (id) => {
     style={{ marginLeft: 8 }}
     onClick={() => handleViewEC(cert._id)}
     disabled={
-      !['certificate_ready', 'waiting_for_sanction', 'sanctioned_for_work'].includes(cert.status)
+      !['certificate_ready', 'waiting_for_sanction', 'sanctioned_for_work' , 'ongoing_work'].includes(cert.status)
     }
   >
     View EC
@@ -500,7 +511,7 @@ const verifyFinalBill = async (id) => {
     style={{ marginLeft: 8 }}
     onClick={() => handleViewTC(cert._id)}
     disabled={
-      !['certificate_ready', 'waiting_for_sanction', 'sanctioned_for_work'].includes(cert.status)
+      !['certificate_ready', 'waiting_for_sanction', 'sanctioned_for_work' , 'ongoing_work'].includes(cert.status)
     }
   >
     View TC
@@ -509,15 +520,25 @@ const verifyFinalBill = async (id) => {
 
 {/* VERIFY column */}
 <td style={{ padding: 10 }}>
-  {cert.status === 'sanctioned_for_work' && (
+  {cert.status === 'sanctioned_for_work' ? (
     <Button
       variant="contained"
       color="success"
-      onClick={() => verifyFinalBill(cert._id)}
+      onClick={() => {
+        setVerifyEntry(cert);
+        setVerifyDialogOpen(true);
+      }}
     >
       Verify
     </Button>
+  ) : cert.status === 'ongoing_work' ? (
+    <Typography style={{ color: 'green', fontWeight: 'bold' }}>✔ Verified</Typography>
+  ) : (
+    <Typography variant="body2" color="textSecondary">N/A</Typography>
   )}
+
+
+
 
 
 
@@ -661,6 +682,46 @@ const verifyFinalBill = async (id) => {
           </Button>
         </DialogActions>
       </Dialog>
+
+
+
+      {/* Verify Dialog for sanctioned_for_work */}
+<Dialog
+  open={verifyDialogOpen}
+  onClose={() => setVerifyDialogOpen(false)}
+  fullWidth
+  maxWidth="sm"
+>
+  <DialogTitle>Verify and Send to Mechanic</DialogTitle>
+  <DialogContent dividers>
+    {verifyEntry && (
+      <>
+        
+        <Typography><strong>PEN:</strong> {verifyEntry.pen}</Typography>
+        <Typography><strong>Date:</strong> {verifyEntry.date}</Typography>
+        <Typography><strong>Status:</strong> {verifyEntry.status}</Typography>
+        {verifyEntry.billFile ? (
+          <iframe
+            src={verifyEntry.billFile}
+            title="Final Bill"
+            style={{ width: '100%', height: '400px', marginTop: 10 }}
+          />
+        ) : (
+          <Typography color="textSecondary" sx={{ mt: 2 }}>No bill uploaded</Typography>
+        )}
+      </>
+    )}
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={handleConfirmVerification} color="success" variant="contained">
+      Verified
+    </Button>
+    <Button onClick={() => setVerifyDialogOpen(false)} variant="outlined">
+      Cancel
+    </Button>
+  </DialogActions>
+</Dialog>
+
     </div>
   );
 };

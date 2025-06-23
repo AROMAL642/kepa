@@ -47,6 +47,7 @@ function MechanicPendingRequests() {
           description: req.description,
           userName: req.userName || 'N/A',
           repairStatus: req.repairStatus,
+          status: req.status,
           mechanicFeedback: req.mechanicFeedback,
           workDone: req.workDone || 'No',
           billImage: req.billFile
@@ -184,6 +185,39 @@ function MechanicPendingRequests() {
     { field: 'date', headerName: 'Date', width: 110 },
     { field: 'subject', headerName: 'Subject', width: 150 },
     { field: 'description', headerName: 'Description', width: 200 },
+   {
+  field: 'status',
+  headerName: 'Status',
+  width: 150,
+  renderCell: (params) => {
+    let color = 'black';
+
+    switch (params.value) {
+      case 'completed':
+        color = 'green';
+        break;
+      case 'ongoing_work':
+        color = 'orange';
+        break;
+      case 'sanctioned_for_work':
+        color = 'purple';
+        break;
+      case 'certificate_ready':
+        color = '#007bff'; // bootstrap blue
+        break;
+      case 'forwarded':
+      case 'sent_to_repair_admin':
+        color = '#6c757d'; // gray
+        break;
+      default:
+        color = 'black';
+    }
+
+    return <strong style={{ color }}>{params.value}</strong>;
+  }
+}
+,
+
     { field: 'repairStatus', headerName: 'Repair Status', width: 140 },
     {
       field: 'workDone',
