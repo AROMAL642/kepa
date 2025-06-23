@@ -24,6 +24,8 @@ function MechanicDashboard() {
   const [activeTab, setActiveTab] = useState('pending');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
+
 
   const [mechanicData, setMechanicData] = useState({
     name: '',
@@ -59,6 +61,23 @@ function MechanicDashboard() {
       role: localStorage.getItem('mechanicRole') || ''
     });
   }, []);
+
+  useEffect(() => {
+  const fetchPendingCount = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/repair/mechanicpending/count');
+      const data = await response.json();
+      if (response.ok) {
+        setPendingCount(data.count || 0);
+      }
+    } catch (error) {
+      console.error('Error fetching pending count:', error);
+    }
+  };
+
+  fetchPendingCount();
+}, []);
+
 
   const handleEditChange = (e) => {
     const { name, value } = e.target;
@@ -137,7 +156,10 @@ function MechanicDashboard() {
           <div className="sidebar-buttons">
             <button className={`sidebar-btn ${activeTab === 'repair' ? 'active' : ''}`} onClick={() => setActiveTab('repair')}>Mechanic Entry Review</button>
             <button className={`sidebar-btn ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>Profile</button>
-            <button className={`sidebar-btn ${activeTab === 'pending' ? 'active' : ''}`} onClick={() => setActiveTab('pending')}>Pending Requests</button>
+            <button className={`sidebar-btn notification-btn ${activeTab === 'pending' ? 'active' : ''}`}onClick={() => setActiveTab('pending')}>
+              Pending Requests {pendingCount > 0 && <span className="notification-badge">{pendingCount}</span>}
+            </button>
+
             <button className={`sidebar-btn ${activeTab === 'stocks' ? 'active' : ''}`} onClick={() => setActiveTab('stocks')}>Stocks</button> 
               <button className={`sidebar-btn ${activeTab === 'viewallstocks' ? 'active' : ''}`} onClick={() => setActiveTab('viewallstocks')}>
     View All Stocks

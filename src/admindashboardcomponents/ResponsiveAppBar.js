@@ -14,7 +14,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Badge from '@mui/material/Badge';
 import { useNavigate } from 'react-router-dom';
 
-const settings = ['Profile', 'Dashboard', 'Logout'];
+const settings = ['Profile', 'Dashboard', 'Notifications', 'Logout'];
 const DRAWER_WIDTH = 240;
 
 function ResponsiveAppBar({ photo, name, isDrawerOpen, onDrawerToggle, onSelectTab, pendingRequestCount }) {
@@ -24,6 +24,7 @@ function ResponsiveAppBar({ photo, name, isDrawerOpen, onDrawerToggle, onSelectT
 
   const handleOpenNavMenu = (event) => setAnchorElNav(event.currentTarget);
   const handleOpenUserMenu = (event) => setAnchorElUser(event.currentTarget);
+
   const handleCloseNavMenu = () => setAnchorElNav(null);
 
   const handleCloseUserMenu = (setting) => {
@@ -31,7 +32,7 @@ function ResponsiveAppBar({ photo, name, isDrawerOpen, onDrawerToggle, onSelectT
     if (setting === 'Logout') {
       localStorage.clear();
       navigate('/');
-    } else if (onSelectTab && (setting === 'Profile' || setting === 'Dashboard')) {
+    } else if (onSelectTab && setting.toLowerCase()) {
       onSelectTab(setting.toLowerCase());
     }
   };
@@ -89,13 +90,9 @@ function ResponsiveAppBar({ photo, name, isDrawerOpen, onDrawerToggle, onSelectT
               onClose={handleCloseNavMenu}
               sx={{ display: { xs: 'block', md: 'none' } }}
             >
-              <MenuItem onClick={handleCloseNavMenu}>
-                <Typography textAlign="center">Notifications</Typography>
-              </MenuItem>
-              <MenuItem onClick={handleCloseNavMenu}>
+              <MenuItem onClick={() => { handleCloseNavMenu(); onSelectTab('notifications'); }}>
                 <Typography textAlign="center">
-                  Requests{' '}
-                  <Badge badgeContent={pendingRequestCount} color="error" sx={{ ml: 1 }} />
+                  Requests <Badge badgeContent={pendingRequestCount} color="error" sx={{ ml: 1 }} />
                 </Typography>
               </MenuItem>
             </Menu>
@@ -103,17 +100,11 @@ function ResponsiveAppBar({ photo, name, isDrawerOpen, onDrawerToggle, onSelectT
 
           {/* Desktop View */}
           <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}>
-            <Button onClick={handleCloseNavMenu} sx={{ my: 2, color: 'white' }}>
-              Notifications
-            </Button>
-            <Button onClick={handleCloseNavMenu} sx={{ my: 2, color: 'white', display: 'flex', alignItems: 'center' }}>
-              Requests
-              <Badge
-                badgeContent={pendingRequestCount}
-                color="error"
-                sx={{ ml: 2 }}
-              />
-            </Button>
+            <Button onClick={() => onSelectTab('notifications')} sx={{ my: 2, color: 'white' }}>
+  Requests
+  <Badge badgeContent={pendingRequestCount} color="error" sx={{ ml: 2 }} />
+</Button>
+
           </Box>
 
           {/* Avatar and User Menu */}

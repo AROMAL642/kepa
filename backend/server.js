@@ -288,6 +288,9 @@ app.use('/api/purchases', purchaseRoutes);
 //expense
 const fuelReportRoutes = require('./routes/expenseRoutes');
 app.use('/api/fuel', fuelReportRoutes);
+//traineed details
+const traineeRoutes = require('./routes/traineeRoutes');
+app.use('/api/trainees', traineeRoutes);
 
 
 // Fetch all unverified users

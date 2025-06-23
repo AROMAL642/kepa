@@ -439,21 +439,6 @@ router.put('/:id/sanction-work', upload.single('sanctionBillFile'), async (req, 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //complete work status update by mechanic
 
 router.patch('/:id/complete', async (req, res) => {
@@ -530,28 +515,6 @@ router.put('/:id/verify-and-send-to-mechanic', async (req, res) => {
     res.status(500).json({ message: 'Verification failed' });
   }
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 /**
@@ -699,6 +662,17 @@ router.get('/pending/count', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch count' });
+  }
+});
+
+
+// GET /api/repair/pending/count
+router.get('/mechanicpending/count', async (req, res) => {
+  try {
+    const count = await RepairRequest.countDocuments({ status: 'forwarded' });
+    res.status(200).json({ count });
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching pending count' });
   }
 });
 

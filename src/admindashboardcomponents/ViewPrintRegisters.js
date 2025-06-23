@@ -25,7 +25,7 @@ const formatDate = (isoDate) => {
   return `${day}-${month}-${year}`;
 };
 
-const excludedFields = ['createdAt', 'updatedAt', 'hasWarranty', '__v', '_id'];
+const excludedFields = ['createdAt', 'updatedAt', 'hasWarranty', '__v', '_id', 'previousKm', 'kmpl', 'fullTank', 'file', 'fileType'];
 
 const ViewPrintRegisters = () => {
   const [registerType, setRegisterType] = useState('');
@@ -84,7 +84,6 @@ const ViewPrintRegisters = () => {
 
       const dateFields = ['date', 'accidentTime', 'startTime', 'endTime'];
 
-      // Step 1: Filter out excluded fields
       const filteredData = data.map(row => {
         const cleaned = {};
         Object.entries(row).forEach(([key, value]) => {
@@ -95,38 +94,33 @@ const ViewPrintRegisters = () => {
         return cleaned;
       });
 
-      // Step 2: Collect all unique fields
       let fieldSet = new Set();
       filteredData.forEach(row => {
         Object.keys(row).forEach(key => fieldSet.add(key));
       });
 
-      // Always include warrantyNumber for purchase register
       if (registerType === 'purchase') {
         fieldSet.add('warrantyNumber');
       }
-// Step 3: Build columns
-let cols = Array.from(fieldSet).map((key) => ({
-  field: key,
-  headerName:
-    key === 'enteredBy' ? 'Entered By (Name - PEN)' :
-    key === 'warrantyNumber' ? 'Warranty Number' :
-    key.toUpperCase(),
-  flex: 1
-}));
 
-// For purchase register, reorder columns to put warrantyNumber after billNo
-if (registerType === 'purchase') {
-  const billNoIndex = cols.findIndex(col => col.field === 'billNo');
-  const warrantyCol = cols.find(col => col.field === 'warrantyNumber');
-  cols = cols.filter(col => col.field !== 'warrantyNumber');
-  if (billNoIndex !== -1 && warrantyCol) {
-    cols.splice(billNoIndex + 1, 0, warrantyCol);
-  }
-}
+      let cols = Array.from(fieldSet).map((key) => ({
+        field: key,
+        headerName:
+          key === 'enteredBy' ? 'Entered By (Name - PEN)' :
+          key === 'warrantyNumber' ? 'Warranty Number' :
+          key.toUpperCase(),
+        flex: 1
+      }));
 
+      if (registerType === 'purchase') {
+        const billNoIndex = cols.findIndex(col => col.field === 'billNo');
+        const warrantyCol = cols.find(col => col.field === 'warrantyNumber');
+        cols = cols.filter(col => col.field !== 'warrantyNumber');
+        if (billNoIndex !== -1 && warrantyCol) {
+          cols.splice(billNoIndex + 1, 0, warrantyCol);
+        }
+      }
 
-      // Step 4: Format rows
       const rowsWithId = filteredData.map((row, idx) => {
         const formatted = { id: idx + 1 };
         Array.from(fieldSet).forEach((key) => {

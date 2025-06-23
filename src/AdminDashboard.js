@@ -21,6 +21,10 @@ import AddUpdateCertificate from './admindashboardcomponents/AddUpdateCertificat
 import AdminStocksView from './admindashboardcomponents/AdminStocksView';
 import Purchase from './mechanicdashboardcomponents/Purchase';
 import Expense from './admindashboardcomponents/Expense'; 
+import TraineesDetails from './admindashboardcomponents/TraineesDetails';
+
+
+
 
 import dayjs from 'dayjs';
 
@@ -225,6 +229,12 @@ const fetchRepairPendingCount = async () => {
             <button className={`sidebar-btn ${activeTab === 'VerifiedUsersTable' ? 'active' : ''}`} onClick={() => setActiveTab('VerifiedUsersTable')}>Users Details</button>
             <button className={`sidebar-btn ${activeTab === 'AddUser' ? 'active' : ''}`} onClick={() => setActiveTab('AddUser')}>Add Users</button>
             <button className={`sidebar-btn ${activeTab === 'PrintRegisters' ? 'active' : ''}`} onClick={() => setActiveTab('PrintRegisters')}>View/Print Registers</button>
+            <button className={`sidebar-btn ${activeTab === 'trainees' ? 'active' : ''}`} onClick={() => setActiveTab('trainees')}>Trainees Details</button>
+
+
+
+
+
             <button className={`sidebar-btn ${activeTab === 'Purchases' ? 'active' : ''}`} onClick={() => setActiveTab('Purchases')}>Purchase</button>
           </div>
         </div>
@@ -338,6 +348,13 @@ const fetchRepairPendingCount = async () => {
           {activeTab === 'AddUser' && <RegisterPage themeStyle={themeStyle} />}
           {activeTab === 'PrintRegisters' && <ViewPrintRegisters />}
           {activeTab === 'stocks' && <AdminStocksView />}
+          {activeTab === 'trainees' && <TraineesDetails themeStyle={themeStyle} />}
+
+    
+          
+
+
+
           {activeTab === 'Purchases' && <Purchase isAdmin={true} themeStyle={themeStyle} />}
         </div>
       </div>
