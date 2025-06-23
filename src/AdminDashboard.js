@@ -18,7 +18,9 @@ import RegisterPage from './admindashboardcomponents/RegisterPage';
 import AdminRepairTable from './admindashboardcomponents/AdminRepairTable';
 import ViewPrintRegisters from './admindashboardcomponents/ViewPrintRegisters';
 import AddUpdateCertificate from './admindashboardcomponents/AddUpdateCertificate';
-
+import AdminStocksView from './admindashboardcomponents/AdminStocksView';
+import PurchaseTable from './admindashboardcomponents/PurchaseTable';
+import Expense from './admindashboardcomponents/Expense'; 
 
 import dayjs from 'dayjs';
 
@@ -26,6 +28,11 @@ function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('PrintRegisters');
   const [vehicleTab, setVehicleTab] = useState('main');
   const [pendingCount, setPendingCount] = useState(0);
+  const [pendingFuelCount, setPendingFuelCount] = useState(0);
+  const [pendingAccidentCount, setPendingAccidentCount] = useState(0);
+  const [repairPendingCount, setRepairPendingCount] = useState(0);
+  const totalNotifications = pendingCount + pendingFuelCount + pendingAccidentCount + repairPendingCount;
+
   const [loadingVerifiedUsers, setLoadingVerifiedUsers] = useState(false);
   const [verifiedUsers, setVerifiedUsers] = useState([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -34,31 +41,15 @@ function AdminDashboard() {
   const [editedProfile, setEditedProfile] = useState({});
 
   const [adminData, setAdminData] = useState({
-    name: '',
-    email: '',
-    pen: '',
-    generalNo: '',
-    photo: '',
-    signature: '',
-    role: '',
-    phone: '',
-    dob: '',
-    licenseNo: '',
-    bloodGroup: '',
-    gender: ''
+    name: '', email: '', pen: '', generalNo: '', photo: '',
+    signature: '', role: '', phone: '', dob: '',
+    licenseNo: '', bloodGroup: '', gender: ''
   });
 
   const fieldLabels = {
-    name: 'Name',
-    email: 'Email',
-    pen: 'PEN',
-    generalNo: 'General No',
-    phone: 'Mobile',
-    dob: 'Date of Birth',
-    licenseNo: 'License Number',
-    bloodGroup: 'Blood Group',
-    gender: 'Gender',
-    role: 'Role'
+    name: 'Name', email: 'Email', pen: 'PEN', generalNo: 'General No',
+    phone: 'Mobile', dob: 'Date of Birth', licenseNo: 'License Number',
+    bloodGroup: 'Blood Group', gender: 'Gender', role: 'Role'
   };
 
   useEffect(() => {
@@ -70,6 +61,9 @@ function AdminDashboard() {
       setEditedProfile(parsedData);
     }
     fetchPendingCount();
+    fetchPendingFuelCount();
+    fetchPendingAccidentCount();
+    fetchRepairPendingCount();
     return () => clearTimeout(timer);
   }, []);
 
@@ -88,6 +82,38 @@ function AdminDashboard() {
       console.error('Error fetching pending requests count:', error);
     }
   };
+
+  const fetchPendingAccidentCount = async () => {
+  try {
+    const res = await fetch('http://localhost:5000/api/accident-pending-count');
+    const data = await res.json();
+    setPendingAccidentCount(data.count || 0);
+  } catch (error) {
+    console.error('Error fetching pending accident count:', error);
+  }
+};
+
+const fetchRepairPendingCount = async () => {
+  try {
+    const res = await fetch('http://localhost:5000/api/repair/pending/count');
+    const data = await res.json();
+    setRepairPendingCount(data.count || 0);
+  } catch (error) {
+    console.error('Error fetching repair pending count:', error);
+  }
+};
+
+
+  const fetchPendingFuelCount = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/fuel-pending-count');
+      const data = await res.json();
+      setPendingFuelCount(data.count || 0);
+    } catch (error) {
+      console.error('Error fetching fuel pending count:', error);
+    }
+  };
+
 
   const fetchVerifiedUsers = async () => {
     setLoadingVerifiedUsers(true);
@@ -150,41 +176,56 @@ function AdminDashboard() {
         name={adminData.name}
         isDrawerOpen={isDrawerOpen}
         onDrawerToggle={() => setIsDrawerOpen(!isDrawerOpen)}
-        onSelectTab={handleTabSelect}
+        onSelectTab={handleTabSelect}   
+        pendingRequestCount={totalNotifications}
+    
       />
 
-      <button className="drawer-toggle-btn" onClick={() => setIsDrawerOpen(!isDrawerOpen)}>
-        ☰
-      </button>
+      <button className="drawer-toggle-btn" onClick={() => setIsDrawerOpen(!isDrawerOpen)}>☰</button>
 
       <div className={`dashboard ${isDrawerOpen ? 'drawer-open' : ''}`} style={themeStyle}>
         <div className={`drawer ${isDrawerOpen ? 'open' : ''}`}>
           <h2>ADMIN PANEL</h2>
           {adminData.role && (
             <div className="role-badge" style={{
-              background: '#4CAF50',
-              color: 'white',
-              padding: '5px 10px',
-              borderRadius: '20px',
-              marginBottom: '15px',
-              fontSize: '0.9rem'
+              background: '#4CAF50', color: 'white', padding: '5px 10px',
+              borderRadius: '20px', marginBottom: '15px', fontSize: '0.9rem'
             }}>
               {adminData.role}
             </div>
           )}
 
           <div className="sidebar-buttons">
-            <button className={`sidebar-btn ${activeTab === 'Fuel' ? 'active' : ''}`} onClick={() => setActiveTab('Fuel')}>Fuel</button>
+            <button
+              className={`sidebar-btn notification-btn ${activeTab === 'Fuel' ? 'active' : ''}`}
+              onClick={() => setActiveTab('Fuel')}
+            >
+              Fuel {pendingFuelCount > 0 && <span className="notification-badge">{pendingFuelCount}</span>}
+            </button>
             <button className={`sidebar-btn ${activeTab === 'Movement' ? 'active' : ''}`} onClick={() => setActiveTab('Movement')}>Movement Register</button>
-            <button className={`sidebar-btn ${activeTab === 'Repair' ? 'active' : ''}`} onClick={() => setActiveTab('Repair')}>Repair Reports</button>
-            <button className={`sidebar-btn ${activeTab === 'Accident' ? 'active' : ''}`} onClick={() => setActiveTab('Accident')}>Accident Details</button>
+            
+            <button className={`sidebar-btn notification-btn ${activeTab === 'Repair' ? 'active' : ''}`}
+              onClick={() => setActiveTab('Repair')}
+              >
+     Repair Reports {repairPendingCount > 0 && <span className="notification-badge">{repairPendingCount} </span>}
+    </button>
+
+
+            <button className={`sidebar-btn notification-btn ${activeTab === 'Accident' ? 'active' : ''}`}
+              onClick={() => setActiveTab('Accident')}
+              >
+  Accident Details {pendingAccidentCount > 0 && <span className="notification-badge">{pendingAccidentCount}</span>}
+</button>
+
             <button className={`sidebar-btn ${activeTab === 'VehicleDetails' ? 'active' : ''}`} onClick={() => { setActiveTab('VehicleDetails'); setVehicleTab('main'); }}>Vehicle</button>
             <button className={`sidebar-btn notification-btn ${activeTab === 'Request' ? 'active' : ''}`} onClick={() => setActiveTab('Request')}>
               Non Verified Users {pendingCount > 0 && <span className="notification-badge">{pendingCount}</span>}
             </button>
+            <button className={`sidebar-btn ${activeTab === 'stocks' ? 'active' : ''}`} onClick={() => setActiveTab('stocks')}>Stock</button>
             <button className={`sidebar-btn ${activeTab === 'VerifiedUsersTable' ? 'active' : ''}`} onClick={() => setActiveTab('VerifiedUsersTable')}>Users Details</button>
             <button className={`sidebar-btn ${activeTab === 'AddUser' ? 'active' : ''}`} onClick={() => setActiveTab('AddUser')}>Add Users</button>
             <button className={`sidebar-btn ${activeTab === 'PrintRegisters' ? 'active' : ''}`} onClick={() => setActiveTab('PrintRegisters')}>View/Print Registers</button>
+            <button className={`sidebar-btn ${activeTab === 'Purchases' ? 'active' : ''}`} onClick={() => setActiveTab('Purchases')}>Purchase</button>
           </div>
         </div>
 
@@ -220,7 +261,6 @@ function AdminDashboard() {
                     )}
                   </div>
                 ))}
-
                 <div style={{ marginTop: '15px' }}>
                   {!isEditing ? (
                     <button onClick={() => setIsEditing(true)} className="submit-btn">Edit Profile</button>
@@ -244,7 +284,6 @@ function AdminDashboard() {
               </div>
             </div>
           )}
-
           {activeTab === 'Fuel' && <FuelAdmin themeStyle={themeStyle} />}
           {activeTab === 'VerifiedUsersTable' && <VerifiedUsersTable themeStyle={themeStyle} />}
           {activeTab === 'userdetails' && (
@@ -255,13 +294,7 @@ function AdminDashboard() {
               ) : (
                 <table className="data-table">
                   <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>PEN</th>
-                      <th>General No</th>
-                      <th>Mobile Number</th>
-                      <th>Action</th>
-                    </tr>
+                    <tr><th>Name</th><th>PEN</th><th>General No</th><th>Mobile Number</th><th>Action</th></tr>
                   </thead>
                   <tbody>
                     {verifiedUsers.length > 0 ? (
@@ -282,12 +315,12 @@ function AdminDashboard() {
               )}
             </div>
           )}
-
           {activeTab === 'VehicleDetails' && vehicleTab === 'main' && (
             <div className="vehicle-box">
               <button className="vehicle-btn" onClick={() => setVehicleTab('addremove')}>Add Vehicle</button>
               <button className="vehicle-btn" onClick={() => setVehicleTab('search')}>Search Vehicle Details</button>
-              <button className="vehicle-btn">Expense Details</button>
+              <button className="vehicle-btn" onClick={() => setVehicleTab('expense')}>Expense Details</button>
+
               <button className="vehicle-btn" onClick={() => setVehicleTab('viewassign')}>View/Assign Vehicle</button>
               <button className="vehicle-btn" onClick={() => setVehicleTab('certificate')}>View and Update Certificates</button>
             </div>
@@ -296,12 +329,16 @@ function AdminDashboard() {
           {activeTab === 'VehicleDetails' && vehicleTab === 'search' && <SearchVehicleDetails onBack={() => setVehicleTab('main')} themeStyle={themeStyle} />}
           {activeTab === 'VehicleDetails' && vehicleTab === 'viewassign' && <ViewAssignVehicle onBack={() => setVehicleTab('main')} themeStyle={themeStyle} />}
           {activeTab === 'VehicleDetails' && vehicleTab === 'certificate' && <AddUpdateCertificate onBack={() => setVehicleTab('main')} themeStyle={themeStyle} />}
+          {activeTab === 'VehicleDetails' && vehicleTab === 'expense' && <Expense onBack={() => setVehicleTab('main')} themeStyle={themeStyle} />}
+
           {activeTab === 'Request' && <ViewRequests themeStyle={themeStyle} />}
           {activeTab === 'Movement' && <MovementAdmin themeStyle={themeStyle} />}
           {activeTab === 'Accident' && <AccidentReportTable themeStyle={themeStyle} />}
           {activeTab === 'Repair' && <AdminRepairTable themeStyle={themeStyle} />}
           {activeTab === 'AddUser' && <RegisterPage themeStyle={themeStyle} />}
           {activeTab === 'PrintRegisters' && <ViewPrintRegisters />}
+          {activeTab === 'stocks' && <AdminStocksView />}
+          {activeTab === 'Purchases' && <PurchaseTable isAdmin={true} themeStyle={themeStyle} />}
         </div>
       </div>
     </div>

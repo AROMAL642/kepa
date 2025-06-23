@@ -3,35 +3,65 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
-const styles = {
-  container: { position: 'relative' },
-  trackButton: {
-    position: 'absolute', top: 10, right: 10,
-    padding: '8px 16px', fontSize: '14px',
-    borderRadius: '4px', backgroundColor: '#28a745',
-    color: 'white', border: 'none', cursor: 'pointer'
+const baseStyles = {
+  container: {
+    padding: '10px',
   },
   form: {
-    maxWidth: '900px', margin: '0 auto', padding: '20px',
-    border: '1px solid #ddd', borderRadius: '8px',
-    backgroundColor: '#fff', boxShadow: '0 0 10px rgba(0,0,0,0.1)'
+    maxWidth: '100%',
+    width: '95%',
+    margin: '0 auto',
+    padding: '20px',
+    border: '1px solid #ddd',
+    borderRadius: '8px',
+    backgroundColor: '#fff',
+    boxShadow: '0 0 10px rgba(0,0,0,0.1)',
   },
-  title: { textAlign: 'center', marginBottom: '20px' },
-  grid: { display: 'flex', justifyContent: 'space-between', gap: '20px' },
-  column: { flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' },
+  title: {
+    textAlign: 'center',
+    marginBottom: '20px',
+    fontSize: '24px',
+  },
+  grid: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '20px',
+  },
+  column: {
+    flex: '1 1 100%',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+  },
   input: {
-    padding: '8px', fontSize: '16px', borderRadius: '4px',
-    border: '1px solid #ccc'
+    padding: '10px',
+    fontSize: '16px',
+    borderRadius: '4px',
+    border: '1px solid #ccc',
+    width: '100%',
   },
   textarea: {
-    padding: '10px', fontSize: '16px', borderRadius: '4px',
-    border: '1px solid #ccc', resize: 'vertical'
+    padding: '10px',
+    fontSize: '16px',
+    borderRadius: '4px',
+    border: '1px solid #ccc',
+    resize: 'vertical',
+    width: '100%',
   },
   button: {
-    marginTop: '20px', width: '100%', padding: '10px',
-    fontSize: '18px', borderRadius: '5px',
-    backgroundColor: '#007bff', color: 'white',
-    border: 'none', cursor: 'pointer'
+    marginTop: '20px',
+    padding: '12px',
+    fontSize: '18px',
+    borderRadius: '5px',
+    backgroundColor: '#007bff',
+    color: 'white',
+    border: 'none',
+    cursor: 'pointer',
+    width: '100%',
+  },
+  statusText: {
+    fontSize: '14px',
+    marginTop: '-5px',
   }
 };
 
@@ -97,7 +127,9 @@ const RepairRequestForm = ({ pen }) => {
 
     try {
       await axios.post('http://localhost:5000/api/repair-request', formDataToSend, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
 
       alert('✅ Request submitted successfully');
@@ -115,37 +147,40 @@ const RepairRequestForm = ({ pen }) => {
   };
 
   return (
-    <div style={styles.container}>
-      <button style={styles.trackButton} onClick={() => navigate('/trackrepairrequest')}>
-        Track Requests
-      </button>
+    <div style={baseStyles.container}>
+      <form onSubmit={handleSubmit} style={baseStyles.form}>
+        <h2 style={baseStyles.title}>Repair Request Form</h2>
 
-      <form onSubmit={handleSubmit} style={styles.form}>
-        <h2 style={styles.title}>Repair Request Form</h2>
-
-        <div style={styles.grid}>
-          <div style={styles.column}>
+        <div style={baseStyles.grid}>
+          <div style={baseStyles.column}>
             <label>Vehicle Number</label>
             <input
               type="text"
               value={vehicleNo}
               onChange={handleVehicleChange}
               placeholder="Enter vehicle number"
-              style={styles.input}
+              style={baseStyles.input}
               required
             />
             {vehicleStatus && (
-              <p style={{
-                color:
-                  vehicleStatus === 'Valid' ? 'green' :
-                  vehicleStatus === 'Not Found' || vehicleStatus === 'Invalid Format' ? 'red' : 'orange'
-              }}>
-                {
-                  vehicleStatus === 'Valid' ? '✅ Vehicle Number is Valid' :
-                  vehicleStatus === 'Not Found' ? '❌ Vehicle Not Found in Database' :
-                  vehicleStatus === 'Invalid Format' ? '❌ Invalid Vehicle Number Format' :
-                  'Error Checking Vehicle'
-                }
+              <p
+                style={{
+                  ...baseStyles.statusText,
+                  color:
+                    vehicleStatus === 'Valid'
+                      ? 'green'
+                      : vehicleStatus === 'Not Found' || vehicleStatus === 'Invalid Format'
+                      ? 'red'
+                      : 'orange',
+                }}
+              >
+                {vehicleStatus === 'Valid'
+                  ? '✅ Vehicle Number is Valid'
+                  : vehicleStatus === 'Not Found'
+                  ? '❌ Vehicle Not Found in Database'
+                  : vehicleStatus === 'Invalid Format'
+                  ? '❌ Invalid Vehicle Number Format'
+                  : 'Error Checking Vehicle'}
               </p>
             )}
 
@@ -154,7 +189,7 @@ const RepairRequestForm = ({ pen }) => {
               type="text"
               value={pen}
               readOnly
-              style={{ ...styles.input, backgroundColor: '#f0f0f0' }}
+              style={{ ...baseStyles.input, backgroundColor: '#f0f0f0' }}
             />
 
            
@@ -164,7 +199,7 @@ const RepairRequestForm = ({ pen }) => {
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              style={styles.input}
+              style={baseStyles.input}
               required
             />
 
@@ -174,19 +209,19 @@ const RepairRequestForm = ({ pen }) => {
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               placeholder="Enter subject"
-              style={styles.input}
+              style={baseStyles.input}
               required
             />
           </div>
 
-          <div style={styles.column}>
+          <div style={baseStyles.column}>
             <label>Description</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Describe the issue"
               rows={5}
-              style={styles.textarea}
+              style={baseStyles.textarea}
               required
             />
 
@@ -195,12 +230,12 @@ const RepairRequestForm = ({ pen }) => {
               type="file"
               accept="image/*,.pdf"
               onChange={handleFileChange}
-              style={styles.input}
+              style={baseStyles.input}
             />
           </div>
         </div>
 
-        <button type="submit" style={styles.button}>Submit Request</button>
+        <button type="submit" style={baseStyles.button}>Submit Request</button>
       </form>
     </div>
   );

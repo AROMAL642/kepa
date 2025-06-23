@@ -13,8 +13,11 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
-  TextField
+  TextField,
+  useMediaQuery,
+  useTheme
 } from '@mui/material';
+import '../css/MechanicPendingRequests.css';
 
 function MechanicPendingRequests() {
   const [requests, setRequests] = useState([]);
@@ -26,6 +29,9 @@ function MechanicPendingRequests() {
   const [workDoneChoice, setWorkDoneChoice] = useState('');
   const [partsList, setPartsList] = useState([{ item: '', quantity: '' }]);
   const [billFile, setBillFile] = useState(null);
+
+  const theme = useTheme(); // ✅ added
+  const fullScreen = useMediaQuery(theme.breakpoints.down('md')); // ✅ added
 
   useEffect(() => {
     fetch('http://localhost:5000/api/repairs')
@@ -113,28 +119,25 @@ function MechanicPendingRequests() {
     setFilePreviewOpen(false);
   };
 
-  // ✅ Add Part Row Function
   const addPartRow = () => {
-    setPartsList(prev => [...prev, {  item: '', quantity: '' }]);
+    setPartsList(prev => [...prev, { item: '', quantity: '' }]);
   };
 
-  // ✅ Handle Part Input Change
   const handlePartChange = (index, field, value) => {
     const updated = [...partsList];
     updated[index][field] = value;
     setPartsList(updated);
   };
 
-  // ✅ Submit Parts Request Handler
   const handlePartsSubmit = async () => {
     if (!selectedRequest) return;
     const formData = {
       mechanicFeedback: '',
       needsParts: true,
-       partsList: partsList.map(p => ({
-    item: p.item,          // ✅ correct field
-    quantity: parseInt(p.quantity)  // ✅ convert quantity to number
-  })),
+      partsList: partsList.map(p => ({
+        item: p.item,
+        quantity: parseInt(p.quantity)
+      })),
       billFile: null
     };
 
@@ -175,7 +178,7 @@ function MechanicPendingRequests() {
   };
 
   const columns = [
-    { field: 'serial', headerName: '#', width: 50 },
+    { field: 'serial', headerName: '#', width: 60 },
     { field: 'vehicleNo', headerName: 'Vehicle No', width: 120 },
     { field: 'pen', headerName: 'PEN', width: 100 },
     { field: 'date', headerName: 'Date', width: 110 },
@@ -218,6 +221,7 @@ function MechanicPendingRequests() {
         <Button
           variant="contained"
           color="primary"
+          size="small"
           onClick={() => handleReviewClick(params.row)}
         >
           Review
@@ -227,25 +231,31 @@ function MechanicPendingRequests() {
   ];
 
   return (
-    <div style={{ height: 500, width: '100%' }}>
-      <h2>Verified Repair Requests</h2>
+    <div className="mechanic-container">
+      <h2 className="mechanic-title">Verified Repair Requests</h2>
+
       {loading ? (
         <div style={{ textAlign: 'center', padding: 20 }}>
           <CircularProgress />
         </div>
       ) : (
-        <DataGrid
-          rows={requests}
-          columns={columns}
-          pageSize={7}
-          rowsPerPageOptions={[7, 10, 20]}
-        />
+        <div className="mechanic-table-wrapper">
+          <div className="data-grid-wrapper">
+            <DataGrid
+              rows={requests}
+              columns={columns}
+              autoHeight
+              pageSize={7}
+              rowsPerPageOptions={[7, 10, 20]}
+            />
+          </div>
+        </div>
       )}
 
       {/* Modal for Review */}
       <Dialog open={modalOpen} onClose={handleCloseModal} fullWidth maxWidth="md">
         <DialogTitle>Repair Review</DialogTitle>
-        <DialogContent>
+        <DialogContent dividers>
           {selectedRequest && (
             <>
               <Typography><strong>Vehicle No:</strong> {selectedRequest.vehicleNo}</Typography>
@@ -266,7 +276,6 @@ function MechanicPendingRequests() {
                   <Typography sx={{ mt: 2 }}><strong>Parts Required</strong></Typography>
                   {partsList.map((part, idx) => (
                     <div key={idx} style={{ display: 'flex', gap: 10, marginTop: 10 }}>
-                      
                       <TextField
                         label="Item"
                         size="small"
@@ -307,7 +316,13 @@ function MechanicPendingRequests() {
       </Dialog>
 
       {/* File Preview Dialog */}
-      <Dialog open={filePreviewOpen} onClose={handleCloseFilePreview} maxWidth="md" fullWidth>
+      <Dialog
+        open={filePreviewOpen}
+        onClose={handleCloseFilePreview}
+        fullScreen={fullScreen}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>Bill File Preview</DialogTitle>
         <DialogContent dividers>
           {fileToPreview?.type?.includes('pdf') ? (

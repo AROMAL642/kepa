@@ -9,12 +9,6 @@ const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const app = express(); 
 
-
-
-
-
-
-
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
@@ -89,8 +83,6 @@ app.post('/register', async (req, res) => {
   }
 });
 
-
-
 // Login Route for User, Admin, and Fuel Section
 
 app.post('/login', async (req, res) => {
@@ -153,10 +145,6 @@ app.post('/login', async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
-
-
-
-
 
 //  Get User by Email 
 app.get('/api/user/:email', async (req, res) => {
@@ -234,6 +222,8 @@ app.use('/api/assignvehicle', assignVehicleRoutes);
 
 const fuelRoutes = require('./routes/fuelregisterRoutes'); 
 app.use('/api/fuel', fuelRoutes); 
+app.use('/api', fuelRoutes);
+
 
 
 
@@ -254,7 +244,7 @@ app.use('/api/user-delete', userDetailsRoutes);
 //Accident Report
 const accidentRoutes = require('./routes/accidentreportRoutes');
 app.use('/api/accidents', accidentRoutes);
-
+app.use('/api', accidentRoutes);
 //eye test report
 const eyeTestRoutes = require('./routes/eyeTestRoutes');
 app.use('/api/eyetests', eyeTestRoutes);
@@ -274,6 +264,7 @@ app.use('/api/repair-request', require('./routes/repairRequestRoutes'));
 
 const repairRoutes = require('./routes/repairRequestRoutes');
 app.use('/api/repairs', repairRoutes);
+app.use('/api/repair', repairRoutes);
 
 
 
@@ -284,11 +275,16 @@ app.use('/api/repairs', repairRoutes);
 
 //stock register
 const stockRoutes = require('./routes/stockRoutes');
-app.use('/api/stocks', stockRoutes);
+app.use('/api/stockroutes', stockRoutes);
+app.use('/api/stock', stockRoutes);
 
 //Purchase
 const purchaseRoutes = require('./routes/purchaseRoutes');
 app.use('/api/purchases', purchaseRoutes);
+
+//expense
+const fuelReportRoutes = require('./routes/expenseRoutes');
+app.use('/api/fuel', fuelReportRoutes);
 
 
 // Fetch all unverified users
@@ -332,10 +328,6 @@ app.get('/api/users/:id', async (req, res) => {
     res.status(500).json({ message: 'Error fetching user' });
   }
 });
-
-
-
-
 
 
 // Start server (only once)

@@ -12,7 +12,7 @@ import {
   Typography,
   Chip
 } from '@mui/material';
-import FuelAdmin2 from './FuelAdmin2'; // ✅ Import directly
+import FuelAdmin2 from './FuelAdmin2';
 
 const FuelAdmin = ({ darkMode }) => {
   const [vehicles, setVehicles] = useState([]);
@@ -20,7 +20,7 @@ const FuelAdmin = ({ darkMode }) => {
   const [error, setError] = useState(null);
   const [selectedEntry, setSelectedEntry] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
-  const [showAll, setShowAll] = useState(false); // ✅ View toggle
+  const [showAll, setShowAll] = useState(false);
 
   const fetchFuelData = async () => {
     try {
@@ -72,7 +72,8 @@ const FuelAdmin = ({ darkMode }) => {
         dateString: new Date(entry.date).toLocaleDateString(),
         fullTankText: entry.fullTank === 'yes' ? 'Yes' : 'No',
         status: entry.status || 'Pending',
-        fuelType: entry.fuelType || 'N/A'
+        fuelType: entry.fuelType || 'N/A',
+        nameWithPen: entry.nameWithPen || entry.pen // fallback if backend didn’t add name
       }))
   );
 
@@ -108,8 +109,8 @@ const FuelAdmin = ({ darkMode }) => {
   };
 
   const columns = [
-    { field: 'vehicleNo', headerName: 'Vehicle No', flex: 1 },
-    { field: 'pen', headerName: 'Entered By(PEN)', flex: 1 },
+    { field: 'vehicleNo', headerName: 'Vehicle No', flex: 1.5 },
+    { field: 'nameWithPen', headerName: 'Entered By', flex: 1 },
     { field: 'dateString', headerName: 'Date', flex: 1 },
     { field: 'presentKm', headerName: 'Present KM', flex: 1, type: 'number' },
     { field: 'previousKm', headerName: 'Previous KM', flex: 1, type: 'number' },
@@ -129,7 +130,7 @@ const FuelAdmin = ({ darkMode }) => {
     {
       field: 'actions',
       headerName: 'Actions',
-      flex: 2.5,
+      flex: 3,
       renderCell: (params) => (
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Button
@@ -181,7 +182,6 @@ const FuelAdmin = ({ darkMode }) => {
     );
   }
 
-  // ✅ If "View All" is clicked, render FuelAdmin2 instead
   if (showAll) {
     return (
       <Box sx={{ p: 2 }}>
@@ -197,27 +197,25 @@ const FuelAdmin = ({ darkMode }) => {
   }
 
   return (
-    <Box sx={{ flexGrow: 1, minWidth: 0, height: '100%', p: 2, overflow: 'hidden' }}>
-      {/* Top heading and View All button */}
+    <Box sx={{ flexGrow: 1, minWidth: 0, height: '100%', p: 2 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h4">Pending Fuel Entry</Typography>
         <Button
           variant="contained"
           color="primary"
-          onClick={() => setShowAll(true)} // ✅ Toggle to show all
+          onClick={() => setShowAll(true)}
         >
           View All
         </Button>
       </Box>
 
-      <Box sx={{ flexGrow: 1, minWidth: 0, height: '600px' }}>
+      <Box sx={{ height: 600 }}>
         <DataGrid
           rows={allEntries}
           columns={columns}
           pageSize={10}
           rowsPerPageOptions={[5, 10, 25]}
           disableSelectionOnClick
-          autoHeight={false}
           sx={{
             '& .MuiDataGrid-cell': {
               borderRight: '1px solid rgba(224, 224, 224, 1)'
@@ -236,7 +234,7 @@ const FuelAdmin = ({ darkMode }) => {
             <Box sx={{ p: 2 }}>
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
                 <Typography><strong>Vehicle No:</strong> {selectedEntry.vehicleNo}</Typography>
-                <Typography><strong>Entered By(PEN):</strong> {selectedEntry.pen}</Typography>
+                <Typography><strong>Entered By:</strong> {selectedEntry.nameWithPen}</Typography>
                 <Typography><strong>Date:</strong> {selectedEntry.dateString}</Typography>
                 <Typography><strong>Present KM:</strong> {selectedEntry.presentKm}</Typography>
                 <Typography><strong>Previous KM:</strong> {selectedEntry.previousKm}</Typography>

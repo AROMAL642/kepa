@@ -17,7 +17,6 @@ import axios from 'axios';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-// Helper to format ISO date to dd-mm-yyyy
 const formatDate = (isoDate) => {
   const date = new Date(isoDate);
   const day = String(date.getDate()).padStart(2, '0');
@@ -25,6 +24,8 @@ const formatDate = (isoDate) => {
   const year = date.getFullYear();
   return `${day}-${month}-${year}`;
 };
+
+const excludedFields = ['createdAt', 'updatedAt', 'hasWarranty', '__v', '_id'];
 
 const ViewPrintRegisters = () => {
   const [registerType, setRegisterType] = useState('');
@@ -37,7 +38,7 @@ const ViewPrintRegisters = () => {
   const [selectedFields, setSelectedFields] = useState([]);
 
   const validate = () => {
-    if (!registerType || !vehicleOption || !fromDate || !toDate) {
+    if (!registerType || !fromDate || !toDate) {
       alert('Please fill all required fields');
       return false;
     }
@@ -45,7 +46,11 @@ const ViewPrintRegisters = () => {
       alert('From Date cannot be later than To Date');
       return false;
     }
-    if (vehicleOption === 'individual' && !vehicleNumber.trim()) {
+    if (
+      ['fuel', 'movement', 'accident'].includes(registerType) &&
+      vehicleOption === 'individual' &&
+      !vehicleNumber.trim()
+    ) {
       alert('Please enter a vehicle number');
       return false;
     }
@@ -77,29 +82,67 @@ const ViewPrintRegisters = () => {
         return;
       }
 
-      const cols = Object.keys(data[0]).map((key) => ({
-        field: key,
-        headerName: key.toUpperCase(),
-        flex: 1
-      }));
+      const dateFields = ['date', 'accidentTime', 'startTime', 'endTime'];
 
-      const dateFields = ['date', 'createdAt', 'accidentTime', 'startTime', 'endTime'];
-
-      const rowsWithId = data.map((row, idx) => {
-        const formattedRow = { id: idx + 1 };
+      // Step 1: Filter out excluded fields
+      const filteredData = data.map(row => {
+        const cleaned = {};
         Object.entries(row).forEach(([key, value]) => {
-          if (dateFields.includes(key) && value) {
-            formattedRow[key] = formatDate(value);
-          } else {
-            formattedRow[key] = value;
+          if (!excludedFields.includes(key)) {
+            cleaned[key] = value;
           }
         });
-        return formattedRow;
+        return cleaned;
+      });
+
+      // Step 2: Collect all unique fields
+      let fieldSet = new Set();
+      filteredData.forEach(row => {
+        Object.keys(row).forEach(key => fieldSet.add(key));
+      });
+
+      // Always include warrantyNumber for purchase register
+      if (registerType === 'purchase') {
+        fieldSet.add('warrantyNumber');
+      }
+// Step 3: Build columns
+let cols = Array.from(fieldSet).map((key) => ({
+  field: key,
+  headerName:
+    key === 'enteredBy' ? 'Entered By (Name - PEN)' :
+    key === 'warrantyNumber' ? 'Warranty Number' :
+    key.toUpperCase(),
+  flex: 1
+}));
+
+// For purchase register, reorder columns to put warrantyNumber after billNo
+if (registerType === 'purchase') {
+  const billNoIndex = cols.findIndex(col => col.field === 'billNo');
+  const warrantyCol = cols.find(col => col.field === 'warrantyNumber');
+  cols = cols.filter(col => col.field !== 'warrantyNumber');
+  if (billNoIndex !== -1 && warrantyCol) {
+    cols.splice(billNoIndex + 1, 0, warrantyCol);
+  }
+}
+
+
+      // Step 4: Format rows
+      const rowsWithId = filteredData.map((row, idx) => {
+        const formatted = { id: idx + 1 };
+        Array.from(fieldSet).forEach((key) => {
+          const value = row[key];
+          if (dateFields.includes(key) && value) {
+            formatted[key] = formatDate(value);
+          } else {
+            formatted[key] = value || '';
+          }
+        });
+        return formatted;
       });
 
       setColumns(cols);
       setRows(rowsWithId);
-      setSelectedFields(cols.map((col) => col.field)); 
+      setSelectedFields(cols.map(col => col.field));
     } catch (error) {
       console.error('Error fetching data:', error);
       alert('Failed to fetch report data.');
@@ -116,9 +159,9 @@ const ViewPrintRegisters = () => {
     doc.setFontSize(18);
     doc.text(`${registerType.toUpperCase()} Register Report`, 14, 22);
 
-    const visibleCols = columns.filter((col) => selectedFields.includes(col.field));
-    const headers = visibleCols.map((col) => col.headerName);
-    const data = rows.map((row) => visibleCols.map((col) => row[col.field]));
+    const visibleCols = columns.filter(col => selectedFields.includes(col.field));
+    const headers = visibleCols.map(col => col.headerName);
+    const data = rows.map(row => visibleCols.map(col => row[col.field]));
 
     autoTable(doc, {
       head: [headers],
@@ -142,39 +185,46 @@ const ViewPrintRegisters = () => {
           <InputLabel>Select Register</InputLabel>
           <Select
             value={registerType}
-            onChange={(e) => setRegisterType(e.target.value)}
+            onChange={(e) => {
+              setRegisterType(e.target.value);
+              setVehicleOption('');
+              setVehicleNumber('');
+            }}
             label="Select Register"
           >
             <MenuItem value="fuel">Fuel Register</MenuItem>
             <MenuItem value="movement">Movement Register</MenuItem>
             <MenuItem value="accident">Accident Register</MenuItem>
+            <MenuItem value="purchase">Purchase Register</MenuItem>
+            <MenuItem value="stock">Stock Register</MenuItem>
           </Select>
         </FormControl>
 
-        <FormControl fullWidth sx={{ minWidth: 250 }}>
-          <InputLabel>Vehicle Scope</InputLabel>
-          <Select
-            value={vehicleOption}
-            onChange={(e) => {
-              setVehicleOption(e.target.value);
-              if (e.target.value === 'all') setVehicleNumber('');
-            }}
-            label="Vehicle Scope"
-          >
-            <MenuItem value="all">All Vehicles</MenuItem>
-            <MenuItem value="individual">Individual Vehicle</MenuItem>
-          </Select>
-        </FormControl>
+        {['fuel', 'movement', 'accident'].includes(registerType) && (
+          <FormControl fullWidth sx={{ minWidth: 250 }}>
+            <InputLabel>Vehicle Scope</InputLabel>
+            <Select
+              value={vehicleOption}
+              onChange={(e) => {
+                setVehicleOption(e.target.value);
+                if (e.target.value === 'all') setVehicleNumber('');
+              }}
+              label="Vehicle Scope"
+            >
+              <MenuItem value="all">All Vehicles</MenuItem>
+              <MenuItem value="individual">Individual Vehicle</MenuItem>
+            </Select>
+          </FormControl>
+        )}
 
         {vehicleOption === 'individual' && (
-         <TextField
-          placeholder="eg.KL01AA1234"
-          label="Vehicle Number"
-          value={vehicleNumber}
-          onChange={(e) => setVehicleNumber(e.target.value.toUpperCase())}
-          fullWidth
-         />
-
+          <TextField
+            placeholder="eg.KL01AA1234"
+            label="Vehicle Number"
+            value={vehicleNumber}
+            onChange={(e) => setVehicleNumber(e.target.value.toUpperCase())}
+            fullWidth
+          />
         )}
 
         <TextField

@@ -178,9 +178,25 @@ router.put('/end/:vehicleno', async (req, res) => {
 router.get('/all', async (req, res) => {
   try {
     const allMovements = await VehicleMovement.aggregate([
-      { $unwind: "$movements" }, // Unwind the movements array
-      { $sort: { "movements.createdAt": -1 } }, // Sort by creation date (newest first)
-      { 
+      { $unwind: "$movements" },
+      {
+        $lookup: {
+          from: "users",
+          localField: "movements.pen",
+          foreignField: "pen",
+          as: "userDetails"
+        }
+      },
+      {
+        $unwind: {
+          path: "$userDetails",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $sort: { "movements.createdAt": -1 }
+      },
+      {
         $project: {
           vehicleno: 1,
           startingkm: "$movements.startingkm",
@@ -189,6 +205,7 @@ router.get('/all', async (req, res) => {
           destination: "$movements.destination",
           purpose: "$movements.purpose",
           pen: "$movements.pen",
+          name: "$userDetails.name",
           officerincharge: "$movements.officerincharge",
           endingkm: "$movements.endingkm",
           endingdate: "$movements.endingdate",
@@ -199,6 +216,7 @@ router.get('/all', async (req, res) => {
         }
       }
     ]);
+
     res.status(200).json(allMovements);
   } catch (err) {
     console.error('Error fetching all movements:', err);

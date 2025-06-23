@@ -1,0 +1,43 @@
+/* Main container for the mechanic page */
+.mechanic-container {
+  width: 100%;
+  padding: 1rem;
+  box-sizing: border-box;
+  background-color: #f9f9f9;
+}
+
+/* Heading stays centered and does not scroll */
+.mechanic-title {
+  text-align: center;
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: #222;
+}
+
+/* Wrapper to enable horizontal scrolling for table only */
+.mechanic-table-wrapper {
+  overflow-x: auto;
+  padding-bottom: 1rem;
+}
+
+/* DataGrid min width to allow scrolling on smaller screens */
+.data-grid-wrapper {
+  min-width: 1000px;
+}
+
+/* Dialog text spacing */
+.dialog-text {
+  margin-bottom: 0.75rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .mechanic-title {
+    font-size: 1.4rem;
+  }
+
+  .data-grid-wrapper {
+    min-width: 600px;
+  }
+}

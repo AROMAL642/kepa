@@ -42,7 +42,7 @@ const FuelAdmin = ({ darkMode }) => {
         `http://localhost:5000/api/fuel/${entry.vehicleNo}/${entry._id}`,
         { status: newStatus }
       );
-      await fetchFuelData(); // Refresh list after status update
+      await fetchFuelData();
     } catch (error) {
       console.error('Failed to update status:', error);
       alert('Error updating status');
@@ -57,7 +57,8 @@ const FuelAdmin = ({ darkMode }) => {
       fuelType: entry.fuelType || 'Unknown',
       dateString: new Date(entry.date).toLocaleDateString(),
       fullTankText: entry.fullTank === 'yes' ? 'Yes' : 'No',
-      status: entry.status || 'Pending'
+      status: entry.status || 'Pending',
+      nameWithPen: entry.nameWithPen || entry.pen // fallback if missing
     }))
   );
 
@@ -93,9 +94,9 @@ const FuelAdmin = ({ darkMode }) => {
   };
 
   const columns = [
-    { field: 'vehicleNo', headerName: 'Vehicle No', flex: 1 },
+    { field: 'vehicleNo', headerName: 'Vehicle No', flex: 1.75 },
     { field: 'fuelType', headerName: 'Fuel Type', flex: 1 },
-    { field: 'pen', headerName: 'Entered By(PEN)', flex: 2 },
+    { field: 'nameWithPen', headerName: 'Entered By', flex: 2 },
     { field: 'dateString', headerName: 'Date', flex: 1 },
     { field: 'presentKm', headerName: 'Present KM', flex: 1, type: 'number' },
     { field: 'previousKm', headerName: 'Previous KM', flex: 1, type: 'number' },
@@ -106,7 +107,7 @@ const FuelAdmin = ({ darkMode }) => {
     {
       field: 'status',
       headerName: 'Status',
-      flex: 1.5,
+      flex: 1.6,
       renderCell: (params) => (
         <Box sx={{ pointerEvents: 'none' }}>
           {getStatusChip(params.value)}
@@ -116,7 +117,7 @@ const FuelAdmin = ({ darkMode }) => {
     {
       field: 'actions',
       headerName: 'Actions',
-      flex: 3,
+      flex: 3.2,
       renderCell: (params) => (
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Button
@@ -174,7 +175,7 @@ const FuelAdmin = ({ darkMode }) => {
         Fuel Entry Review
       </Typography>
 
-      <Box sx={{ flexGrow: 1, minWidth: 0, height: '600px' }}>
+      <Box sx={{ height: '600px' }}>
         <DataGrid
           rows={allEntries}
           columns={columns}
@@ -201,7 +202,7 @@ const FuelAdmin = ({ darkMode }) => {
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
                 <Typography><strong>Vehicle No:</strong> {selectedEntry.vehicleNo}</Typography>
                 <Typography><strong>Fuel Type:</strong> {selectedEntry.fuelType}</Typography>
-                <Typography><strong>Entered By(PEN):</strong> {selectedEntry.pen}</Typography>
+                <Typography><strong>Entered By:</strong> {selectedEntry.nameWithPen}</Typography>
                 <Typography><strong>Date:</strong> {selectedEntry.dateString}</Typography>
                 <Typography><strong>Present KM:</strong> {selectedEntry.presentKm}</Typography>
                 <Typography><strong>Previous KM:</strong> {selectedEntry.previousKm}</Typography>

@@ -2,29 +2,59 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const Purchase = require('../models/Purchase');
+const User = require('../models/User');
 
-// Use memory storage for multer (stores file in RAM)
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// 📌 POST /api/purchases — Add a new purchase
+/**
+ * 📥 GET /api/purchases — Fetch all purchases with enteredBy name
+ */
+router.get('/', async (req, res) => {
+  try {
+    const purchases = await Purchase.find().lean();
+    const users = await User.find({}, { pen: 1, name: 1 }).lean();
+
+    const userMap = {};
+    users.forEach(u => {
+      userMap[u.pen] = u.name;
+    });
+
+    const enriched = purchases.map(p => {
+      const { __v, createdAt, updatedAt, ...cleaned } = p;
+      return {
+        ...cleaned,
+        enteredBy: userMap[p.pen] ? `${userMap[p.pen]} (${p.pen})` : p.pen
+      };
+    });
+
+    res.json(enriched);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server error while fetching purchases');
+  }
+});
+
+/**
+ * ➕ POST /api/purchases — Add a new purchase
+ */
 router.post('/', upload.single('billFile'), async (req, res) => {
   try {
-    const { itemName, quantity, price, vendor, billNo } = req.body;
+    const { itemName, quantity, price, date, Firm, billNo, pen, warrantyNumber } = req.body;
 
     const billFile = req.file
-      ? {
-          data: req.file.buffer,
-          contentType: req.file.mimetype
-        }
+      ? { data: req.file.buffer, contentType: req.file.mimetype }
       : undefined;
 
     const purchase = new Purchase({
       itemName,
       quantity,
       price,
-      vendor,
+      Firm,
+      date,
       billNo,
+      pen,
+      warrantyNumber: warrantyNumber || '',
       billFile
     });
 
@@ -36,41 +66,72 @@ router.post('/', upload.single('billFile'), async (req, res) => {
   }
 });
 
-// 📌 GET /api/purchases — Fetch all purchases (with base64-encoded bill)
-router.get('/', async (req, res) => {
+/**
+ * ✏️ PUT /api/purchases/:id — Update a purchase
+ */
+router.put('/:id', upload.single('billFile'), async (req, res) => {
   try {
-    const purchases = await Purchase.find();
+    const { itemName, quantity, price, Firm, date, billNo, pen, warrantyNumber } = req.body;
 
-    const formatted = purchases.map(p => ({
-      ...p._doc,
-      billFile: p.billFile?.data
-        ? {
-            data: p.billFile.data.toString('base64'),
-            contentType: p.billFile.contentType
-          }
-        : null
-    }));
+    const updateData = {
+      itemName,
+      quantity,
+      price,
+      Firm,
+      date,
+      billNo,
+      pen,
+      warrantyNumber: warrantyNumber || ''
+    };
 
-    res.json(formatted);
+    if (req.file) {
+      updateData.billFile = {
+        data: req.file.buffer,
+        contentType: req.file.mimetype
+      };
+    }
+
+    const updated = await Purchase.findByIdAndUpdate(req.params.id, updateData, { new: true });
+
+    if (!updated) return res.status(404).json({ message: 'Purchase not found' });
+
+    res.json(updated);
   } catch (err) {
-    console.error('Error fetching purchases:', err);
-    res.status(500).json({ message: 'Failed to fetch purchases' });
+    console.error('Error updating purchase:', err);
+    res.status(500).json({ message: 'Update failed' });
   }
 });
 
-// 📌 GET /api/purchases/:id/bill — Get raw bill file by ID (optional)
+/**
+ * 📄 GET /api/purchases/:id/bill — View bill file
+ */
 router.get('/:id/bill', async (req, res) => {
   try {
     const purchase = await Purchase.findById(req.params.id);
     if (!purchase || !purchase.billFile || !purchase.billFile.data) {
-      return res.status(404).json({ message: 'Bill file not found' });
+      return res.status(404).send('Bill not found');
     }
 
-    res.set('Content-Type', purchase.billFile.contentType);
+    res.contentType(purchase.billFile.contentType);
     res.send(purchase.billFile.data);
   } catch (err) {
     console.error('Error retrieving bill file:', err);
     res.status(500).json({ message: 'Failed to retrieve bill file' });
+  }
+});
+
+/**
+ * ❌ DELETE /api/purchases/:id — Delete a purchase
+ */
+router.delete('/:id', async (req, res) => {
+  try {
+    const deleted = await Purchase.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ message: 'Purchase not found' });
+
+    res.json({ message: 'Purchase deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting purchase:', err);
+    res.status(500).json({ message: 'Delete failed' });
   }
 });
 

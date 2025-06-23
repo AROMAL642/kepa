@@ -6,7 +6,8 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  Typography
+  Typography,
+  Box
 } from '@mui/material';
 
 const AccidentReportTable = ({ themeStyle }) => {
@@ -14,17 +15,22 @@ const AccidentReportTable = ({ themeStyle }) => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
+  const [viewAll, setViewAll] = useState(false);
 
   const fetchReports = useCallback(async () => {
     try {
+      setLoading(true);
       const res = await fetch('http://localhost:5000/api/accidents');
       const data = await res.json();
 
-      const formatted = data.map((item) => ({
+      const filtered = viewAll ? data : data.filter(item => item.status === 'pending');
+
+      const formatted = filtered.map((item) => ({
         id: item._id,
         _id: item._id,
         vehicleNo: item.vehicleNo,
         pen: item.pen,
+        penDisplay: item.penDisplay || item.pen,
         accidentTime: item.accidentTime,
         location: item.location,
         description: item.description,
@@ -41,7 +47,7 @@ const AccidentReportTable = ({ themeStyle }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [viewAll]);
 
   useEffect(() => {
     fetchReports();
@@ -76,7 +82,6 @@ const AccidentReportTable = ({ themeStyle }) => {
     }
   };
 
-  // Helper functions
   const formatDate = (value) => {
     try {
       const date = new Date(value);
@@ -91,35 +96,32 @@ const AccidentReportTable = ({ themeStyle }) => {
   };
 
   const columns = [
-    { field: 'vehicleNo', headerName: 'Vehicle No', width: 150 },
-    { field: 'pen', headerName: 'PEN', width: 100 },
+    { field: 'vehicleNo', headerName: 'Vehicle No', minWidth: 120, flex: 1 },
+    { field: 'penDisplay', headerName: 'Entered By', minWidth: 150, flex: 1 },
     {
-  field: 'date',
-  headerName: 'Date',
-  width: 150,
-  renderCell: (params) => {
-    const val = params.row?.date;
-    if (!val) return 'N/A';
-    const date = new Date(val);
-    return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString();
-  }
-},
-{
-  field: 'accidentTime',
-  headerName: 'Time',
-  width: 120,
-  renderCell: (params) => {
-    const val = params.row?.accidentTime;
-    return val && /^\d{2}:\d{2}$/.test(val) ? val : 'Invalid Time';
-  }
-}
-,
-    { field: 'location', headerName: 'Location', width: 180 },
-    { field: 'description', headerName: 'Description', width: 220 },
+      field: 'date',
+      headerName: 'Date',
+      minWidth: 120,
+      flex: 1,
+      renderCell: (params) => {
+        const val = params.row?.date;
+        return val ? new Date(val).toLocaleDateString() : 'N/A';
+      }
+    },
+    {
+      field: 'accidentTime',
+      headerName: 'Time',
+      minWidth: 100,
+      flex: 1,
+      renderCell: (params) => formatTime(params.row?.accidentTime)
+    },
+    { field: 'location', headerName: 'Location', minWidth: 150, flex: 1 },
+    { field: 'description', headerName: 'Description', minWidth: 180, flex: 1 },
     {
       field: 'status',
       headerName: 'Status',
-      width: 120,
+      minWidth: 100,
+      flex: 1,
       renderCell: (params) => {
         const colorMap = {
           verified: 'green',
@@ -136,15 +138,12 @@ const AccidentReportTable = ({ themeStyle }) => {
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 260,
+      minWidth: 250,
+      flex: 1,
+      sortable: false,
       renderCell: (params) => (
-        <>
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={() => handleViewDetails(params.row)}
-            style={{ marginRight: 8 }}
-          >
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+          <Button variant="outlined" size="small" onClick={() => handleViewDetails(params.row)}>
             View
           </Button>
           <Button
@@ -153,7 +152,6 @@ const AccidentReportTable = ({ themeStyle }) => {
             size="small"
             onClick={() => updateStatus(params.row._id, 'verified')}
             disabled={params.row.status === 'verified'}
-            style={{ marginRight: 4 }}
           >
             Verify
           </Button>
@@ -166,22 +164,49 @@ const AccidentReportTable = ({ themeStyle }) => {
           >
             Reject
           </Button>
-        </>
+        </Box>
       )
     }
   ];
 
   return (
-    <div style={{ height: 600, width: '100%', ...themeStyle }}>
-      <h2>Accident Report Table</h2>
-      <DataGrid
-        rows={rows}
-        columns={columns}
-        loading={loading}
-        pageSize={5}
-        rowsPerPageOptions={[5, 10]}
-        style={{ background: themeStyle.background, color: themeStyle.color }}
-      />
+    <Box sx={{ width: '100%', ...themeStyle, paddingBottom: '2rem' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 2
+        }}
+      >
+        <Typography variant="h6" component="div">
+          Accident Report Table ({viewAll ? 'All' : 'Pending Only'})
+        </Typography>
+        <Button
+          variant="contained"
+          onClick={() => setViewAll(!viewAll)}
+          sx={{ mt: { xs: 1, sm: 0 } }}
+        >
+          {viewAll ? 'View Pending Only' : 'View All Accident Reports'}
+        </Button>
+      </Box>
+
+      <Box sx={{ width: '100%', overflowX: 'auto' }}>
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          loading={loading}
+          pageSize={5}
+          rowsPerPageOptions={[5, 10]}
+          autoHeight
+          sx={{
+            backgroundColor: themeStyle.background,
+            color: themeStyle.color,
+            minWidth: '600px'
+          }}
+        />
+      </Box>
 
       <Dialog open={dialogOpen} onClose={handleClose} fullWidth maxWidth="sm">
         <DialogTitle>Accident Report Details</DialogTitle>
@@ -189,13 +214,9 @@ const AccidentReportTable = ({ themeStyle }) => {
           {selectedReport && (
             <>
               <Typography><strong>Vehicle No:</strong> {selectedReport.vehicleNo}</Typography>
-              <Typography><strong>PEN:</strong> {selectedReport.pen}</Typography>
-              <Typography>
-                <strong>Date:</strong> {formatDate(selectedReport.date)}
-              </Typography>
-              <Typography>
-                <strong>Time:</strong> {formatTime(selectedReport.accidentTime)}
-              </Typography>
+              <Typography><strong>Entered By:</strong> {selectedReport.penDisplay}</Typography>
+              <Typography><strong>Date:</strong> {formatDate(selectedReport.date)}</Typography>
+              <Typography><strong>Time:</strong> {formatTime(selectedReport.accidentTime)}</Typography>
               <Typography><strong>Location:</strong> {selectedReport.location}</Typography>
               <Typography><strong>Description:</strong> {selectedReport.description}</Typography>
               <Typography><strong>Status:</strong> {selectedReport.status}</Typography>
@@ -222,7 +243,7 @@ const AccidentReportTable = ({ themeStyle }) => {
           <Button onClick={handleClose} variant="contained">Close</Button>
         </DialogActions>
       </Dialog>
-    </div>
+    </Box>
   );
 };
 

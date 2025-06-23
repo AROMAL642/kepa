@@ -10,7 +10,7 @@ const FuelEntrySchema = new mongoose.Schema({
   kmpl: { type: Number },
   date: { type: Date, required: true },
   billNo: { type: String, required: true },
-  fullTank: { type: Boolean, required: true }, // ✅ changed from enum to Boolean
+  fullTank: { type: Boolean, required: true }, 
   file: { type: Buffer },
   fileType: { type: String },
   fuelType: { type: String, required: true },

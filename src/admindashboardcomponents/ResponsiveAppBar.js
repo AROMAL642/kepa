@@ -11,38 +11,28 @@ import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
+import Badge from '@mui/material/Badge';
 import { useNavigate } from 'react-router-dom';
 
-const pages = ['Notifications', 'Requests'];
 const settings = ['Profile', 'Dashboard', 'Logout'];
 const DRAWER_WIDTH = 240;
 
-function ResponsiveAppBar({ photo, name, isDrawerOpen, onDrawerToggle, onSelectTab }) {
+function ResponsiveAppBar({ photo, name, isDrawerOpen, onDrawerToggle, onSelectTab, pendingRequestCount }) {
   const [anchorElNav, setAnchorElNav] = React.useState(null);
   const [anchorElUser, setAnchorElUser] = React.useState(null);
   const navigate = useNavigate();
 
-  const handleOpenNavMenu = (event) => {
-    setAnchorElNav(event.currentTarget);
-  };
-
-  const handleOpenUserMenu = (event) => {
-    setAnchorElUser(event.currentTarget);
-  };
-
-  const handleCloseNavMenu = () => {
-    setAnchorElNav(null);
-  };
+  const handleOpenNavMenu = (event) => setAnchorElNav(event.currentTarget);
+  const handleOpenUserMenu = (event) => setAnchorElUser(event.currentTarget);
+  const handleCloseNavMenu = () => setAnchorElNav(null);
 
   const handleCloseUserMenu = (setting) => {
     setAnchorElUser(null);
     if (setting === 'Logout') {
       localStorage.clear();
       navigate('/');
-    } else if (setting === 'Profile' && onSelectTab) {
-      onSelectTab('profile');
-    } else if (setting === 'Dashboard' && onSelectTab) {
-      onSelectTab('dashboard');
+    } else if (onSelectTab && (setting === 'Profile' || setting === 'Dashboard')) {
+      onSelectTab(setting.toLowerCase());
     }
   };
 
@@ -58,11 +48,8 @@ function ResponsiveAppBar({ photo, name, isDrawerOpen, onDrawerToggle, onSelectT
     >
       <Container maxWidth="xl">
         <Toolbar disableGutters sx={{ px: 2 }}>
-
-          {/* Drawer toggle button (always on left) */}
           <IconButton
             color="inherit"
-            aria-label="open drawer"
             edge="start"
             onClick={onDrawerToggle}
             sx={{ mr: 2, display: { md: 'inline-flex' } }}
@@ -70,7 +57,6 @@ function ResponsiveAppBar({ photo, name, isDrawerOpen, onDrawerToggle, onSelectT
             <MenuIcon />
           </IconButton>
 
-          {/* Logo */}
           <Typography
             variant="h6"
             noWrap
@@ -89,7 +75,7 @@ function ResponsiveAppBar({ photo, name, isDrawerOpen, onDrawerToggle, onSelectT
             KEPA
           </Typography>
 
-          {/* Small screen menu button */}
+          {/* Mobile View */}
           <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
             <IconButton size="large" onClick={handleOpenNavMenu} color="inherit">
               <MenuIcon />
@@ -103,24 +89,34 @@ function ResponsiveAppBar({ photo, name, isDrawerOpen, onDrawerToggle, onSelectT
               onClose={handleCloseNavMenu}
               sx={{ display: { xs: 'block', md: 'none' } }}
             >
-              {pages.map((page) => (
-                <MenuItem key={page} onClick={handleCloseNavMenu}>
-                  <Typography textAlign="center">{page}</Typography>
-                </MenuItem>
-              ))}
+              <MenuItem onClick={handleCloseNavMenu}>
+                <Typography textAlign="center">Notifications</Typography>
+              </MenuItem>
+              <MenuItem onClick={handleCloseNavMenu}>
+                <Typography textAlign="center">
+                  Requests{' '}
+                  <Badge badgeContent={pendingRequestCount} color="error" sx={{ ml: 1 }} />
+                </Typography>
+              </MenuItem>
             </Menu>
           </Box>
 
-          {/* Large screen nav buttons */}
-          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-            {pages.map((page) => (
-              <Button key={page} onClick={handleCloseNavMenu} sx={{ my: 2, color: 'white' }}>
-                {page}
-              </Button>
-            ))}
+          {/* Desktop View */}
+          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}>
+            <Button onClick={handleCloseNavMenu} sx={{ my: 2, color: 'white' }}>
+              Notifications
+            </Button>
+            <Button onClick={handleCloseNavMenu} sx={{ my: 2, color: 'white', display: 'flex', alignItems: 'center' }}>
+              Requests
+              <Badge
+                badgeContent={pendingRequestCount}
+                color="error"
+                sx={{ ml: 2 }}
+              />
+            </Button>
           </Box>
 
-          {/* Profile avatar & menu */}
+          {/* Avatar and User Menu */}
           <Box sx={{ flexGrow: 0 }}>
             <Tooltip title="Open settings">
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -153,8 +149,5 @@ function ResponsiveAppBar({ photo, name, isDrawerOpen, onDrawerToggle, onSelectT
     </AppBar>
   );
 }
-
-
-
 
 export default ResponsiveAppBar;
