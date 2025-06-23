@@ -73,7 +73,7 @@ router.get('/for-generating-certificate', async (req, res) => {
   try {
     const requests = await RepairRequest.find({
       status: { $in: ['for_generating_certificate' , 'certificate_ready' , 'waiting_for_sanction',
-    'sanctioned_for_work'] },
+    'sanctioned_for_work', 'ongoing_work'] },
      finalBillFile: { $exists: true}
     });
 
@@ -363,7 +363,7 @@ router.post('/:id/complete-certificates', async (req, res) => {
     const request = await RepairRequest.findById(req.params.id);
     if (!request) return res.status(404).json({ message: 'Request not found' });
 
-    request.status = 'certificates_ready';
+    request.status = 'certificate_ready';
 
     await request.save();
     res.json({ message: 'Certificates marked as ready' });
@@ -512,6 +512,46 @@ router.post('/notify-mti/:id', async (req, res) => {
 
 
 
+/**
+ * PUT: Main admin verifies and sends to mechanic after getting sanction
+ */
+router.put('/:id/verify-and-send-to-mechanic', async (req, res) => {
+  try {
+    const request = await RepairRequest.findById(req.params.id);
+    if (!request) return res.status(404).json({ message: 'Request not found' });
+
+    request.status = 'ongoing_work';
+    request.forwardedToMechanic = true;
+
+    await request.save();
+    res.json({ message: 'Request verified and sent to mechanic for work' });
+  } catch (err) {
+    console.error('Error verifying and sending to mechanic:', err);
+    res.status(500).json({ message: 'Verification failed' });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /**
@@ -522,63 +562,74 @@ router.get('/:id/view-ec', async (req, res) => {
     const request = await RepairRequest.findById(req.params.id);
     if (!request) return res.status(404).json({ message: 'Request not found' });
 
-    // Create a PDF document
     const doc = new PDFDocument({ size: 'A4', margin: 50 });
 
-    // Set the response headers
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `inline; filename="Essentiality_Certificate_${request.vehicleNo}.pdf"`);
 
-    // Pipe PDF to response
     doc.pipe(res);
 
-    // ========== TEMPLATE CONTENT ==========
+    // ========== Header ==========
     doc.fontSize(12).text(`No........ /2025/AD(T&MTS)/KEPA`, { align: 'right' });
-    doc.moveDown(0.5);
     doc.text(`Office of the Asst.Director(Tech & MT Studies)`, { align: 'right' });
     doc.text(`Kerala Police Academy, R.V.Puram,Thrissur`, { align: 'right' });
     doc.text(`Date: ${new Date().toLocaleDateString('en-IN')}`, { align: 'right' });
 
     doc.moveDown(2);
-
-    doc.fontSize(14).text('ESSENTIALITY CERTIFICATE', { align: 'center', underline: true });
+    doc.fontSize(14).font('Helvetica-Bold').text('ESSENTIALITY CERTIFICATE', { align: 'center', underline: true });
     doc.moveDown(1.5);
 
     const vehicleNo = request.vehicleNo || '__________';
     const subject = request.subject || '';
     const partsList = request.partsList || [];
 
-    doc.fontSize(12).text(`It is hereby certified that Vehicle number ${vehicleNo} (${subject}) has been inspected at this office, and the following spare parts have been found to be defective. Accordingly, these items are recommended for replacement with new ones.`);
-    
+    doc.font('Helvetica').fontSize(12).text(
+      `It is hereby certified that Vehicle number ${vehicleNo} (${subject}) has been inspected at this office, and the following spare parts have been found to be defective. Accordingly, these items are recommended for replacement with new ones.`,
+      { align: 'justify' }
+    );
+
     doc.moveDown(1.5);
 
-    // Table Headers
-    doc.font('Helvetica-Bold');
-    doc.text('Sl No', 70, doc.y);
-    doc.text('Items', 120, doc.y);
-    doc.text('Quantity', 400, doc.y);
+    // ========== Table ==========
+
+    // Column positions and widths
+    const startX = 70;
+    let startY = doc.y;
+    const colWidths = [50, 300, 100]; // Sl No, Items, Quantity
+
+    // Draw header row
+    doc.rect(startX, startY, colWidths[0], 25).stroke();
+    doc.rect(startX + colWidths[0], startY, colWidths[1], 25).stroke();
+    doc.rect(startX + colWidths[0] + colWidths[1], startY, colWidths[2], 25).stroke();
+
+    doc.font('Helvetica-Bold').fontSize(11);
+    doc.text('Sl No', startX + 15, startY + 7);
+    doc.text('Items', startX + colWidths[0] + 10, startY + 7);
+    doc.text('Quantity', startX + colWidths[0] + colWidths[1] + 10, startY + 7);
+
+    startY += 25;
+
+    // Draw rows
     doc.font('Helvetica');
-
-    // Draw Line
-    doc.moveTo(70, doc.y + 2).lineTo(500, doc.y + 2).stroke();
-    doc.moveDown(0.5);
-
-    // Table Data
     partsList.forEach((item, index) => {
-      doc.text(index + 1, 70, doc.y);
-      doc.text(item.item || 'N/A', 120, doc.y);
-      doc.text(item.quantity || 'N/A', 400, doc.y);
-      doc.moveDown(0.5);
+      doc.rect(startX, startY, colWidths[0], 25).stroke();
+      doc.rect(startX + colWidths[0], startY, colWidths[1], 25).stroke();
+      doc.rect(startX + colWidths[0] + colWidths[1], startY, colWidths[2], 25).stroke();
+
+      doc.text(`${index + 1}`, startX + 15, startY + 7);
+      doc.text(item.item || 'N/A', startX + colWidths[0] + 10, startY + 7);
+      doc.text(item.quantity || 'N/A', startX + colWidths[0] + colWidths[1] + 10, startY + 7);
+
+      startY += 25;
     });
 
-    doc.end(); // Finalize the PDF
+    doc.end();
 
   } catch (err) {
     console.error('Error generating EC PDF:', err);
     res.status(500).json({ message: 'Failed to generate certificate' });
   }
 });
-
 
 
 
