@@ -1,34 +1,78 @@
+// Modified backend route in routes/fuelRoutes.js (or wherever you define it)
+
 const express = require('express');
 const router = express.Router();
 const VehicleFuel = require('../models/Fuel');
+const Vehicle = require('../models/Vehicle');
+const User = require('../models/User');
 
-// POST /api/fuel/expense-summary
 router.post('/expense-summary', async (req, res) => {
-  const { vehicleNo, fromDate, toDate } = req.body;
+  const { vehicleNo, fromDate, toDate, category } = req.body;
 
   try {
-    const vehicle = await VehicleFuel.findOne({ vehicleNo });
+    const from = new Date(fromDate);
+    from.setHours(0, 0, 0, 0);
+    const to = new Date(toDate);
+    to.setHours(23, 59, 59, 999);
 
-    if (!vehicle) {
-      return res.status(404).json({ error: 'Vehicle not found' });
+    if (category === 'fuel') {
+      const vehicle = await VehicleFuel.findOne({ vehicleNo });
+      if (!vehicle) return res.status(404).json({ error: 'Vehicle not found' });
+
+      const filteredEntries = vehicle.fuelEntries.filter(entry => {
+        const entryDate = new Date(entry.date);
+        return (
+          entryDate >= from &&
+          entryDate <= to &&
+          entry.status === 'approved'
+        );
+      });
+
+      const penArray = [...new Set(filteredEntries.map(e => e.pen.trim()))];
+      const users = await User.find({ pen: { $in: penArray } }, 'pen name');
+      const userMap = Object.fromEntries(users.map(user => [user.pen.trim(), user.name]));
+
+      const entries = filteredEntries.map(entry => ({
+        pen: entry.pen,
+        name: userMap[entry.pen.trim()] || 'Unknown',
+        amount: entry.amount,
+        date: entry.date
+      }));
+
+      const totalAmount = entries.reduce((sum, e) => sum + (e.amount || 0), 0);
+
+      return res.json({ totalAmount, count: entries.length, entries });
     }
 
-    // Filter entries within the date range
-    const filteredEntries = vehicle.fuelEntries.filter(entry => {
-      const entryDate = new Date(entry.date);
-      return (
-        entryDate >= new Date(fromDate) &&
-        entryDate <= new Date(toDate) &&
-        entry.status === 'approved'
-      );
-    });
+    if (['insurance', 'pollution'].includes(category)) {
+      const vehicle = await Vehicle.findOne({ number: vehicleNo });
+      if (!vehicle) return res.status(404).json({ error: 'Vehicle not found' });
 
-    // Calculate total amount
-    const totalAmount = filteredEntries.reduce((sum, entry) => sum + (entry.amount || 0), 0);
+      const certs = vehicle.certificateHistory.filter(cert => {
+        const certDate = new Date(cert.updatedAt);
+        return certDate >= from && certDate <= to;
+      });
 
-    res.json({ totalAmount, count: filteredEntries.length });
-  } catch (error) {
-    console.error('Error calculating fuel expense:', error);
+      const entries = certs.map(cert => {
+        return {
+          amount:
+            category === 'insurance'
+              ? cert.insuranceExpense
+              : cert.pollutionExpense,
+          date: cert.updatedAt,
+          pen: '-',
+          name: category.charAt(0).toUpperCase() + category.slice(1)
+        };
+      });
+
+      const totalAmount = entries.reduce((sum, e) => sum + (e.amount || 0), 0);
+
+      return res.json({ totalAmount, count: entries.length, entries });
+    }
+
+    return res.status(400).json({ error: 'Invalid category' });
+  } catch (err) {
+    console.error('Error calculating expense:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

@@ -1,6 +1,3 @@
-// for validate vehicle number
-
-
 const express = require('express');
 const router = express.Router();
 const Vehicle = require('../models/Vehicle');
@@ -9,8 +6,7 @@ const multer = require('multer');
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-
-// Get all vehicle numbers for validation
+// GET all vehicle numbers
 router.get('/numbers', async (req, res) => {
   try {
     const vehicles = await Vehicle.find({}, 'number');
@@ -20,49 +16,36 @@ router.get('/numbers', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching vehicle numbers:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching vehicle numbers',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 });
-//Vlidate Vehicle number
 
+// VALIDATE a single vehicle number
 router.get('/check/:vehicleno', async (req, res) => {
   try {
-    const vehicleNo = req.params.vehicleno.toUpperCase(); // normalize input
-    const vehicle = await Vehicle.findOne({ number: vehicleNo });
-
-    if (vehicle) {
-      res.json({ exists: true });
-    } else {
-      res.json({ exists: false });
-    }
+    const vehicleNo = req.params.vehicleno.toUpperCase();
+    const exists = await Vehicle.exists({ number: vehicleNo });
+    res.json({ exists: !!exists });
   } catch (err) {
     console.error('Error checking vehicle:', err);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-
+// FETCH full vehicle data (including certificateHistory)
 router.get('/data/:vehicleno', async (req, res) => {
-  const { vehicleno } = req.params;
-
   try {
+    const vehicleno = req.params.vehicleno.toUpperCase();
     const vehicle = await Vehicle.findOne({ number: vehicleno });
-
     if (!vehicle) {
       return res.status(404).json({ message: 'Vehicle not found' });
     }
-
     res.status(200).json({ vehicle });
   } catch (error) {
     console.error('Error fetching vehicle details:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
-//update certificates
 
 router.post('/update-certificates', upload.fields([
   { name: 'insuranceFile', maxCount: 1 },
@@ -73,53 +56,56 @@ router.post('/update-certificates', upload.fields([
       vehicleNo,
       insurancePolicyNo,
       insuranceValidity,
-      pollutionValidity
+      insuranceExpense,
+      pollutionValidity,
+      pollutionExpense
     } = req.body;
 
-    if (!vehicleNo) {
-      return res.status(400).json({ message: 'Vehicle number is required.' });
-    }
+    if (!vehicleNo) return res.status(400).json({ message: 'Vehicle number is required.' });
 
     const vehicle = await Vehicle.findOne({ number: vehicleNo });
-    if (!vehicle) {
-      return res.status(404).json({ message: 'Vehicle not found.' });
-    }
+    if (!vehicle) return res.status(404).json({ message: 'Vehicle not found.' });
 
-    // Update basic fields if provided
-    if (insurancePolicyNo) vehicle.insurancePolicyNo = insurancePolicyNo;
-    if (insuranceValidity) vehicle.insuranceValidity = new Date(insuranceValidity);
-    if (pollutionValidity) vehicle.pollutionValidity = new Date(pollutionValidity);
+    const lastCert = vehicle.certificateHistory?.[vehicle.certificateHistory.length - 1] || {};
 
-    // Update insurance file if uploaded
+    const newCert = {
+      insurancePolicyNo: insurancePolicyNo || lastCert.insurancePolicyNo,
+      insuranceValidity: insuranceValidity ? new Date(insuranceValidity) : lastCert.insuranceValidity,
+      insuranceExpense: insuranceExpense ? Number(insuranceExpense) : lastCert.insuranceExpense,
+      pollutionValidity: pollutionValidity ? new Date(pollutionValidity) : lastCert.pollutionValidity,
+      pollutionExpense: pollutionExpense ? Number(pollutionExpense) : lastCert.pollutionExpense,
+      insuranceFile: lastCert.insuranceFile,
+      pollutionFile: lastCert.pollutionFile,
+      updatedAt: new Date()
+    };
+
     if (req.files.insuranceFile) {
       const file = req.files.insuranceFile[0];
-      vehicle.insuranceFile = {
+      newCert.insuranceFile = {
         data: file.buffer,
         contentType: file.mimetype,
         originalName: file.originalname
       };
     }
 
-    // Update pollution file if uploaded
     if (req.files.pollutionFile) {
       const file = req.files.pollutionFile[0];
-      vehicle.pollutionFile = {
+      newCert.pollutionFile = {
         data: file.buffer,
         contentType: file.mimetype,
         originalName: file.originalname
       };
     }
 
+    vehicle.certificateHistory.push(newCert);
     await vehicle.save();
-    res.status(200).json({ message: 'Vehicle certificate details updated successfully.' });
+
+    res.status(200).json({ message: 'Certificates updated successfully!' });
 
   } catch (error) {
     console.error('Error updating certificates:', error);
     res.status(500).json({ message: 'Server error while updating certificates.' });
   }
 });
-
-
-
 
 module.exports = router;
