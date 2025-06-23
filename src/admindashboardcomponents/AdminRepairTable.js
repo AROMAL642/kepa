@@ -6,8 +6,7 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  Typography,
-  CircularProgress
+  Typography
 } from '@mui/material';
 
 const RepairAdminTable = ({ themeStyle }) => {
@@ -15,25 +14,41 @@ const RepairAdminTable = ({ themeStyle }) => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedRepair, setSelectedRepair] = useState(null);
-  const [dialogLoading, setDialogLoading] = useState(false);
 
+  const [mechanicRequests, setMechanicRequests] = useState([]);
+  const [showMechanicTab, setShowMechanicTab] = useState(false);
+  const [mechanicDialogOpen, setMechanicDialogOpen] = useState(false);
+  const [selectedMechanicRequest, setSelectedMechanicRequest] = useState(null);
+  const [activeTab, setActiveTab] = useState('repair'); // 'repair', 'mechanic', or 'certificates'
+  const [certificateRequests, setCertificateRequests] = useState([]);
+  const [certificateFilter, setCertificateFilter] = useState('all');
+
+  const [verifyDialogOpen, setVerifyDialogOpen] = useState(false);
+  const [verifyEntry, setVerifyEntry] = useState(null);
+
+
+  
+ 
   const fetchRepairs = useCallback(async () => {
-    setLoading(true);
     try {
       const res = await fetch('http://localhost:5000/api/repair-request');
       const data = await res.json();
-
-      const formatted = data.map((item, index) => ({
-        slNo: index + 1,
-        id: item._id,
-        _id: item._id,
-        pen: item.pen,
-        vehicleNo: item.vehicleNo,
-        subject: item.subject,
-        description: item.description,
-        date: item.date,
-        status: item.status || 'pending',
-      }));
+      const formatted = Array.isArray(data)
+        ? data.map((item, index) => ({
+            id: item._id || index,
+            slNo: index + 1,
+            _id: item._id,
+            pen: item.pen,
+            vehicleNo: item.vehicleNo,
+            subject: item.subject,
+            description: item.description,
+            date: item.date,
+            status: item.status || 'pending',
+            billFile: item.billFile?.data
+              ? `data:${item.billFile.contentType};base64,${item.billFile.data}`
+              : ''
+          }))
+        : [];
 
       setRows(formatted);
     } catch (err) {
@@ -43,36 +58,89 @@ const RepairAdminTable = ({ themeStyle }) => {
     }
   }, []);
 
+  const fetchMechanicRequests = useCallback(async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/repair-request/forwarded');
+      const data = await res.json();
+      setMechanicRequests(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('❌ Error fetching mechanic requests:', err);
+      setMechanicRequests([]);
+    }
+  }, []);
+
+
+
+
+
+const fetchCertificates = async () => {
+  try {
+    const res = await fetch('http://localhost:5000/api/repair-request/for-generating-certificate');
+    const data = await res.json();
+    const formatted = Array.isArray(data)
+  ? data.map((item, index) => ({
+      id: item._id || index,
+      slNo: index + 1,
+      _id: item._id,
+      pen: item.pen,
+      date: item.date,
+      status: item.status,
+      billFile: item.finalBillFile?.data
+  ? `data:${item.finalBillFile.contentType};base64,${item.finalBillFile.data}`
+  : ''
+
+    }))
+  : [];
+
+setCertificateRequests(formatted);
+
+  } catch (err) {
+    console.error('Error fetching certificates:', err);
+    setCertificateRequests([]);
+  }
+};
+
+
+
+
+
+
   useEffect(() => {
     fetchRepairs();
-  }, [fetchRepairs]);
+    fetchMechanicRequests();
+  }, [fetchRepairs, fetchMechanicRequests]);
 
-  // 👇 Load full repair details with billFile when needed
-  const handleViewDetails = async (row) => {
-    setDialogLoading(true);
+
+ // for certificates
+useEffect(() => {
+  if (activeTab === 'certificates') {
+    fetchCertificates();
+    console.log("Fetching certificates because tab is active");
+  }
+}, [activeTab]);
+
+
+
+
+
+  const handleViewDetails = (row) => {
+    setSelectedRepair(row);
     setDialogOpen(true);
-
-    try {
-      const res = await fetch(`http://localhost:5000/api/repair-request/${row._id}`);
-      const data = await res.json();
-
-      const billFile =
-        data.billFile?.data && data.billFile?.contentType
-          ? `data:${data.billFile.contentType};base64,${data.billFile.data}`
-          : '';
-
-      setSelectedRepair({ ...data, billFile });
-    } catch (err) {
-      console.error('Error fetching full repair details:', err);
-      alert('Failed to load full repair details');
-    } finally {
-      setDialogLoading(false);
-    }
   };
 
   const handleClose = () => {
     setDialogOpen(false);
     setSelectedRepair(null);
+  };
+
+  const handleViewMechanicRequest = (row) => {
+    setSelectedMechanicRequest(row);
+    setMechanicDialogOpen(true);
+  };
+
+  const handleCloseMechanicDialog = () => {
+    setMechanicDialogOpen(false);
+    setSelectedMechanicRequest(null);
   };
 
   const updateStatus = async (id, status) => {
@@ -97,7 +165,7 @@ const RepairAdminTable = ({ themeStyle }) => {
   const forwardToMechanic = async (id) => {
     try {
       const res = await fetch(`http://localhost:5000/api/repair-request/${id}/forward-to-mechanic`, {
-        method: 'PUT',
+        method: 'PUT'
       });
 
       if (res.ok) {
@@ -113,6 +181,113 @@ const RepairAdminTable = ({ themeStyle }) => {
     }
   };
 
+
+const generateCertificates = async (id) => {
+  try {
+    const res = await fetch(`http://localhost:5000/api/repair-request/${id}/generate-certificates`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    const result = await res.json(); // <-- get proper message
+
+    if (res.ok) {
+      alert(result.message ? '✅ ' + result.message : '✅ Certificates generated successfully');
+
+      fetchCertificates();
+    } else {
+      alert('❌ Failed to generate certificates: ' + (result.message || 'Unknown error'));
+    }
+  } catch (err) {
+    console.error(err);
+    alert('❌ Server/network error occurred while generating certificate');
+  }
+};
+
+
+
+
+
+   const handlePrepareEC = async (id) => {
+    await generateCertificates(id);
+  };
+
+  const handlePrepareTC = async (id) => {
+    await generateCertificates(id);};
+
+  const handleViewEC = (id) => {
+   window.open(`http://localhost:5000/api/repair-request/${id}/view-ec`, '_blank');
+
+  };
+
+  const handleViewTC = (id) => {
+   window.open(`http://localhost:5000/api/repair-request/${id}/view-tc`, '_blank');
+
+  };
+
+// newly added for verifying bill frpm repair section 
+
+const verifyFinalBill = (entry) => {
+  setVerifyEntry(entry);
+  setVerifyDialogOpen(true);
+};
+
+
+
+const handleConfirmVerification = async () => {
+  try {
+    const res = await fetch(`http://localhost:5000/api/repair-request/${verifyEntry._id}/verify-and-send-to-mechanic`, {
+      method: 'PUT'
+    });
+
+    const result = await res.json();
+
+    if (res.ok) {
+      alert('✅ Request verified and sent to Mechanic');
+      setVerifyDialogOpen(false);
+      fetchCertificates(); // Refresh table
+    } else {
+      alert(`❌ Failed to verify: ${result.message || 'Unknown error'}`);
+    }
+  } catch (err) {
+    console.error('Verification error:', err);
+    alert('❌ Network error while verifying final bill.');
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  const statusStyle = (status) => {
+    const pretty = status
+      .toLowerCase()
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, c => c.toUpperCase());
+    const color = {
+      verified: 'green',
+      rejected: 'red',
+      pending: 'gray',
+      forwarded: 'blue',
+      sent_to_repair_admin: 'orange',
+      generating_certificates: 'purple',
+      
+    }[status] || 'black';
+    return <strong style={{ color }}>{pretty}</strong>;
+  };
+
+
   const columns = [
     { field: 'slNo', headerName: 'Sl. No', width: 90 },
     { field: 'vehicleNo', headerName: 'Vehicle No', width: 130 },
@@ -121,14 +296,15 @@ const RepairAdminTable = ({ themeStyle }) => {
     {
       field: 'status',
       headerName: 'Status',
-      width: 140,
+      width: 160,
       renderCell: (params) => {
         const colorMap = {
           verified: 'green',
           rejected: 'red',
           pending: 'gray',
           forwarded: 'blue',
-          sent_to_repair_admin: 'orange'
+          sent_to_repair_admin: 'orange',
+           generating_certificates: 'purple'
         };
         return (
           <strong style={{ color: colorMap[params.value] || 'gray' }}>
@@ -142,7 +318,10 @@ const RepairAdminTable = ({ themeStyle }) => {
       headerName: 'Actions',
       width: 300,
       renderCell: (params) => {
-        const isVerifiedOrBeyond = ['verified', 'forwarded', 'sent_to_repair_admin', 'user_approved'].includes(params.row.status);
+        const status = params.row.status;
+        const isVerified = status === 'verified';
+        const isForwarded = status === 'forwarded';
+        const isRejected = status === 'rejected';
 
         return (
           <>
@@ -162,7 +341,7 @@ const RepairAdminTable = ({ themeStyle }) => {
                 await updateStatus(params.row._id, 'verified');
                 await forwardToMechanic(params.row._id);
               }}
-              disabled={isVerifiedOrBeyond}
+              disabled={isVerified || isForwarded}
               style={{ marginRight: 4 }}
             >
               Verify
@@ -172,7 +351,7 @@ const RepairAdminTable = ({ themeStyle }) => {
               color="error"
               size="small"
               onClick={() => updateStatus(params.row._id, 'rejected')}
-              disabled={params.row.status === 'rejected'}
+              disabled={isRejected}
             >
               Reject
             </Button>
@@ -183,26 +362,200 @@ const RepairAdminTable = ({ themeStyle }) => {
   ];
 
   return (
-    <div style={{ height: 600, width: '100%', ...themeStyle }}>
-      <h2>Repair Requests</h2>
-      <DataGrid
-        rows={rows}
-        columns={columns}
-        loading={loading}
-        pageSize={5}
-        rowsPerPageOptions={[5, 10]}
-        style={{ background: themeStyle.background, color: themeStyle.color }}
-      />
+    <div style={{ width: '100%', ...themeStyle }}>
+      <h2>
+  {activeTab === 'repair'
+    ? 'Repair Requests'
+    : activeTab === 'mechanic'
+    ? 'Mechanic Requests'
+    : 'Certificates'}
+</h2>
 
-      {/* Repair Details Dialog */}
+
+      <div style={{ marginBottom: 10 }}>
+  <Button
+    variant={activeTab === 'repair' ? 'contained' : 'outlined'}
+    onClick={() => setActiveTab('repair')}
+    style={{ marginRight: 10 }}
+  >
+    Repair Requests
+  </Button>
+  <Button
+    variant={activeTab === 'mechanic' ? 'contained' : 'outlined'}
+    onClick={() => setActiveTab('mechanic')}
+    style={{ marginRight: 10 }}
+  >
+    Mechanic Requests
+  </Button>
+  <Button
+    variant={activeTab === 'certificates' ? 'contained' : 'outlined'}
+    onClick={() => setActiveTab('certificates')}
+  >
+    Certificates
+  </Button>
+</div>
+
+
+     {activeTab === 'repair' ? (
+  <div style={{ height: 600 }}>
+    <DataGrid
+      rows={rows}
+      columns={columns}
+      loading={loading}
+      pageSize={5}
+      rowsPerPageOptions={[5, 10]}
+      style={{ background: themeStyle?.background, color: themeStyle?.color }}
+    />
+  </div>
+) : activeTab === 'mechanic' ? (
+  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+    <thead>
+      <tr>
+        <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>Sl No</th>
+        <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>Vehicle No</th>
+        <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>PEN</th>
+        <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>Date</th>
+        <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {(mechanicRequests || [])
+        .filter(req => req.forwardedToMechanic)
+        .map((req, index) => (
+          <tr key={req._id}>
+            <td style={{ padding: 10 }}>{index + 1}</td>
+            <td style={{ padding: 10 }}>{req.vehicleNo}</td>
+            <td style={{ padding: 10 }}>{req.pen}</td>
+            <td style={{ padding: 10 }}>{req.date}</td>
+            <td style={{ padding: 10 }}>
+              <Button variant="outlined" onClick={() => handleViewMechanicRequest(req)}>View</Button>
+            </td>
+          </tr>
+        ))}
+    </tbody>
+  </table>
+) : activeTab === 'certificates' ? (
+  
+
+  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+  <thead>
+    <tr>
+      <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>Sl No</th>
+      <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>Date</th>
+      <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>PEN No</th>
+      <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>Status</th>
+      <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>View Bill</th>
+      <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>Essentiality Certificate</th>
+<th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>Technical Certificate</th>
+<th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>Verify</th>
+
+    </tr>
+  </thead>
+  <tbody>
+    {certificateRequests.map((cert, index) => (
+      <tr key={cert._id}>
+        <td style={{ padding: 10 }}>{cert.slNo}</td>
+        <td style={{ padding: 10 }}>{cert.date}</td>
+        <td style={{ padding: 10 }}>{cert.pen}</td>
+        <td style={{ padding: 10 }}>{statusStyle(cert.status)}</td>
+        <td style={{ padding: 10 }}>
+         {cert.billFile ? (
+  <Button
+    variant="outlined"
+    onClick={() => {
+      setSelectedRepair(cert);
+      setDialogOpen(true);
+    }}
+  >
+    View
+  </Button>
+) : (
+  <Typography variant="body2" color="textSecondary">No File</Typography>
+)}
+
+        </td>
+        {/* EC column */}
+<td style={{ padding: 10 }}>
+  <Button
+    variant="contained"
+    color="primary"
+    onClick={() => handlePrepareEC(cert._id)}
+    disabled={cert.status !== 'for_generating_certificate'}
+  >
+    Prepare EC
+  </Button>
+  <Button
+    variant="outlined"
+    style={{ marginLeft: 8 }}
+    onClick={() => handleViewEC(cert._id)}
+    disabled={
+      !['certificate_ready', 'waiting_for_sanction', 'sanctioned_for_work' , 'ongoing_work'].includes(cert.status)
+    }
+  >
+    View EC
+  </Button>
+</td>
+
+{/* TC column */}
+<td style={{ padding: 10 }}>
+  <Button
+    variant="contained"
+    color="primary"
+    onClick={() => handlePrepareTC(cert._id)}
+    disabled={cert.status !== 'for_generating_certificate'}
+  >
+    Prepare TC
+  </Button>
+  <Button
+    variant="outlined"
+    style={{ marginLeft: 8 }}
+    onClick={() => handleViewTC(cert._id)}
+    disabled={
+      !['certificate_ready', 'waiting_for_sanction', 'sanctioned_for_work' , 'ongoing_work'].includes(cert.status)
+    }
+  >
+    View TC
+  </Button>
+</td>
+
+{/* VERIFY column */}
+<td style={{ padding: 10 }}>
+  {cert.status === 'sanctioned_for_work' ? (
+    <Button
+      variant="contained"
+      color="success"
+      onClick={() => {
+        setVerifyEntry(cert);
+        setVerifyDialogOpen(true);
+      }}
+    >
+      Verify
+    </Button>
+  ) : cert.status === 'ongoing_work' ? (
+    <Typography style={{ color: 'green', fontWeight: 'bold' }}>✔ Verified</Typography>
+  ) : (
+    <Typography variant="body2" color="textSecondary">N/A</Typography>
+  )}
+
+
+
+
+
+
+        </td>
+      </tr>
+    ))}
+  </tbody>
+</table>
+
+) : null}
+
+
+      {/* Repair Request Dialog */}
       <Dialog open={dialogOpen} onClose={handleClose} fullWidth maxWidth="sm">
         <DialogTitle>Repair Request Details</DialogTitle>
         <DialogContent>
-          {dialogLoading ? (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
-              <CircularProgress />
-            </div>
-          ) : selectedRepair ? (
+          {selectedRepair && (
             <>
               <Typography><strong>Vehicle No:</strong> {selectedRepair.vehicleNo}</Typography>
               <Typography><strong>PEN:</strong> {selectedRepair.pen}</Typography>
@@ -221,14 +574,154 @@ const RepairAdminTable = ({ themeStyle }) => {
                 <Typography color="textSecondary">No Bill File Available</Typography>
               )}
             </>
-          ) : (
-            <Typography>No details available.</Typography>
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose} variant="contained">Close</Button>
         </DialogActions>
       </Dialog>
+
+      {/* Mechanic Request Dialog */}
+      <Dialog open={mechanicDialogOpen} onClose={handleCloseMechanicDialog} fullWidth maxWidth="md">
+        <DialogTitle>Mechanic Request Details</DialogTitle>
+        <DialogContent>
+          {selectedMechanicRequest && selectedMechanicRequest.partsList?.length > 0 ? (
+            <>
+              <Typography><strong>Vehicle No:</strong> {selectedMechanicRequest.vehicleNo}</Typography>
+              <Typography><strong>Work Done:</strong> {selectedMechanicRequest.workDone}</Typography>
+              <Typography><strong>Date:</strong> {selectedMechanicRequest.date}</Typography>
+              <Typography><strong>Subject:</strong> {selectedMechanicRequest.subject}</Typography>
+
+              <Typography variant="h6" style={{ marginTop: '16px' }}>Parts Required</Typography>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr>
+                    <th style={{ borderBottom: '1px solid #ccc', padding: '6px' }}>Sl No</th>
+                    <th style={{ borderBottom: '1px solid #ccc', padding: '6px' }}>Item</th>
+                    <th style={{ borderBottom: '1px solid #ccc', padding: '6px' }}>Quantity</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedMechanicRequest.partsList.map((part, idx) => (
+                    <tr key={idx}>
+                      <td style={{ padding: '6px' }}>{idx + 1}</td>
+                      <td style={{ padding: '6px' }}>{part.item}</td>
+                      <td style={{ padding: '6px' }}>{part.quantity}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {selectedMechanicRequest.finalBillFile ? (
+                <>
+                  <Typography variant="h6" style={{ marginTop: '16px' }}>Uploaded Bill</Typography>
+                  {selectedMechanicRequest.finalBillFile.contentType.includes('pdf') ? (
+                    <iframe
+                      src={`data:${selectedMechanicRequest.finalBillFile.contentType};base64,${selectedMechanicRequest.finalBillFile.data}`}
+                      title="Bill Preview"
+                      style={{
+                        width: '100%',
+                        maxHeight: '500px',
+                        border: '1px solid #ccc',
+                        borderRadius: 4
+                      }}
+                    />
+                  ) : (
+                    <img
+                      src={`data:${selectedMechanicRequest.finalBillFile.contentType};base64,${selectedMechanicRequest.finalBillFile.data}`}
+                      alt="Bill"
+                      style={{
+                        maxWidth: '100%',
+                        maxHeight: '500px',
+                        display: 'block',
+                        margin: 'auto',
+                        objectFit: 'contain',
+                        borderRadius: 6,
+                        border: '1px solid #ddd'
+                      }}
+                    />
+                  )}
+                </>
+              ) : (
+                <Typography color="textSecondary">No Bill Uploaded</Typography>
+              )}
+            </>
+          ) : (
+            <Typography>No mechanic request details available.</Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseMechanicDialog}>Close</Button>
+          <Button
+            variant="contained"
+            color="success"
+            onClick={async () => {
+              try {
+                const res = await fetch(`http://localhost:5000/api/repair-request/forward-to-repair`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ id: selectedMechanicRequest._id })
+                });
+
+                const result = await res.json();
+
+                if (res.ok) {
+                  alert('✅ Request forwarded to Repair Section');
+                  fetchRepairs();
+                  handleCloseMechanicDialog();
+                } else {
+                  alert(`❌ Failed: ${result.message || 'Unable to forward request'}`);
+                }
+              } catch (err) {
+                console.error('Fetch error:', err);
+                alert('❌ Error while forwarding the request. Please try again.');
+              }
+            }}
+          >
+            Forward to Repair Section
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+
+
+      {/* Verify Dialog for sanctioned_for_work */}
+<Dialog
+  open={verifyDialogOpen}
+  onClose={() => setVerifyDialogOpen(false)}
+  fullWidth
+  maxWidth="sm"
+>
+  <DialogTitle>Verify and Send to Mechanic</DialogTitle>
+  <DialogContent dividers>
+    {verifyEntry && (
+      <>
+        
+        <Typography><strong>PEN:</strong> {verifyEntry.pen}</Typography>
+        <Typography><strong>Date:</strong> {verifyEntry.date}</Typography>
+        <Typography><strong>Status:</strong> {verifyEntry.status}</Typography>
+        {verifyEntry.billFile ? (
+          <iframe
+            src={verifyEntry.billFile}
+            title="Final Bill"
+            style={{ width: '100%', height: '400px', marginTop: 10 }}
+          />
+        ) : (
+          <Typography color="textSecondary" sx={{ mt: 2 }}>No bill uploaded</Typography>
+        )}
+      </>
+    )}
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={handleConfirmVerification} color="success" variant="contained">
+      Verified
+    </Button>
+    <Button onClick={() => setVerifyDialogOpen(false)} variant="outlined">
+      Cancel
+    </Button>
+  </DialogActions>
+</Dialog>
+
     </div>
   );
 };

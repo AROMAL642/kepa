@@ -265,11 +265,16 @@ const repairRequestRoutes = require('./routes/repairRequestRoutes');
 app.use('/api/repairRequestRoutes', require('./routes/repairRequestRoutes'));
 app.use('/api/repair-request', require('./routes/repairRequestRoutes'));
 
-
-
 const repairRoutes = require('./routes/repairRequestRoutes');
 app.use('/api/repairs', repairRoutes);
 app.use('/api/repair', repairRoutes);
+
+
+
+// mechanic repair section
+
+//const mechanicRepairRoutes = require('./routes/mechanicRepairRoutes');
+//app.use('/api', mechanicRepairRoutes);
 
 //stock register
 const stockRoutes = require('./routes/stockRoutes');

@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { DataGrid } from '@mui/x-data-grid';
+import {
+  DataGrid
+} from '@mui/x-data-grid';
 import {
   CircularProgress,
   Button,
@@ -8,6 +10,10 @@ import {
   DialogContent,
   DialogActions,
   Typography,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  TextField,
   useMediaQuery,
   useTheme
 } from '@mui/material';
@@ -20,9 +26,12 @@ function MechanicPendingRequests() {
   const [modalOpen, setModalOpen] = useState(false);
   const [filePreviewOpen, setFilePreviewOpen] = useState(false);
   const [fileToPreview, setFileToPreview] = useState(null);
+  const [workDoneChoice, setWorkDoneChoice] = useState('');
+  const [partsList, setPartsList] = useState([{ item: '', quantity: '' }]);
+  const [billFile, setBillFile] = useState(null);
 
-  const theme = useTheme();
-  const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
+  const theme = useTheme(); // ✅ added
+  const fullScreen = useMediaQuery(theme.breakpoints.down('md')); // ✅ added
 
   useEffect(() => {
     fetch('http://localhost:5000/api/repairs')
@@ -38,6 +47,7 @@ function MechanicPendingRequests() {
           description: req.description,
           userName: req.userName || 'N/A',
           repairStatus: req.repairStatus,
+          status: req.status,
           mechanicFeedback: req.mechanicFeedback,
           workDone: req.workDone || 'No',
           billImage: req.billFile
@@ -58,6 +68,9 @@ function MechanicPendingRequests() {
 
   const handleReviewClick = (row) => {
     setSelectedRequest(row);
+    setWorkDoneChoice('');
+    setPartsList([{ item: '', quantity: '' }]);
+    setBillFile(null);
     setModalOpen(true);
   };
 
@@ -66,13 +79,11 @@ function MechanicPendingRequests() {
     setSelectedRequest(null);
   };
 
-  const handleWorkCompleted = (id) => {
-    fetch(`http://localhost:5000/api/repairs/${id}/complete`, {
+  const handleWorkCompleted = () => {
+    fetch(`http://localhost:5000/api/repairs/${selectedRequest.id}/complete`, {
       method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ workDone: 'Yes' }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ workDone: 'Yes' })
     })
       .then((res) => res.json())
       .then((updated) => {
@@ -80,19 +91,17 @@ function MechanicPendingRequests() {
           alert('Update failed.');
           return;
         }
-
         setRequests((prev) =>
           prev.map((r) =>
-            r.id === id
+            r.id === selectedRequest.id
               ? {
                   ...r,
                   workDone: 'Yes',
-                  repairStatus: 'completed',
+                  repairStatus: 'completed'
                 }
               : r
           )
         );
-
         handleCloseModal();
       })
       .catch((err) => {
@@ -111,6 +120,64 @@ function MechanicPendingRequests() {
     setFilePreviewOpen(false);
   };
 
+  const addPartRow = () => {
+    setPartsList(prev => [...prev, { item: '', quantity: '' }]);
+  };
+
+  const handlePartChange = (index, field, value) => {
+    const updated = [...partsList];
+    updated[index][field] = value;
+    setPartsList(updated);
+  };
+
+  const handlePartsSubmit = async () => {
+    if (!selectedRequest) return;
+    const formData = {
+      mechanicFeedback: '',
+      needsParts: true,
+      partsList: partsList.map(p => ({
+        item: p.item,
+        quantity: parseInt(p.quantity)
+      })),
+      billFile: null
+    };
+
+    if (billFile) {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64Data = reader.result.split(',')[1];
+        formData.billFile = {
+          data: base64Data,
+          contentType: billFile.type
+        };
+
+        await sendPartsRequest(formData);
+      };
+      reader.readAsDataURL(billFile);
+    } else {
+      await sendPartsRequest(formData);
+    }
+  };
+
+  const sendPartsRequest = async (formData) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/repair-request/${selectedRequest.id}/mechanic-update`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      if (res.ok) {
+        alert('Parts request submitted');
+        handleCloseModal();
+      } else {
+        alert('Failed to submit parts request');
+      }
+    } catch (err) {
+      console.error('Error submitting parts request:', err);
+      alert('Error submitting parts request');
+    }
+  };
+
   const columns = [
     { field: 'serial', headerName: '#', width: 60 },
     { field: 'vehicleNo', headerName: 'Vehicle No', width: 120 },
@@ -118,6 +185,39 @@ function MechanicPendingRequests() {
     { field: 'date', headerName: 'Date', width: 110 },
     { field: 'subject', headerName: 'Subject', width: 150 },
     { field: 'description', headerName: 'Description', width: 200 },
+   {
+  field: 'status',
+  headerName: 'Status',
+  width: 150,
+  renderCell: (params) => {
+    let color = 'black';
+
+    switch (params.value) {
+      case 'completed':
+        color = 'green';
+        break;
+      case 'ongoing_work':
+        color = 'orange';
+        break;
+      case 'sanctioned_for_work':
+        color = 'purple';
+        break;
+      case 'certificate_ready':
+        color = '#007bff'; // bootstrap blue
+        break;
+      case 'forwarded':
+      case 'sent_to_repair_admin':
+        color = '#6c757d'; // gray
+        break;
+      default:
+        color = 'black';
+    }
+
+    return <strong style={{ color }}>{params.value}</strong>;
+  }
+}
+,
+
     { field: 'repairStatus', headerName: 'Repair Status', width: 140 },
     {
       field: 'workDone',
@@ -145,7 +245,7 @@ function MechanicPendingRequests() {
           </Button>
         ) : (
           'N/A'
-        ),
+        )
     },
     {
       field: 'review',
@@ -161,7 +261,7 @@ function MechanicPendingRequests() {
           Review
         </Button>
       )
-    },
+    }
   ];
 
   return (
@@ -186,33 +286,64 @@ function MechanicPendingRequests() {
         </div>
       )}
 
-      {/* Review Dialog */}
-      <Dialog
-        open={modalOpen}
-        onClose={handleCloseModal}
-        fullScreen={fullScreen}
-        maxWidth="sm"
-        fullWidth
-      >
+      {/* Modal for Review */}
+      <Dialog open={modalOpen} onClose={handleCloseModal} fullWidth maxWidth="md">
         <DialogTitle>Repair Review</DialogTitle>
         <DialogContent dividers>
           {selectedRequest && (
             <>
-              <Typography className="dialog-text"><strong>Vehicle No:</strong> {selectedRequest.vehicleNo}</Typography>
-              <Typography className="dialog-text"><strong>Description:</strong> {selectedRequest.description}</Typography>
-              <Typography><strong>Work Done:</strong> {selectedRequest.workDone}</Typography>
+              <Typography><strong>Vehicle No:</strong> {selectedRequest.vehicleNo}</Typography>
+              <Typography><strong>Description:</strong> {selectedRequest.description}</Typography>
+
+              <Typography sx={{ mt: 2 }}><strong>Is Work Done?</strong></Typography>
+              <RadioGroup
+                row
+                value={workDoneChoice}
+                onChange={(e) => setWorkDoneChoice(e.target.value)}
+              >
+                <FormControlLabel value="yes" control={<Radio />} label="Yes" />
+                <FormControlLabel value="no" control={<Radio />} label="No" />
+              </RadioGroup>
+
+              {workDoneChoice === 'no' && (
+                <>
+                  <Typography sx={{ mt: 2 }}><strong>Parts Required</strong></Typography>
+                  {partsList.map((part, idx) => (
+                    <div key={idx} style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+                      <TextField
+                        label="Item"
+                        size="small"
+                        value={part.item}
+                        onChange={(e) => handlePartChange(idx, 'item', e.target.value)}
+                      />
+                      <TextField
+                        label="Quantity"
+                        size="small"
+                        type="number"
+                        value={part.quantity}
+                        onChange={(e) => handlePartChange(idx, 'quantity', e.target.value)}
+                      />
+                    </div>
+                  ))}
+                  <Button sx={{ mt: 1 }} onClick={addPartRow}>+ Add More</Button>
+
+                  <Typography sx={{ mt: 2 }}><strong>Upload Bill</strong></Typography>
+                  <input type="file" onChange={(e) => setBillFile(e.target.files[0])} />
+                </>
+              )}
             </>
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseModal}>Close</Button>
           {selectedRequest?.workDone !== 'Yes' && (
-            <Button
-              variant="contained"
-              color="success"
-              onClick={() => handleWorkCompleted(selectedRequest.id)}
-            >
-              Mark as Completed
+            <Button variant="contained" color="success" onClick={handleWorkCompleted}>
+              Work Completed
+            </Button>
+          )}
+          {workDoneChoice === 'no' && (
+            <Button variant="contained" color="warning" onClick={handlePartsSubmit}>
+              Submit Parts Request
             </Button>
           )}
         </DialogActions>

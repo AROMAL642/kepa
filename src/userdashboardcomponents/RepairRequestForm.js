@@ -1,5 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const baseStyles = {
   container: {
@@ -64,6 +66,8 @@ const baseStyles = {
 };
 
 const RepairRequestForm = ({ pen }) => {
+  const navigate = useNavigate();
+
   const [vehicleNo, setVehicleNo] = useState('');
   const [vehicleStatus, setVehicleStatus] = useState('');
   const [subject, setSubject] = useState('');
@@ -128,10 +132,17 @@ const RepairRequestForm = ({ pen }) => {
         },
       });
 
-      alert('Request submitted successfully');
+      alert('✅ Request submitted successfully');
+      setVehicleNo('');
+      setVehicleStatus('');
+      setDate(new Date().toISOString().split('T')[0]);
+      setSubject('');
+      setDescription('');
+      setBillFile(null);
+      document.querySelector('input[type="file"]').value = '';
     } catch (err) {
       console.error('Error submitting form:', err.response?.data || err.message);
-      alert('Error submitting form.');
+      alert('❌ Error submitting form.');
     }
   };
 
@@ -180,6 +191,8 @@ const RepairRequestForm = ({ pen }) => {
               readOnly
               style={{ ...baseStyles.input, backgroundColor: '#f0f0f0' }}
             />
+
+           
 
             <label>Date</label>
             <input
