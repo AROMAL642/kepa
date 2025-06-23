@@ -3,26 +3,14 @@ const router = express.Router();
 const User = require('../models/User');
 
 // Get all verified users (role=user, verified=YES)
+// Get all verified users (optimized)
 router.get('/verified-users', async (req, res) => {
   try {
     const users = await User.find(
       { verified: 'YES' },
-      { 
-        name: 1, 
-        pen: 1, 
-        generalNo: 1, 
-        phone: 1, 
-        email: 1,
-        photo: 1,
-        signature: 1,
-        dob: 1,
-        licenseNo: 1,
-        bloodGroup: 1,
-        gender: 1,
-        role: 1 
-      }
+      { name: 1, pen: 1, generalNo: 1, phone: 1, role: 1 } // removed photo, email, etc.
     ).lean();
-    
+
     res.status(200).json(users);
   } catch (err) {
     console.error('Error fetching verified users:', err);

@@ -222,6 +222,7 @@ app.use('/api/vehicles', addRemoveVehicleRoutes);
 
 const searchVehicleRoute = require('./routes/searchVehicle');
 app.use('/', searchVehicleRoute);
+app.use('/api/vehicle', searchVehicleRoute);
 
 
 //assign vehicle
@@ -239,13 +240,12 @@ app.use('/api/fuel', fuelRoutes);
 // vehicle number validation
 const vehicleRoutes = require('./routes/vehicleRoutes');
 app.use('/api/vehicles', vehicleRoutes);
-
-
-
+app.use('/api/vehicle', vehicleRoutes);
 //fetch all verified users
 
 const userDetailsRoutes = require('./routes/userDetailsRoutes');
 app.use('/api/user-details', userDetailsRoutes);
+
 
 //delete user by admin
 

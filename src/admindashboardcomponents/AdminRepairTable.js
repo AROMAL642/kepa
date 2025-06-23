@@ -15,32 +15,36 @@ const RepairAdminTable = ({ themeStyle }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedRepair, setSelectedRepair] = useState(null);
 
-  // New mechanic request-related states
   const [mechanicRequests, setMechanicRequests] = useState([]);
   const [showMechanicTab, setShowMechanicTab] = useState(false);
   const [mechanicDialogOpen, setMechanicDialogOpen] = useState(false);
   const [selectedMechanicRequest, setSelectedMechanicRequest] = useState(null);
+  const [activeTab, setActiveTab] = useState('repair'); // 'repair', 'mechanic', or 'certificates'
+  const [certificateRequests, setCertificateRequests] = useState([]);
+  const [certificateFilter, setCertificateFilter] = useState('all');
 
-  // Fetch repair requests
+  
+ 
   const fetchRepairs = useCallback(async () => {
     try {
       const res = await fetch('http://localhost:5000/api/repair-request');
       const data = await res.json();
-
-      const formatted = data.map((item, index) => ({
-        slNo: index + 1,
-        id: item._id,
-        _id: item._id,
-        pen: item.pen,
-        vehicleNo: item.vehicleNo,
-        subject: item.subject,
-        description: item.description,
-        date: item.date,
-        status: item.status || 'pending',
-        billFile: item.billFile?.data
-          ? `data:${item.billFile.contentType};base64,${item.billFile.data}`
-          : ''
-      }));
+      const formatted = Array.isArray(data)
+        ? data.map((item, index) => ({
+            id: item._id || index,
+            slNo: index + 1,
+            _id: item._id,
+            pen: item.pen,
+            vehicleNo: item.vehicleNo,
+            subject: item.subject,
+            description: item.description,
+            date: item.date,
+            status: item.status || 'pending',
+            billFile: item.billFile?.data
+              ? `data:${item.billFile.contentType};base64,${item.billFile.data}`
+              : ''
+          }))
+        : [];
 
       setRows(formatted);
     } catch (err) {
@@ -50,18 +54,70 @@ const RepairAdminTable = ({ themeStyle }) => {
     }
   }, []);
 
+  const fetchMechanicRequests = useCallback(async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/repair-request/forwarded');
+      const data = await res.json();
+      setMechanicRequests(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('❌ Error fetching mechanic requests:', err);
+      setMechanicRequests([]);
+    }
+  }, []);
+
+
+
+
+
+const fetchCertificates = async () => {
+  try {
+    const res = await fetch('http://localhost:5000/api/repair-request/for-generating-certificate');
+    const data = await res.json();
+    const formatted = Array.isArray(data)
+  ? data.map((item, index) => ({
+      id: item._id || index,
+      slNo: index + 1,
+      _id: item._id,
+      pen: item.pen,
+      date: item.date,
+      status: item.status,
+      billFile: item.finalBillFile?.data
+  ? `data:${item.finalBillFile.contentType};base64,${item.finalBillFile.data}`
+  : ''
+
+    }))
+  : [];
+
+setCertificateRequests(formatted);
+
+  } catch (err) {
+    console.error('Error fetching certificates:', err);
+    setCertificateRequests([]);
+  }
+};
+
+
+
+
+
+
   useEffect(() => {
     fetchRepairs();
-  }, [fetchRepairs]);
+    fetchMechanicRequests();
+  }, [fetchRepairs, fetchMechanicRequests]);
 
-  // Fetch mechanic requests
-  useEffect(() => {
-    fetch('http://localhost:5000/api/repair-request/forwarded')
 
-      .then(res => res.json())
-      .then(data => setMechanicRequests(data))
-      .catch(err => console.error('Failed to load mechanic requests:', err));
-  }, []);
+ // for certificates
+useEffect(() => {
+  if (activeTab === 'certificates') {
+    fetchCertificates();
+    console.log("Fetching certificates because tab is active");
+  }
+}, [activeTab]);
+
+
+
+
 
   const handleViewDetails = (row) => {
     setSelectedRepair(row);
@@ -121,6 +177,106 @@ const RepairAdminTable = ({ themeStyle }) => {
     }
   };
 
+
+const generateCertificates = async (id) => {
+  try {
+    const res = await fetch(`http://localhost:5000/api/repair-request/${id}/generate-certificates`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    const result = await res.json(); // <-- get proper message
+
+    if (res.ok) {
+      alert(result.message ? '✅ ' + result.message : '✅ Certificates generated successfully');
+
+      fetchCertificates();
+    } else {
+      alert('❌ Failed to generate certificates: ' + (result.message || 'Unknown error'));
+    }
+  } catch (err) {
+    console.error(err);
+    alert('❌ Server/network error occurred while generating certificate');
+  }
+};
+
+
+
+
+
+   const handlePrepareEC = async (id) => {
+    await generateCertificates(id);
+  };
+
+  const handlePrepareTC = async (id) => {
+    await generateCertificates(id);};
+
+  const handleViewEC = (id) => {
+   window.open(`http://localhost:5000/api/repair-request/${id}/view-ec`, '_blank');
+
+  };
+
+  const handleViewTC = (id) => {
+   window.open(`http://localhost:5000/api/repair-request/${id}/view-tc`, '_blank');
+
+  };
+
+// newly added for verifying bill frpm repair section 
+
+const verifyFinalBill = async (id) => {
+  try {
+    const res = await fetch(`http://localhost:5000/api/repair-request/${id}/verify-final-bill`, {
+      method: 'PUT'
+    });
+
+    const result = await res.json();
+
+    if (res.ok) {
+      alert('✅ Final bill verified. Notification sent to mechanic.');
+      fetchCertificates(); // Refresh data
+    } else {
+      alert(`❌ Failed to verify: ${result.message || 'Unknown error'}`);
+    }
+  } catch (err) {
+    console.error('Verification error:', err);
+    alert('❌ Network error while verifying final bill.');
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  const statusStyle = (status) => {
+    const pretty = status
+      .toLowerCase()
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, c => c.toUpperCase());
+    const color = {
+      verified: 'green',
+      rejected: 'red',
+      pending: 'gray',
+      forwarded: 'blue',
+      sent_to_repair_admin: 'orange',
+      generating_certificates: 'purple',
+      
+    }[status] || 'black';
+    return <strong style={{ color }}>{pretty}</strong>;
+  };
+
+
   const columns = [
     { field: 'slNo', headerName: 'Sl. No', width: 90 },
     { field: 'vehicleNo', headerName: 'Vehicle No', width: 130 },
@@ -136,7 +292,8 @@ const RepairAdminTable = ({ themeStyle }) => {
           rejected: 'red',
           pending: 'gray',
           forwarded: 'blue',
-          'sent_to_repair_admin': 'orange'
+          sent_to_repair_admin: 'orange',
+           generating_certificates: 'purple'
         };
         return (
           <strong style={{ color: colorMap[params.value] || 'gray' }}>
@@ -195,25 +352,40 @@ const RepairAdminTable = ({ themeStyle }) => {
 
   return (
     <div style={{ width: '100%', ...themeStyle }}>
-      <h2>{showMechanicTab ? 'Mechanic Requests' : 'Repair Requests'}</h2>
+      <h2>
+  {activeTab === 'repair'
+    ? 'Repair Requests'
+    : activeTab === 'mechanic'
+    ? 'Mechanic Requests'
+    : 'Certificates'}
+</h2>
+
 
       <div style={{ marginBottom: 10 }}>
-        <Button
-          variant={!showMechanicTab ? 'contained' : 'outlined'}
-          onClick={() => setShowMechanicTab(false)}
-          style={{ marginRight: 10 }}
-        >
-          Repair Requests
-        </Button>
-        <Button
-          variant={showMechanicTab ? 'contained' : 'outlined'}
-          onClick={() => setShowMechanicTab(true)}
-        >
-          Mechanic Requests
-        </Button>
-      </div>
+  <Button
+    variant={activeTab === 'repair' ? 'contained' : 'outlined'}
+    onClick={() => setActiveTab('repair')}
+    style={{ marginRight: 10 }}
+  >
+    Repair Requests
+  </Button>
+  <Button
+    variant={activeTab === 'mechanic' ? 'contained' : 'outlined'}
+    onClick={() => setActiveTab('mechanic')}
+    style={{ marginRight: 10 }}
+  >
+    Mechanic Requests
+  </Button>
+  <Button
+    variant={activeTab === 'certificates' ? 'contained' : 'outlined'}
+    onClick={() => setActiveTab('certificates')}
+  >
+    Certificates
+  </Button>
+</div>
 
-      {!showMechanicTab ? (
+
+     {activeTab === 'repair' ? (
   <div style={{ height: 600 }}>
     <DataGrid
       rows={rows}
@@ -221,10 +393,10 @@ const RepairAdminTable = ({ themeStyle }) => {
       loading={loading}
       pageSize={5}
       rowsPerPageOptions={[5, 10]}
-      style={{ background: themeStyle.background, color: themeStyle.color }}
+      style={{ background: themeStyle?.background, color: themeStyle?.color }}
     />
   </div>
-) : (
+) : activeTab === 'mechanic' ? (
   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
     <thead>
       <tr>
@@ -233,12 +405,11 @@ const RepairAdminTable = ({ themeStyle }) => {
         <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>PEN</th>
         <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>Date</th>
         <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>Actions</th>
-        
       </tr>
     </thead>
     <tbody>
-      {mechanicRequests.filter(req => req.forwardedToMechanic === true)
-
+      {(mechanicRequests || [])
+        .filter(req => req.forwardedToMechanic)
         .map((req, index) => (
           <tr key={req._id}>
             <td style={{ padding: 10 }}>{index + 1}</td>
@@ -252,7 +423,111 @@ const RepairAdminTable = ({ themeStyle }) => {
         ))}
     </tbody>
   </table>
+) : activeTab === 'certificates' ? (
+  
+
+  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+  <thead>
+    <tr>
+      <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>Sl No</th>
+      <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>Date</th>
+      <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>PEN No</th>
+      <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>Status</th>
+      <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>View Bill</th>
+      <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>Essentiality Certificate</th>
+<th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>Technical Certificate</th>
+<th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>Verify</th>
+
+    </tr>
+  </thead>
+  <tbody>
+    {certificateRequests.map((cert, index) => (
+      <tr key={cert._id}>
+        <td style={{ padding: 10 }}>{cert.slNo}</td>
+        <td style={{ padding: 10 }}>{cert.date}</td>
+        <td style={{ padding: 10 }}>{cert.pen}</td>
+        <td style={{ padding: 10 }}>{statusStyle(cert.status)}</td>
+        <td style={{ padding: 10 }}>
+         {cert.billFile ? (
+  <Button
+    variant="outlined"
+    onClick={() => {
+      setSelectedRepair(cert);
+      setDialogOpen(true);
+    }}
+  >
+    View
+  </Button>
+) : (
+  <Typography variant="body2" color="textSecondary">No File</Typography>
 )}
+
+        </td>
+        {/* EC column */}
+<td style={{ padding: 10 }}>
+  <Button
+    variant="contained"
+    color="primary"
+    onClick={() => handlePrepareEC(cert._id)}
+    disabled={cert.status !== 'for_generating_certificate'}
+  >
+    Prepare EC
+  </Button>
+  <Button
+    variant="outlined"
+    style={{ marginLeft: 8 }}
+    onClick={() => handleViewEC(cert._id)}
+    disabled={
+      !['certificate_ready', 'waiting_for_sanction', 'sanctioned_for_work'].includes(cert.status)
+    }
+  >
+    View EC
+  </Button>
+</td>
+
+{/* TC column */}
+<td style={{ padding: 10 }}>
+  <Button
+    variant="contained"
+    color="primary"
+    onClick={() => handlePrepareTC(cert._id)}
+    disabled={cert.status !== 'for_generating_certificate'}
+  >
+    Prepare TC
+  </Button>
+  <Button
+    variant="outlined"
+    style={{ marginLeft: 8 }}
+    onClick={() => handleViewTC(cert._id)}
+    disabled={
+      !['certificate_ready', 'waiting_for_sanction', 'sanctioned_for_work'].includes(cert.status)
+    }
+  >
+    View TC
+  </Button>
+</td>
+
+{/* VERIFY column */}
+<td style={{ padding: 10 }}>
+  {cert.status === 'sanctioned_for_work' && (
+    <Button
+      variant="contained"
+      color="success"
+      onClick={() => verifyFinalBill(cert._id)}
+    >
+      Verify
+    </Button>
+  )}
+
+
+
+        </td>
+      </tr>
+    ))}
+  </tbody>
+</table>
+
+) : null}
 
 
       {/* Repair Request Dialog */}
@@ -307,50 +582,48 @@ const RepairAdminTable = ({ themeStyle }) => {
                 </thead>
                 <tbody>
                   {selectedMechanicRequest.partsList.map((part, idx) => (
-  <tr key={idx}>
-    <td style={{ padding: '6px' }}>{idx + 1}</td> {/* Serial number */}
-    <td style={{ padding: '6px' }}>{part.item}</td>
-    <td style={{ padding: '6px' }}>{part.quantity}</td>
-  </tr>
-))}
-
+                    <tr key={idx}>
+                      <td style={{ padding: '6px' }}>{idx + 1}</td>
+                      <td style={{ padding: '6px' }}>{part.item}</td>
+                      <td style={{ padding: '6px' }}>{part.quantity}</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
 
               {selectedMechanicRequest.finalBillFile ? (
-  <>
-    <Typography variant="h6" style={{ marginTop: '16px' }}>Uploaded Bill</Typography>
-    {selectedMechanicRequest.finalBillFile.contentType.includes('pdf') ? (
-      <iframe
-        src={`data:${selectedMechanicRequest.finalBillFile.contentType};base64,${selectedMechanicRequest.finalBillFile.data}`}
-        title="Bill Preview"
-        style={{
-          width: '100%',
-          maxHeight: '500px',
-          border: '1px solid #ccc',
-          borderRadius: 4
-        }}
-      />
-    ) : (
-      <img
-        src={`data:${selectedMechanicRequest.finalBillFile.contentType};base64,${selectedMechanicRequest.finalBillFile.data}`}
-        alt="Bill"
-        style={{
-          maxWidth: '100%',
-          maxHeight: '500px',
-          display: 'block',
-          margin: 'auto',
-          objectFit: 'contain',
-          borderRadius: 6,
-          border: '1px solid #ddd'
-        }}
-      />
-    )}
-  </>
-) : (
-  <Typography color="textSecondary">No Bill Uploaded</Typography>
-)}
-
+                <>
+                  <Typography variant="h6" style={{ marginTop: '16px' }}>Uploaded Bill</Typography>
+                  {selectedMechanicRequest.finalBillFile.contentType.includes('pdf') ? (
+                    <iframe
+                      src={`data:${selectedMechanicRequest.finalBillFile.contentType};base64,${selectedMechanicRequest.finalBillFile.data}`}
+                      title="Bill Preview"
+                      style={{
+                        width: '100%',
+                        maxHeight: '500px',
+                        border: '1px solid #ccc',
+                        borderRadius: 4
+                      }}
+                    />
+                  ) : (
+                    <img
+                      src={`data:${selectedMechanicRequest.finalBillFile.contentType};base64,${selectedMechanicRequest.finalBillFile.data}`}
+                      alt="Bill"
+                      style={{
+                        maxWidth: '100%',
+                        maxHeight: '500px',
+                        display: 'block',
+                        margin: 'auto',
+                        objectFit: 'contain',
+                        borderRadius: 6,
+                        border: '1px solid #ddd'
+                      }}
+                    />
+                  )}
+                </>
+              ) : (
+                <Typography color="textSecondary">No Bill Uploaded</Typography>
+              )}
             </>
           ) : (
             <Typography>No mechanic request details available.</Typography>
@@ -363,28 +636,25 @@ const RepairAdminTable = ({ themeStyle }) => {
             color="success"
             onClick={async () => {
               try {
-  const res = await fetch(`http://localhost:5000/api/repair-request/forward-to-repair`, {
-    method: 'PUT',
-     headers: {
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({ id: selectedMechanicRequest._id }) // ✅ pass the id here
-  });
+                const res = await fetch(`http://localhost:5000/api/repair-request/forward-to-repair`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ id: selectedMechanicRequest._id })
+                });
 
-  const result = await res.json();
+                const result = await res.json();
 
-  if (res.ok) {
-    alert('✅ Request forwarded to Repair Section');
-    fetchRepairs(); // refresh table
-    handleCloseMechanicDialog(); // close modal/dialog
-  } else {
-    alert(`❌ Failed: ${result.message || 'Unable to forward request'}`);
-  }
-} catch (err) {
-  console.error('Fetch error:', err);
-  alert('❌ Error while forwarding the request. Please try again.');
-}
-
+                if (res.ok) {
+                  alert('✅ Request forwarded to Repair Section');
+                  fetchRepairs();
+                  handleCloseMechanicDialog();
+                } else {
+                  alert(`❌ Failed: ${result.message || 'Unable to forward request'}`);
+                }
+              } catch (err) {
+                console.error('Fetch error:', err);
+                alert('❌ Error while forwarding the request. Please try again.');
+              }
             }}
           >
             Forward to Repair Section

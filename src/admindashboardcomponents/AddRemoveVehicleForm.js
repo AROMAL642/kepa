@@ -1,19 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import axios from 'axios';
-import '../css/BackButton.css'; 
-
+import '../css/BackButton.css';
 
 function AddRemoveVehicleForm({ onBack }) {
   const [vehicle, setVehicle] = useState({
     number: '',
     model: '',
-    type: 'car',
+    type: 'LMV',
     fuelType: '',
     status: 'Active',
     arrivedDate: new Date().toISOString().split('T')[0],
     kmpl: '',
-    currentDriver: '',
   });
+
+  const [insurancePolicyNo, setInsurancePolicyNo] = useState('');
+  const [insuranceValidity, setInsuranceValidity] = useState('');
+  const [pollutionValidity, setPollutionValidity] = useState('');
+
+  const insuranceFileRef = useRef(null);
+  const pollutionFileRef = useRef(null);
+
+  const MAX_FILE_SIZE = 100 * 1024; // 100 KB
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -24,25 +31,62 @@ function AddRemoveVehicleForm({ onBack }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const formattedVehicle = {
-      ...vehicle,
-      number: vehicle.number.toUpperCase(),
-    };
+    const insuranceFile = insuranceFileRef.current?.files[0];
+    const pollutionFile = pollutionFileRef.current?.files[0];
+
+    // File size validation
+    if (insuranceFile && insuranceFile.size > MAX_FILE_SIZE) {
+      alert('Insurance file exceeds 100KB size limit.');
+      return;
+    }
+
+    if (pollutionFile && pollutionFile.size > MAX_FILE_SIZE) {
+      alert('Pollution file exceeds 100KB size limit.');
+      return;
+    }
+
+    const formData = new FormData();
+
+    Object.entries(vehicle).forEach(([key, value]) => {
+      formData.append(key, value);
+    });
+
+    formData.append('insurancePolicyNo', insurancePolicyNo);
+    formData.append('insuranceValidity', insuranceValidity);
+    formData.append('pollutionValidity', pollutionValidity);
+
+    if (insuranceFile) {
+      formData.append('insuranceFile', insuranceFile);
+    }
+
+    if (pollutionFile) {
+      formData.append('pollutionFile', pollutionFile);
+    }
 
     try {
-      await axios.post('http://localhost:5000/api/vehicles', formattedVehicle);
+      await axios.post('http://localhost:5000/api/vehicles', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
       alert('Vehicle added successfully');
 
+      // Reset form
       setVehicle({
         number: '',
         model: '',
-        type: 'car',
+        type: 'LMV',
         fuelType: '',
         status: 'Active',
         arrivedDate: new Date().toISOString().split('T')[0],
         kmpl: '',
-        currentDriver: '',
       });
+      setInsurancePolicyNo('');
+      setInsuranceValidity('');
+      setPollutionValidity('');
+      if (insuranceFileRef.current) insuranceFileRef.current.value = '';
+      if (pollutionFileRef.current) pollutionFileRef.current.value = '';
     } catch (error) {
       console.error(error);
       const errorMsg = error.response?.data?.error;
@@ -93,11 +137,15 @@ function AddRemoveVehicleForm({ onBack }) {
         <div className="form-group">
           <label>Vehicle Type</label>
           <select name="type" value={vehicle.type} onChange={handleChange} required>
-            <option value="car">Car</option>
-            <option value="bike">Bike</option>
-            <option value="jeep">Jeep</option>
-            <option value="minivan">Mini Van</option>
-            <option value="bus">Bus</option>
+            <option value="LMV">LMV</option>
+            <option value="MMV">MMV</option>
+            <option value="HMV">HMV</option>
+            <option value="MPV">MPV</option>
+            <option value="HPV">HPV</option>
+            <option value="HGV">HGV</option>
+            <option value="MGV">MGV</option>
+            <option value="MCWG">MCWG</option>
+            <option value="MCWOG">MCWOG</option>
           </select>
         </div>
 
@@ -142,6 +190,53 @@ function AddRemoveVehicleForm({ onBack }) {
             onChange={handleChange}
             required
             min="0"
+          />
+        </div>
+
+        {/* Insurance Section */}
+        <div className="form-group">
+          <label>Insurance Policy Number</label>
+          <input
+            type="text"
+            value={insurancePolicyNo}
+            onChange={(e) => setInsurancePolicyNo(e.target.value)}
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Insurance Validity</label>
+          <input
+            type="date"
+            value={insuranceValidity}
+            onChange={(e) => setInsuranceValidity(e.target.value)}
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Upload Insurance Certificate (Max 100KB)</label>
+          <input
+            type="file"
+            ref={insuranceFileRef}
+            accept="image/*,.pdf"
+          />
+        </div>
+
+        {/* Pollution Section */}
+        <div className="form-group">
+          <label>Pollution Validity</label>
+          <input
+            type="date"
+            value={pollutionValidity}
+            onChange={(e) => setPollutionValidity(e.target.value)}
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Upload Pollution Certificate (Max 100KB)</label>
+          <input
+            type="file"
+            ref={pollutionFileRef}
+            accept="image/*,.pdf"
           />
         </div>
 

@@ -12,14 +12,15 @@ const repairRequestsSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'forwarded', 'repaired', 'verification pending', 'verified', 'rejected' , 'sent_to_repair_admin' ,   'pending',
-    
-    
+    enum: ['pending', 'forwarded', 'repaired', 'verification pending', 'verified', 'rejected' , 'sent_to_repair_admin' ,   'pending', 'approved certificates',
+    'generating certificates',
+    'certificate_ready',
     'forwarded_to_repair_section', // ✅ Add this
     'completed',
     'Pending User Verification',
     'Check Again',
-    'final_work_done_sent_to_user'],
+    'final_work_done_sent_to_user' , 'for_generating_certificate' ,'waiting_for_sanction',
+    'sanctioned_for_work',],
     default: 'pending'
   },
   workDone: {
@@ -48,6 +49,15 @@ const repairRequestsSchema = new mongoose.Schema({
     essentiality: { type: Boolean, default: false },
     replacement: { type: Boolean, default: false }
   },
+
+  essentialityCertificate: {
+  data: Buffer,
+  contentType: String
+},
+technicalCertificate: {
+  data: Buffer,
+  contentType: String
+},
   sanctioned: { type: Boolean, default: false },
   finalBillFile: {
     data: Buffer,
@@ -60,3 +70,4 @@ const repairRequestsSchema = new mongoose.Schema({
 });
 
 module.exports = mongoose.model('RepairRequests', repairRequestsSchema);
+

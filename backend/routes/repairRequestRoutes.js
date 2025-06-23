@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const RepairRequest = require('../models/RepairRequests');
 const User = require('../models/User');
+const PDFDocument = require('pdfkit');
 
 // Configure multer
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
@@ -63,18 +64,51 @@ router.get('/', async (req, res) => {
   }
 });
 
+// static routes
+
 /**
- * PUT: Admin changes status
+ * GET: Get all requests eligible for certificate generation
  */
-router.put('/:id/status', async (req, res) => {
+router.get('/for-generating-certificate', async (req, res) => {
   try {
-    const updated = await RepairRequest.findByIdAndUpdate(req.params.id, { status: req.body.status }, { new: true });
-    if (!updated) return res.status(404).json({ message: 'Repair request not found' });
-    res.json(updated);
+    const requests = await RepairRequest.find({
+      status: { $in: ['for_generating_certificate' , 'certificate_ready' , 'waiting_for_sanction',
+    'sanctioned_for_work'] },
+     finalBillFile: { $exists: true}
+    });
+
+    const formatted = requests.map(r => ({
+      _id: r._id,
+      pen: r.pen,
+      date: r.date,
+      vehicleNo: r.vehicleNo,
+      status: r.status,
+      subject: r.subject,
+      billAvailable: !!r.finalBillFile,
+    }));
+
+    res.json(formatted);
   } catch (err) {
-    res.status(500).json({ message: 'Error updating request status' });
+    console.error('Error fetching certificate generation requests:', err);
+    res.status(500).json({ message: 'Failed to fetch requests' });
   }
 });
+
+
+router.get('/certificates', async (req, res) => {
+  try {
+    const requests = await RepairRequest.find({
+      status: { $in: ['pending_certificate', 'generating_certificates'] } // adjust according to your schema
+    });
+    res.json(requests);
+  } catch (err) {
+    console.error("Error fetching certificates:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
+
 
 /**
  * GET: Mechanic view all verified repair requests
@@ -108,25 +142,105 @@ router.get('/verified', async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch verified repair requests' });
   }
 });
-//complete work status update by mechanic
 
-router.patch('/:id/complete', async (req, res) => {
+
+// GET: Only mechanic requests forwarded and needing parts (for admin/MTI view)
+router.get('/forwarded', async (req, res) => {
   try {
-    const updated = await RepairRequest.findByIdAndUpdate(
-      req.params.id,
-      { workDone: 'Yes' },
-      { new: true }
-    );
+    const requests = await RepairRequest.find({
+      forwardedToMechanic: true,
+      workDone: 'No',
+      needsParts: true,
+      status: 'sent_to_repair_admin',
+      partsList: { $exists: true, $not: { $size: 0 } }
+    }).populate('user', 'name pen');
+
+    const formatted = requests.map(r => ({
+      ...r.toObject(),
+      finalBillFile: r.finalBillFile?.data
+        ? {
+            data: r.finalBillFile.data.toString('base64'),
+            contentType: r.finalBillFile.contentType
+          }
+        : null
+    }));
+
+    res.json(formatted);
+  } catch (err) {
+    console.error('Error fetching mechanic part requests:', err);
+    res.status(500).json({ message: 'Failed to fetch mechanic requests' });
+  }
+});
+
+
+
+//track status by user
+router.get('/by-pen/:pen', async (req, res) => {
+  try {
+    const { pen } = req.params;
+
+    if (!pen) {
+      return res.status(400).json({ error: 'PEN not provided' });
+    }
+
+    const repairs = await RepairRequest.find({ pen });
+
+    res.json(repairs);
+  } catch (err) {
+    console.error('Error fetching by pen:', err);
+    res.status(500).json({ error: 'Failed to fetch data' });
+  }
+});
+
+
+
+//Dynamic routes only after static routes
+
+
+/**
+ * GET: Get single repair request by ID (used in admin view)
+ */
+router.get('/:id', async (req, res) => {
+  try {
+    const repair = await RepairRequest.findById(req.params.id);
+    if (!repair) return res.status(404).json({ message: 'Repair request not found' });
+
+    const formatted = {
+      ...repair.toObject(),
+      billFile: repair.billFile?.data ? {
+        data: repair.billFile.data.toString('base64'),
+        contentType: repair.billFile.contentType
+      } : null
+    };
+
+    res.json(formatted);
+  } catch (err) {
+    console.error('Error fetching repair by ID:', err);
+    res.status(500).json({ message: 'Failed to fetch repair request' });
+  }
+});
+
+
+
+
+//Dynamic PUTS and POSTS
+
+/**
+ * PUT: Admin changes status
+ */
+router.put('/:id/status', async (req, res) => {
+  try {
+    const updated = await RepairRequest.findByIdAndUpdate(req.params.id, { status: req.body.status }, { new: true });
+    if (!updated) return res.status(404).json({ message: 'Repair request not found' });
     res.json(updated);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to update repair status' });
+  } catch (err) {
+    res.status(500).json({ message: 'Error updating request status' });
   }
 });
 
 
 /**
- * GET: Forwarded to mechanic (optional view if using `forwardedToMechanic`)
+ * GET: Forwarded to mechanic by admin (optional view if using `forwardedToMechanic`)
  */
 
 router.put('/:id/forward-to-mechanic', async (req, res) => {
@@ -151,26 +265,6 @@ router.put('/:id/forward-to-mechanic', async (req, res) => {
     res.status(500).json({ message: 'Error forwarding to mechanic' });
   }
 });
-
-//track status by user
-router.get('/by-pen/:pen', async (req, res) => {
-  try {
-    const { pen } = req.params;
-
-    if (!pen) {
-      return res.status(400).json({ error: 'PEN not provided' });
-    }
-
-    const repairs = await RepairRequest.find({ pen });
-
-    res.json(repairs);
-  } catch (err) {
-    console.error('Error fetching by pen:', err);
-    res.status(500).json({ error: 'Failed to fetch data' });
-  }
-});
-
-
 
 
 /**
@@ -205,36 +299,9 @@ router.put('/:id/mechanic-update', async (req, res) => {
 
 
 
-// GET: Only mechanic requests forwarded and needing parts (for admin/MTI view)
-router.get('/forwarded', async (req, res) => {
-  try {
-    const requests = await RepairRequest.find({
-      forwardedToMechanic: true,
-      workDone: 'No',
-      needsParts: true,
-      status: 'sent_to_repair_admin',
-      partsList: { $exists: true, $not: { $size: 0 } }
-    }).populate('user', 'name pen');
-
-    const formatted = requests.map(r => ({
-      ...r.toObject(),
-      finalBillFile: r.finalBillFile?.data
-        ? {
-            data: r.finalBillFile.data.toString('base64'),
-            contentType: r.finalBillFile.contentType
-          }
-        : null
-    }));
-
-    res.json(formatted);
-  } catch (err) {
-    console.error('Error fetching mechanic part requests:', err);
-    res.status(500).json({ message: 'Failed to fetch mechanic requests' });
-  }
-});
 
 
-// ❌ This is wrong - it's GET but your frontend sends PUT
+// forward to repair section by MTI Admin
 // router.get('/:id/forward-to-repair', async (req, res) => {
 
 router.put('/forward-to-repair', async (req, res) => {
@@ -251,6 +318,159 @@ router.put('/forward-to-repair', async (req, res) => {
     res.status(500).json({ message: 'Failed to forward to repair section' });
   }
 });
+
+
+/**
+ * PUT: Final repair marked done by admin/MTI
+ */
+router.put('/:id/final-repair-done', async (req, res) => {
+  try {
+    const request = await RepairRequest.findByIdAndUpdate(
+      req.params.id,
+      { status: 'final_work_done_sent_to_user' },
+      { new: true }
+    );
+    res.json(request);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to mark final repair done' });
+  }
+});
+
+
+
+router.put('/:id/forward-to-certificates', async (req, res) => {
+  try {
+    const request = await RepairRequest.findById(req.params.id);
+    if (!request) return res.status(404).json({ message: 'Request not found' });
+
+    request.status = 'for_generating_certificate'; // ✅ Correct
+    await request.save();
+
+    res.json({ message: 'Request forwarded to Main Admin for certificate generation' });
+  } catch (err) {
+    console.error('Error forwarding to certificates tab:', err);
+    res.status(500).json({ message: 'Failed to forward to certificates tab' });
+  }
+});
+
+
+
+
+
+
+router.post('/:id/complete-certificates', async (req, res) => {
+  try {
+    const request = await RepairRequest.findById(req.params.id);
+    if (!request) return res.status(404).json({ message: 'Request not found' });
+
+    request.status = 'certificates_ready';
+
+    await request.save();
+    res.json({ message: 'Certificates marked as ready' });
+  } catch (err) {
+    console.error('Certificate completion error:', err);
+    res.status(500).json({ message: 'Failed to complete certificate process' });
+  }
+});
+
+
+
+
+// Inside repairRequestRoutes.js
+router.post('/:id/generate-certificates', async (req, res) => {
+  try {
+    const request = await RepairRequest.findById(req.params.id);
+    if (!request) return res.status(404).json({ message: 'Request not found' });
+
+    // Simulate generated PDFs
+    request.essentialityCertificate = {
+      data: Buffer.from('ESSENTIALITY CERTIFICATE BASE64', 'base64'),
+      contentType: 'application/pdf'
+    };
+    request.technicalCertificate = {
+      data: Buffer.from('TECHNICAL CERTIFICATE BASE64', 'base64'),
+      contentType: 'application/pdf'
+    };
+
+    // ✅ Update status
+    request.status = 'certificate_ready';
+
+    await request.save();
+    return res.status(200).json({ message: 'Certificates generated successfully' ,  updatedRequest: request});
+
+  } catch (err) {
+    console.error('Certificate generation error:', err);
+    res.status(500).json({ message: 'Certificate generation failed' });
+  }
+});
+
+
+// repair section forwards to MTI Admin
+
+router.put('/:id/sanction-work', upload.single('sanctionBillFile'), async (req, res) => {
+  try {
+    const requestId = req.params.id;
+    //const { approvedNo } = req.body;
+
+    const sanctionBill = req.file;
+
+    if (!sanctionBill) return res.status(400).json({ error: 'Sanction bill file is required' });
+
+    const updated = await RepairRequest.findByIdAndUpdate(
+      requestId,
+      {
+        //approvedNo,
+        sanctionBillFile: {
+          data: sanctionBill.buffer,
+          contentType: sanctionBill.mimetype,
+        },
+        status: 'sanctioned_for_work',
+      },
+      { new: true }
+    );
+
+    res.status(200).json(updated);
+  } catch (err) {
+    console.error('Sanction forwarding error:', err);
+    res.status(500).json({ error: 'Sanction forwarding failed' });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//complete work status update by mechanic
+
+router.patch('/:id/complete', async (req, res) => {
+  try {
+    const updated = await RepairRequest.findByIdAndUpdate(
+      req.params.id,
+      { workDone: 'Yes' },
+      { new: true }
+    );
+    res.json(updated);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to update repair status' });
+  }
+});
+
+
 
 
 
@@ -270,6 +490,10 @@ router.post('/verify/:id', async (req, res) => {
   }
 });
 
+
+
+
+
 /**
  * POST: Notify MTI for rechecking
  */
@@ -286,20 +510,140 @@ router.post('/notify-mti/:id', async (req, res) => {
   }
 });
 
+
+
+
+
 /**
- * PUT: Final repair marked done by admin/MTI
+ * GET: Generate and view Essentiality Certificate
  */
-router.put('/:id/final-repair-done', async (req, res) => {
+router.get('/:id/view-ec', async (req, res) => {
   try {
-    const request = await RepairRequest.findByIdAndUpdate(
-      req.params.id,
-      { status: 'final_work_done_sent_to_user' },
-      { new: true }
-    );
-    res.json(request);
+    const request = await RepairRequest.findById(req.params.id);
+    if (!request) return res.status(404).json({ message: 'Request not found' });
+
+    // Create a PDF document
+    const doc = new PDFDocument({ size: 'A4', margin: 50 });
+
+    // Set the response headers
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="Essentiality_Certificate_${request.vehicleNo}.pdf"`);
+
+    // Pipe PDF to response
+    doc.pipe(res);
+
+    // ========== TEMPLATE CONTENT ==========
+    doc.fontSize(12).text(`No........ /2025/AD(T&MTS)/KEPA`, { align: 'right' });
+    doc.moveDown(0.5);
+    doc.text(`Office of the Asst.Director(Tech & MT Studies)`, { align: 'right' });
+    doc.text(`Kerala Police Academy, R.V.Puram,Thrissur`, { align: 'right' });
+    doc.text(`Date: ${new Date().toLocaleDateString('en-IN')}`, { align: 'right' });
+
+    doc.moveDown(2);
+
+    doc.fontSize(14).text('ESSENTIALITY CERTIFICATE', { align: 'center', underline: true });
+    doc.moveDown(1.5);
+
+    const vehicleNo = request.vehicleNo || '__________';
+    const subject = request.subject || '';
+    const partsList = request.partsList || [];
+
+    doc.fontSize(12).text(`It is hereby certified that Vehicle number ${vehicleNo} (${subject}) has been inspected at this office, and the following spare parts have been found to be defective. Accordingly, these items are recommended for replacement with new ones.`);
+    
+    doc.moveDown(1.5);
+
+    // Table Headers
+    doc.font('Helvetica-Bold');
+    doc.text('Sl No', 70, doc.y);
+    doc.text('Items', 120, doc.y);
+    doc.text('Quantity', 400, doc.y);
+    doc.font('Helvetica');
+
+    // Draw Line
+    doc.moveTo(70, doc.y + 2).lineTo(500, doc.y + 2).stroke();
+    doc.moveDown(0.5);
+
+    // Table Data
+    partsList.forEach((item, index) => {
+      doc.text(index + 1, 70, doc.y);
+      doc.text(item.item || 'N/A', 120, doc.y);
+      doc.text(item.quantity || 'N/A', 400, doc.y);
+      doc.moveDown(0.5);
+    });
+
+    doc.end(); // Finalize the PDF
+
   } catch (err) {
-    res.status(500).json({ message: 'Failed to mark final repair done' });
+    console.error('Error generating EC PDF:', err);
+    res.status(500).json({ message: 'Failed to generate certificate' });
   }
 });
+
+
+
+
+
+
+// GET: View Technical Certificate
+router.get('/:id/view-tc', async (req, res) => {
+  try {
+    const request = await RepairRequest.findById(req.params.id);
+    if (!request) return res.status(404).json({ message: 'Request not found' });
+
+    const doc = new PDFDocument({ size: 'A4', margin: 50 });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="Technical_Certificate_${request.vehicleNo}.pdf"`);
+
+    doc.pipe(res);
+
+    // ===== Header =====
+    doc.fontSize(12).text(`No: /2020/MTO/KEPA`, { align: 'left' });
+    doc.moveDown(1);
+    doc.fontSize(14).text('REPLACEMENT STATEMENT OF SPARES', { align: 'center', underline: true });
+    doc.moveDown(1.5);
+
+    doc.fontSize(12);
+    doc.text(`Reg. No: ${request.vehicleNo || '__________'}`);
+    doc.text(`Model: ${request.model || '__________'}`);
+    doc.text(`Total KM Covered: ${request.kilometerCovered || '__________'}`);
+    doc.moveDown(1);
+
+    // ===== Table Header =====
+    const startY = doc.y;
+    doc.font('Helvetica-Bold');
+    doc.text('Sl No', 50, startY);
+    doc.text('Items', 100, startY);
+    doc.text('Quantity', 230, startY);
+    doc.text('Previous Date', 300, startY);
+    doc.text('Previous MR', 390, startY);
+    doc.text('KM After Replacement', 470, startY);
+    doc.font('Helvetica');
+    doc.moveTo(50, startY + 15).lineTo(570, startY + 15).stroke();
+    doc.moveDown(1);
+
+    // ===== Table Data =====
+    const partsList = request.partsList || [];
+    partsList.forEach((part, index) => {
+      doc.text(index + 1, 50, doc.y);
+      doc.text(part.item || 'N/A', 100, doc.y);
+      doc.text(part.quantity || 'N/A', 230, doc.y);
+      doc.text('N/A', 300, doc.y);
+      doc.text('N/A', 390, doc.y);
+      doc.text('N/A', 470, doc.y);
+      doc.moveDown(0.7);
+    });
+
+    doc.end();
+  } catch (err) {
+    console.error('Error generating TC PDF:', err);
+    res.status(500).json({ message: 'Failed to generate technical certificate' });
+  }
+});
+
+
+
+
+
 
 module.exports = router;
