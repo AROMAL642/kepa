@@ -43,32 +43,45 @@ router.post('/expense-summary', async (req, res) => {
 
       return res.json({ totalAmount, count: entries.length, entries });
     }
+if (['insurance', 'pollution'].includes(category)) {
+  const vehicle = await Vehicle.findOne({ number: vehicleNo });
+  if (!vehicle) return res.status(404).json({ error: 'Vehicle not found' });
 
-    if (['insurance', 'pollution'].includes(category)) {
-      const vehicle = await Vehicle.findOne({ number: vehicleNo });
-      if (!vehicle) return res.status(404).json({ error: 'Vehicle not found' });
+  const certs = vehicle.certificateHistory.filter(cert => {
+    const certDate =
+      category === 'insurance'
+        ? new Date(cert.insuranceIssuedDate)
+        : new Date(cert.pollutionIssuedDate);
+    return certDate >= from && certDate <= to;
+  });
 
-      const certs = vehicle.certificateHistory.filter(cert => {
-        const certDate = new Date(cert.updatedAt);
-        return certDate >= from && certDate <= to;
-      });
+  const entries = certs.map(cert => {
+    return {
+      amount:
+        category === 'insurance'
+          ? cert.insuranceExpense
+          : cert.pollutionExpense,
+      date:
+        category === 'insurance'
+          ? cert.insuranceIssuedDate
+          : cert.pollutionIssuedDate,
+      policyNo:
+        category === 'insurance'
+          ? cert.insurancePolicyNo
+          : cert.pollutionCertificateNo,
+      validity:
+        category === 'insurance'
+          ? cert.insuranceValidity
+          : cert.pollutionValidity,
+      pen: '-',
+      name: category.charAt(0).toUpperCase() + category.slice(1)
+    };
+  });
 
-      const entries = certs.map(cert => {
-        return {
-          amount:
-            category === 'insurance'
-              ? cert.insuranceExpense
-              : cert.pollutionExpense,
-          date: cert.updatedAt,
-          pen: '-',
-          name: category.charAt(0).toUpperCase() + category.slice(1)
-        };
-      });
+  const totalAmount = entries.reduce((sum, e) => sum + (e.amount || 0), 0);
+  return res.json({ totalAmount, count: entries.length, entries });
+}
 
-      const totalAmount = entries.reduce((sum, e) => sum + (e.amount || 0), 0);
-
-      return res.json({ totalAmount, count: entries.length, entries });
-    }
 
     return res.status(400).json({ error: 'Invalid category' });
   } catch (err) {

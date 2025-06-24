@@ -59,7 +59,6 @@ function SearchVehicleDetails({ themeStyle, onBack }) {
         status: v.status,
         kmpl: v.kmpl,
         arrivedDate: v.arrivedDate ? new Date(v.arrivedDate).toLocaleDateString() : '',
-        createdAt: v.createdAt ? new Date(v.createdAt).toLocaleString() : '',
       }));
 
       setVehicleList(formattedData);
@@ -167,7 +166,6 @@ function SearchVehicleDetails({ themeStyle, onBack }) {
     { field: 'status', headerName: 'Status', flex: 1.5 },
     { field: 'arrivedDate', headerName: 'Arrived Date', flex: 1 },
     { field: 'kmpl', headerName: 'KMPL', flex: 0.5 },
-    { field: 'createdAt', headerName: 'Created At', flex: 1.5 },
     {
       field: 'remove',
       headerName: 'Remove',
@@ -289,7 +287,6 @@ function SearchVehicleDetails({ themeStyle, onBack }) {
           <p><strong>Fuel Type:</strong> {vehicleData.fuelType}</p>
           <p><strong>Status:</strong> {vehicleData.status}</p>
           <p><strong>Arrived Date:</strong> {new Date(vehicleData.arrivedDate).toLocaleDateString()}</p>
-          <p><strong>Created At:</strong> {new Date(vehicleData.createdAt).toLocaleString()}</p>
 
           {vehicleData.insurancePolicyNo && <p><strong>Insurance Policy No:</strong> {vehicleData.insurancePolicyNo}</p>}
           {vehicleData.insuranceValidity && <p><strong>Insurance Validity:</strong> {new Date(vehicleData.insuranceValidity).toLocaleDateString()}</p>}

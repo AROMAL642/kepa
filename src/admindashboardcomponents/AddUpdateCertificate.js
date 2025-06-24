@@ -8,9 +8,12 @@ function AddUpdateCertificate() {
   const [form, setForm] = useState({
     insurancePolicyNo: '',
     insuranceValidity: '',
+    insuranceIssuedDate: '',
     insuranceExpense: '',
     insuranceFile: null,
+    pollutionCertificateNo: '',
     pollutionValidity: '',
+    pollutionIssuedDate: '',
     pollutionExpense: '',
     pollutionFile: null
   });
@@ -46,8 +49,11 @@ function AddUpdateCertificate() {
       setForm({
         insurancePolicyNo: latest?.insurancePolicyNo || '',
         insuranceValidity: latest?.insuranceValidity?.slice(0, 10) || '',
+        insuranceIssuedDate: latest?.insuranceIssuedDate?.slice(0, 10) || '',
         insuranceExpense: latest?.insuranceExpense || '',
+        pollutionCertificateNo: latest?.pollutionCertificateNo || '',
         pollutionValidity: latest?.pollutionValidity?.slice(0, 10) || '',
+        pollutionIssuedDate: latest?.pollutionIssuedDate?.slice(0, 10) || '',
         pollutionExpense: latest?.pollutionExpense || '',
         insuranceFile: null,
         pollutionFile: null
@@ -59,14 +65,28 @@ function AddUpdateCertificate() {
   };
 
   const handleUpdate = async () => {
+    const {
+      insurancePolicyNo,
+      pollutionCertificateNo
+    } = form;
+
+    if (!insurancePolicyNo || !pollutionCertificateNo) {
+      alert('Insurance Policy Number and Pollution Certificate Number are required.');
+      return;
+    }
+
     const formData = new FormData();
     formData.append('vehicleNo', vehicleNo);
 
-    if (form.insurancePolicyNo) formData.append('insurancePolicyNo', form.insurancePolicyNo);
-    if (form.insuranceValidity) formData.append('insuranceValidity', form.insuranceValidity);
-    if (form.insuranceExpense) formData.append('insuranceExpense', form.insuranceExpense);
-    if (form.pollutionValidity) formData.append('pollutionValidity', form.pollutionValidity);
-    if (form.pollutionExpense) formData.append('pollutionExpense', form.pollutionExpense);
+    formData.append('insurancePolicyNo', form.insurancePolicyNo);
+    formData.append('insuranceValidity', form.insuranceValidity);
+    formData.append('insuranceIssuedDate', form.insuranceIssuedDate);
+    formData.append('insuranceExpense', form.insuranceExpense);
+
+    formData.append('pollutionCertificateNo', form.pollutionCertificateNo);
+    formData.append('pollutionValidity', form.pollutionValidity);
+    formData.append('pollutionIssuedDate', form.pollutionIssuedDate);
+    formData.append('pollutionExpense', form.pollutionExpense);
 
     if (form.insuranceFile) formData.append('insuranceFile', form.insuranceFile);
     if (form.pollutionFile) formData.append('pollutionFile', form.pollutionFile);
@@ -113,6 +133,7 @@ function AddUpdateCertificate() {
           <h3>Latest Certificate Details</h3>
 
           <p><strong>Insurance Policy No:</strong> {latestCert?.insurancePolicyNo || 'N/A'}</p>
+          <p><strong>Insurance Issued Date:</strong> {latestCert?.insuranceIssuedDate?.slice(0, 10) || 'N/A'}</p>
           <p><strong>Insurance Validity:</strong> {latestCert?.insuranceValidity?.slice(0, 10) || 'N/A'}</p>
           <p><strong>Insurance Expense:</strong> ₹{latestCert?.insuranceExpense || 'N/A'}</p>
           {latestCert?.insuranceFile && (
@@ -121,6 +142,8 @@ function AddUpdateCertificate() {
             </p>
           )}
 
+          <p><strong>Pollution Certificate No:</strong> {latestCert?.pollutionCertificateNo || 'N/A'}</p>
+          <p><strong>Pollution Issued Date:</strong> {latestCert?.pollutionIssuedDate?.slice(0, 10) || 'N/A'}</p>
           <p><strong>Pollution Validity:</strong> {latestCert?.pollutionValidity?.slice(0, 10) || 'N/A'}</p>
           <p><strong>Pollution Expense:</strong> ₹{latestCert?.pollutionExpense || 'N/A'}</p>
           {latestCert?.pollutionFile && (
@@ -132,11 +155,19 @@ function AddUpdateCertificate() {
           <div className="update-form">
             <h4>Update Certificates</h4>
 
-            <label>Insurance Policy Number</label>
+            <label>Insurance Policy Number *</label>
             <input
               type="text"
               value={form.insurancePolicyNo}
               onChange={(e) => setForm({ ...form, insurancePolicyNo: e.target.value })}
+              required
+            />
+
+            <label>Insurance Issued Date</label>
+            <input
+              type="date"
+              value={form.insuranceIssuedDate}
+              onChange={(e) => setForm({ ...form, insuranceIssuedDate: e.target.value })}
             />
 
             <label>Insurance Validity</label>
@@ -158,6 +189,21 @@ function AddUpdateCertificate() {
               type="file"
               accept="application/pdf,image/*"
               onChange={(e) => setForm({ ...form, insuranceFile: e.target.files[0] })}
+            />
+
+            <label>Pollution Certificate Number *</label>
+            <input
+              type="text"
+              value={form.pollutionCertificateNo}
+              onChange={(e) => setForm({ ...form, pollutionCertificateNo: e.target.value })}
+              required
+            />
+
+            <label>Pollution Issued Date</label>
+            <input
+              type="date"
+              value={form.pollutionIssuedDate}
+              onChange={(e) => setForm({ ...form, pollutionIssuedDate: e.target.value })}
             />
 
             <label>Pollution Validity</label>

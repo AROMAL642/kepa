@@ -1,16 +1,7 @@
 import React, { useState } from 'react';
 import {
-  Box,
-  Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Button,
-  TextField,
-  Checkbox,
-  ListItemText,
-  OutlinedInput
+  Box, Typography, FormControl, InputLabel, Select, MenuItem,
+  Button, TextField, Checkbox, ListItemText, OutlinedInput
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import axios from 'axios';
@@ -36,6 +27,7 @@ const ViewPrintRegisters = () => {
   const [rows, setRows] = useState([]);
   const [columns, setColumns] = useState([]);
   const [selectedFields, setSelectedFields] = useState([]);
+  const [totalKmTravelled, setTotalKmTravelled] = useState(null); // New
 
   const validate = () => {
     if (!registerType || !fromDate || !toDate) {
@@ -79,6 +71,7 @@ const ViewPrintRegisters = () => {
         alert('No data found');
         setRows([]);
         setColumns([]);
+        setTotalKmTravelled(null);
         return;
       }
 
@@ -137,6 +130,26 @@ const ViewPrintRegisters = () => {
       setColumns(cols);
       setRows(rowsWithId);
       setSelectedFields(cols.map(col => col.field));
+      setTotalKmTravelled(null);
+
+      // ✅ Calculate total KM travelled (movement individual)
+      if (
+        registerType === 'movement' &&
+        vehicleOption === 'individual' &&
+        filteredData.length > 0
+      ) {
+        const sorted = [...filteredData].sort((a, b) =>
+          new Date(a.createdAt) - new Date(b.createdAt)
+        );
+        const first = sorted[0];
+        const last = sorted[sorted.length - 1];
+        const firstKm = Number(first?.startingkm) || 0;
+        const lastKm = Number(last?.endingkm) || 0;
+        const totalKm = lastKm - firstKm;
+        setTotalKmTravelled(totalKm);
+        alert(`Total KM Travelled: ${totalKm} km`);
+      }
+
     } catch (error) {
       console.error('Error fetching data:', error);
       alert('Failed to fetch report data.');
@@ -153,6 +166,13 @@ const ViewPrintRegisters = () => {
     doc.setFontSize(18);
     doc.text(`${registerType.toUpperCase()} Register Report`, 14, 22);
 
+    if (registerType === 'movement' && vehicleOption === 'individual') {
+      doc.setFontSize(12);
+      doc.text(`Vehicle No: ${vehicleNumber}`, 14, 30);
+      doc.text(`From: ${formatDate(fromDate)}   To: ${formatDate(toDate)}`, 14, 38);
+      doc.text(`Total KM Travelled: ${totalKmTravelled ?? 'N/A'} km`, 14, 46);
+    }
+
     const visibleCols = columns.filter(col => selectedFields.includes(col.field));
     const headers = visibleCols.map(col => col.headerName);
     const data = rows.map(row => visibleCols.map(col => row[col.field]));
@@ -160,7 +180,7 @@ const ViewPrintRegisters = () => {
     autoTable(doc, {
       head: [headers],
       body: data,
-      startY: 30,
+      startY: registerType === 'movement' && vehicleOption === 'individual' ? 52 : 30,
       styles: { fontSize: 9 },
       headStyles: { fillColor: [22, 160, 133] }
     });

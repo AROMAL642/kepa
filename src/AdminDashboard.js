@@ -22,6 +22,7 @@ import AdminStocksView from './admindashboardcomponents/AdminStocksView';
 import Purchase from './mechanicdashboardcomponents/Purchase';
 import Expense from './admindashboardcomponents/Expense'; 
 import TraineesDetails from './admindashboardcomponents/TraineesDetails';
+import NotificationPage from './admindashboardcomponents/NotificationPage';
 
 
 
@@ -35,6 +36,8 @@ function AdminDashboard() {
   const [pendingFuelCount, setPendingFuelCount] = useState(0);
   const [pendingAccidentCount, setPendingAccidentCount] = useState(0);
   const [repairPendingCount, setRepairPendingCount] = useState(0);
+  const [expiredCertCount, setExpiredCertCount] = useState(0);
+
   const totalNotifications = pendingCount + pendingFuelCount + pendingAccidentCount + repairPendingCount;
 
   const [loadingVerifiedUsers, setLoadingVerifiedUsers] = useState(false);
@@ -68,6 +71,9 @@ function AdminDashboard() {
     fetchPendingFuelCount();
     fetchPendingAccidentCount();
     fetchRepairPendingCount();
+    fetchExpiredCertCount();
+    
+
     return () => clearTimeout(timer);
   }, []);
 
@@ -118,6 +124,18 @@ const fetchRepairPendingCount = async () => {
     }
   };
 
+ const fetchExpiredCertCount = async () => {
+  try {
+    const res = await fetch('http://localhost:5000/api/expired-count'); // ✅ changed route
+    const data = await res.json();
+    setExpiredCertCount(data.count || 0); // ✅ get `count`
+  } catch (error) {
+    console.error('Error fetching expired certificate count:', error);
+  }
+};
+
+
+
 
   const fetchVerifiedUsers = async () => {
     setLoadingVerifiedUsers(true);
@@ -155,9 +173,14 @@ const fetchRepairPendingCount = async () => {
     }
   };
 
-  const handleTabSelect = (tab) => {
+ const handleTabSelect = (tab) => {
+  if (tab === 'notificationsPage') {
+    setActiveTab('notificationsPage');
+  } else {
     setActiveTab(tab);
-  };
+  }
+};
+
 
   const themeStyle = {
     background: '#fff',
@@ -182,6 +205,7 @@ const fetchRepairPendingCount = async () => {
         onDrawerToggle={() => setIsDrawerOpen(!isDrawerOpen)}
         onSelectTab={handleTabSelect}   
         pendingRequestCount={totalNotifications}
+        expiredCertCount={expiredCertCount}
     
       />
 
@@ -349,9 +373,7 @@ const fetchRepairPendingCount = async () => {
           {activeTab === 'PrintRegisters' && <ViewPrintRegisters />}
           {activeTab === 'stocks' && <AdminStocksView />}
           {activeTab === 'trainees' && <TraineesDetails themeStyle={themeStyle} />}
-
-    
-          
+          {activeTab === 'notificationsPage' && <NotificationPage themeStyle={themeStyle} />}
 
 
 

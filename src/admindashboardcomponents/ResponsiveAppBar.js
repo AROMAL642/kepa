@@ -17,14 +17,21 @@ import { useNavigate } from 'react-router-dom';
 const settings = ['Profile', 'Dashboard', 'Notifications', 'Logout'];
 const DRAWER_WIDTH = 240;
 
-function ResponsiveAppBar({ photo, name, isDrawerOpen, onDrawerToggle, onSelectTab, pendingRequestCount }) {
+function ResponsiveAppBar({
+  photo,
+  name,
+  isDrawerOpen,
+  onDrawerToggle,
+  onSelectTab,
+  pendingRequestCount,
+  expiredCertCount, // ✅ NEW prop for expired certificate badge count
+}) {
   const [anchorElNav, setAnchorElNav] = React.useState(null);
   const [anchorElUser, setAnchorElUser] = React.useState(null);
   const navigate = useNavigate();
 
   const handleOpenNavMenu = (event) => setAnchorElNav(event.currentTarget);
   const handleOpenUserMenu = (event) => setAnchorElUser(event.currentTarget);
-
   const handleCloseNavMenu = () => setAnchorElNav(null);
 
   const handleCloseUserMenu = (setting) => {
@@ -95,16 +102,29 @@ function ResponsiveAppBar({ photo, name, isDrawerOpen, onDrawerToggle, onSelectT
                   Requests <Badge badgeContent={pendingRequestCount} color="error" sx={{ ml: 1 }} />
                 </Typography>
               </MenuItem>
+              <MenuItem onClick={() => { handleCloseNavMenu(); onSelectTab('notificationsPage'); }}>
+                <Typography textAlign="center">
+                  Notifications
+                  {expiredCertCount > 0 && (
+                    <Badge badgeContent={expiredCertCount} color="error" sx={{ ml: 1 }} />
+                  )}
+                </Typography>
+              </MenuItem>
             </Menu>
           </Box>
 
           {/* Desktop View */}
-          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}>
+          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 2 }}>
             <Button onClick={() => onSelectTab('notifications')} sx={{ my: 2, color: 'white' }}>
-  Requests
-  <Badge badgeContent={pendingRequestCount} color="error" sx={{ ml: 2 }} />
-</Button>
-
+              Requests
+              <Badge badgeContent={pendingRequestCount} color="error" sx={{ ml: 2 }} />
+            </Button>
+            <Button onClick={() => onSelectTab('notificationsPage')} sx={{ my: 2, color: 'white' }}>
+              Notifications
+              {expiredCertCount > 0 && (
+                <Badge badgeContent={expiredCertCount} color="error" sx={{ ml: 2 }} />
+              )}
+            </Button>
           </Box>
 
           {/* Avatar and User Menu */}

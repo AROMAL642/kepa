@@ -46,66 +46,87 @@ router.get('/data/:vehicleno', async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+//update certificate
 
 router.post('/update-certificates', upload.fields([
-  { name: 'insuranceFile', maxCount: 1 },
-  { name: 'pollutionFile', maxCount: 1 }
+  { name: 'insuranceFile' },
+  { name: 'pollutionFile' }
 ]), async (req, res) => {
   try {
     const {
       vehicleNo,
       insurancePolicyNo,
       insuranceValidity,
+      insuranceIssuedDate,
       insuranceExpense,
+      pollutionCertificateNo,
       pollutionValidity,
+      pollutionIssuedDate,
       pollutionExpense
     } = req.body;
 
-    if (!vehicleNo) return res.status(400).json({ message: 'Vehicle number is required.' });
-
     const vehicle = await Vehicle.findOne({ number: vehicleNo });
-    if (!vehicle) return res.status(404).json({ message: 'Vehicle not found.' });
+    if (!vehicle) {
+      return res.status(404).json({ message: 'Vehicle not found' });
+    }
 
-    const lastCert = vehicle.certificateHistory?.[vehicle.certificateHistory.length - 1] || {};
+    const insuranceFile = req.files['insuranceFile']?.[0];
+    const pollutionFile = req.files['pollutionFile']?.[0];
 
-    const newCert = {
-      insurancePolicyNo: insurancePolicyNo || lastCert.insurancePolicyNo,
-      insuranceValidity: insuranceValidity ? new Date(insuranceValidity) : lastCert.insuranceValidity,
-      insuranceExpense: insuranceExpense ? Number(insuranceExpense) : lastCert.insuranceExpense,
-      pollutionValidity: pollutionValidity ? new Date(pollutionValidity) : lastCert.pollutionValidity,
-      pollutionExpense: pollutionExpense ? Number(pollutionExpense) : lastCert.pollutionExpense,
-      insuranceFile: lastCert.insuranceFile,
-      pollutionFile: lastCert.pollutionFile,
+    const latestCert = vehicle.certificateHistory?.[vehicle.certificateHistory.length - 1];
+
+    const isSamePolicy =
+      latestCert &&
+      latestCert.insurancePolicyNo === insurancePolicyNo &&
+      latestCert.pollutionCertificateNo === pollutionCertificateNo;
+
+    const newCertData = {
+      insurancePolicyNo,
+      insuranceValidity,
+      insuranceIssuedDate,
+      insuranceExpense,
+      pollutionCertificateNo,
+      pollutionValidity,
+      pollutionIssuedDate,
+      pollutionExpense,
       updatedAt: new Date()
     };
 
-    if (req.files.insuranceFile) {
-      const file = req.files.insuranceFile[0];
-      newCert.insuranceFile = {
-        data: file.buffer,
-        contentType: file.mimetype,
-        originalName: file.originalname
+    if (insuranceFile) {
+      newCertData.insuranceFile = {
+        data: insuranceFile.buffer,
+        contentType: insuranceFile.mimetype,
+        originalName: insuranceFile.originalname
       };
     }
 
-    if (req.files.pollutionFile) {
-      const file = req.files.pollutionFile[0];
-      newCert.pollutionFile = {
-        data: file.buffer,
-        contentType: file.mimetype,
-        originalName: file.originalname
+    if (pollutionFile) {
+      newCertData.pollutionFile = {
+        data: pollutionFile.buffer,
+        contentType: pollutionFile.mimetype,
+        originalName: pollutionFile.originalname
       };
     }
 
-    vehicle.certificateHistory.push(newCert);
+    if (isSamePolicy) {
+      // Update the existing last entry
+      vehicle.certificateHistory[vehicle.certificateHistory.length - 1] = {
+        ...latestCert.toObject(),
+        ...newCertData
+      };
+    } else {
+      // Add a new entry
+      vehicle.certificateHistory.push(newCertData);
+    }
+
     await vehicle.save();
+    res.status(200).json({ message: 'Certificate updated successfully' });
 
-    res.status(200).json({ message: 'Certificates updated successfully!' });
-
-  } catch (error) {
-    console.error('Error updating certificates:', error);
-    res.status(500).json({ message: 'Server error while updating certificates.' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
   }
 });
+
 
 module.exports = router;

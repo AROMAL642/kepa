@@ -259,6 +259,11 @@ app.use('/api/license', licenseRoutes);
 const reportRoutes = require('./routes/viewprintregisterRoutes');
 app.use('/api', reportRoutes);
 
+//notifications 
+const notificationRoutes = require('./routes/notificationRoutes');
+app.use('/api/notifications', notificationRoutes);
+app.use('/api', notificationRoutes); 
+
 //repair requests
 
 const repairRequestRoutes = require('./routes/repairRequestRoutes');

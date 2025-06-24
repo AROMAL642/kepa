@@ -40,7 +40,9 @@ const Expense = ({ onBack, themeStyle }) => {
         vehicleNo,
         date: entry.date?.substring(0, 10),
         penName: entry.penName || `${entry.name || 'N/A'} (${entry.pen || '-'})`,
-        amount: entry.amount
+        amount: entry.amount,
+        policyNo: entry.policyNo || 'N/A',
+        validity: entry.validity ? entry.validity.substring(0, 10) : 'N/A'
       }));
 
       setRows(formattedRows);
@@ -62,13 +64,14 @@ const Expense = ({ onBack, themeStyle }) => {
     doc.text(`From: ${fromDate}  To: ${toDate}`, 14, 32);
     doc.text(`Total ${category} Expense: ₹${total}`, 14, 39);
 
-    const tableHead = category === 'insurance' || category === 'pollution'
-      ? [['Vehicle Number', 'Date', 'Amount']]
-      : [['Vehicle Number', 'Date', 'Name (PEN)', 'Amount']];
+    const tableHead =
+      category === 'insurance' || category === 'pollution'
+        ? [['Vehicle Number', 'Issued Date', 'Policy/Cert No', 'Validity', 'Amount']]
+        : [['Vehicle Number', 'Date', 'Name (PEN)', 'Amount']];
 
     const tableBody = rows.map(row =>
       category === 'insurance' || category === 'pollution'
-        ? [row.vehicleNo, row.date, row.amount]
+        ? [row.vehicleNo, row.date, row.policyNo, row.validity, row.amount]
         : [row.vehicleNo, row.date, row.penName, row.amount]
     );
 
@@ -83,9 +86,19 @@ const Expense = ({ onBack, themeStyle }) => {
 
   const columns = [
     { field: 'vehicleNo', headerName: 'Vehicle Number', flex: 1 },
-    { field: 'date', headerName: 'Date', flex: 1 },
+    {
+      field: 'date',
+      headerName:
+        category === 'insurance' || category === 'pollution'
+          ? 'Issued Date'
+          : 'Date',
+      flex: 1
+    },
     ...(category === 'insurance' || category === 'pollution'
-      ? []
+      ? [
+          { field: 'policyNo', headerName: 'Policy/Cert No', flex: 1 },
+          { field: 'validity', headerName: 'Validity', flex: 1 }
+        ]
       : [{ field: 'penName', headerName: 'Name (PEN)', flex: 1.5 }]
     ),
     { field: 'amount', headerName: 'Amount', flex: 1 }
