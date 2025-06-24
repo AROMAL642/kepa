@@ -10,10 +10,12 @@ import RepairRequestForm from './userdashboardcomponents/RepairRequestForm';
 import AccidentReportForm from './userdashboardcomponents/AccidentReportForm';
 import './css/accidentreportform.css';
 import EyeTestReport from './userdashboardcomponents/EyeTestReport';
-import ResponsiveAppBar from './admindashboardcomponents/ResponsiveAppBar';
+import ResponsiveAppBar from './userdashboardcomponents/ResponsiveAppBar';
 import TrackRepairRequests from './userdashboardcomponents/trackrepairrequest';
 import AddUpdateCertificate from './admindashboardcomponents/AddUpdateCertificate'; 
 import LicenseForm from './userdashboardcomponents/LicenseForm';
+import NotificationPage from './userdashboardcomponents/NotificationPage';
+
 
 
 // ✅ New Imports
@@ -25,6 +27,8 @@ function UserDashboard() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const navigate = useNavigate();
   const [editMode, setEditMode] = useState(false);
+  const [assignedVehicle, setAssignedVehicle] = useState('');
+
 
   const [formData, setFormData] = useState({
     name: '',
@@ -60,6 +64,18 @@ function UserDashboard() {
         role: user.role || 'user',
       });
     }
+
+    if (user?.pen) {
+  fetch(`http://localhost:5000/api/vehicles/assigned/${user.pen}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.vehicleNumber) {
+        setAssignedVehicle(data.vehicleNumber);
+      }
+    })
+    .catch(err => console.error('Failed to fetch assigned vehicle', err));
+}
+
   }, []);
 
   useEffect(() => {
@@ -85,9 +101,11 @@ function UserDashboard() {
     { key: 'license', label: 'License' },
     { key: 'accident', label: 'Accident' },
     { key: 'vehicle details', label: 'Vehicle Details' },
-    { key: 'certificates', label: 'Vehicle Certificates' }, // ✅ Added here
-    { key: 'stocks', label: 'Stocks' },              // ✅ New tab
-    { key: 'viewalltocks', label: 'View All Stock ' },     // ✅ New tab
+    { key: 'certificates', label: 'Vehicle Certificates' }, 
+    { key: 'stocks', label: 'Stocks' },              
+    { key: 'viewalltocks', label: 'View All Stock ' },   
+    { key: 'notifications', label: 'Notifications' }
+ 
   ];
 
   return (
@@ -105,7 +123,15 @@ function UserDashboard() {
 
       <div className={`dashboard ${isDrawerOpen ? 'drawer-open' : ''}`}>
         <div className={`drawer ${isDrawerOpen ? 'open' : ''}`}>
-          <h2>Welcome {formData.name || 'User'}!</h2>
+          <h2>Welcome {formData.name || 'User'}</h2>
+
+            {assignedVehicle && (
+  <p style={{ marginBottom: '1rem', color: '#333', fontWeight: 'bold' }}>
+    Assigned Vehicle: {assignedVehicle}
+  </p>
+)}
+
+
           <div className="sidebar-buttons">
             {tabMap.map(({ key, label }) => (
               <button
@@ -259,6 +285,12 @@ function UserDashboard() {
               <AddUpdateCertificate />
             </div>
           )}
+          {activeTab === 'notifications' && (
+  <div className="notification-section">
+    <NotificationPage />
+  </div>
+)}
+
 
         </div>
       </div>

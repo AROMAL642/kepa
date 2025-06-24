@@ -128,5 +128,20 @@ router.post('/update-certificates', upload.fields([
   }
 });
 
+// Get assigned vehicle number for a user (based on currentDriver)
+router.get('/assigned/:pen', async (req, res) => {
+  try {
+    const vehicle = await Vehicle.findOne({ currentDriver: req.params.pen }, 'number');
+    if (vehicle) {
+      res.json({ vehicleNumber: vehicle.number });
+    } else {
+      res.json({ vehicleNumber: null });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch assigned vehicle' });
+  }
+});
+
+
 
 module.exports = router;
