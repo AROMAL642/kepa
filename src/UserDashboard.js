@@ -15,6 +15,7 @@ import TrackRepairRequests from './userdashboardcomponents/trackrepairrequest';
 import AddUpdateCertificate from './admindashboardcomponents/AddUpdateCertificate'; 
 import LicenseForm from './userdashboardcomponents/LicenseForm';
 import NotificationPage from './userdashboardcomponents/NotificationPage';
+import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
 
 
 
@@ -125,10 +126,33 @@ function UserDashboard() {
         <div className={`drawer ${isDrawerOpen ? 'open' : ''}`}>
           <h2>Welcome {formData.name || 'User'}</h2>
 
-            {assignedVehicle && (
-  <p style={{ marginBottom: '1rem', color: '#333', fontWeight: 'bold' }}>
-    Assigned Vehicle: {assignedVehicle}
-  </p>
+           
+
+{assignedVehicle && (
+  <div
+    style={{
+      marginBottom: '1rem',
+      color: '#1e88e5',
+      fontWeight: '600',
+      fontSize: '1.1rem',
+      backgroundColor: '#e3f2fd',
+      padding: '12px 16px',
+      borderRadius: '6px',
+      boxShadow: '0 1px 4px rgba(0, 0, 0, 0.1)',
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: '10px',
+      flexDirection: 'row'
+    }}
+  >
+    <DirectionsCarIcon style={{ color: '#1e88e5', marginTop: '2px' }} />
+    <div>
+      <div style={{ fontWeight: 'bold' }}>Assigned Vehicle:</div>
+      <div style={{ marginLeft: '10px', fontSize: '1rem', fontWeight: '500' }}>
+        {assignedVehicle}
+      </div>
+    </div>
+  </div>
 )}
 
 

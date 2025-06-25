@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import './css/loginform.css';
 
 const ResetPassword = () => {
@@ -11,11 +12,15 @@ const ResetPassword = () => {
   const [error, setError] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const navigate = useNavigate();
 
   const handleSendOTP = async (e) => {
     e.preventDefault();
     setMessage('');
     setError('');
+    setLoading(true);
 
     try {
       const res = await axios.post('http://localhost:5000/api/resetpassword', { pen });
@@ -24,6 +29,8 @@ const ResetPassword = () => {
     } catch (error) {
       setError(error.response?.data?.message || 'Error sending OTP');
       setOtpSent(false);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -64,6 +71,11 @@ const ResetPassword = () => {
 
       setMessage(res.data.message || 'Password updated successfully');
       setError('');
+
+      // Redirect to login after delay
+      setTimeout(() => {
+        navigate('/');
+      }, 1500);
     } catch (error) {
       setError(error.response?.data?.message || 'Error saving new password');
     }
@@ -87,7 +99,9 @@ const ResetPassword = () => {
           />
         </div>
 
-        <button type="submit" className="buttonStyle">Send OTP</button>
+        <button type="submit" className="buttonStyle" disabled={loading}>
+          {loading ? 'Sending...' : 'Send OTP'}
+        </button>
       </form>
 
       {otpSent && !otpVerified && (
@@ -99,7 +113,7 @@ const ResetPassword = () => {
               id="otp"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
-              placeholder="Enter the OTP you received"
+              placeholder="Enter the OTP you received in Registered E-mail"
               required
               className="inputStyle"
             />

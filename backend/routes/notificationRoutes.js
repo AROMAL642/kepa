@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Vehicle = require('../models/Vehicle');
-
+//for admin view 
 router.get('/expired-certificates', async (req, res) => {
   try {
     const today = new Date();
@@ -71,6 +71,7 @@ router.get('/expired-count', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
 
 
 

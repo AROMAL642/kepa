@@ -314,11 +314,11 @@ app.get('/api/unverified-users', async (req, res) => {
 });
 
 
-// Verify a user by email
-app.put('/api/verify-user/:email', async (req, res) => {
+// ✅ New: Verify a user by PEN
+app.put('/api/verify-user/pen/:pen', async (req, res) => {
   try {
-    const email = req.params.email;
-    const user = await User.findOneAndUpdate({ email }, { verified: 'YES' }, { new: true });
+    const pen = req.params.pen;
+    const user = await User.findOneAndUpdate({ pen }, { verified: 'YES' }, { new: true });
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     res.status(200).json({ message: 'User verified successfully', user });
@@ -327,6 +327,7 @@ app.put('/api/verify-user/:email', async (req, res) => {
     res.status(500).json({ message: 'Verification failed', error: err.message });
   }
 });
+
 
 
 // view specific user details

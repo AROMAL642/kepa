@@ -1,12 +1,13 @@
 import React, { useEffect, useState, useRef } from 'react';
 import '../css/NotificationPage.css';
-import { Box, Button } from '@mui/material';
+import { Box, Button, Alert } from '@mui/material';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
 const NotificationPage = ({ themeStyle }) => {
   const [expiredList, setExpiredList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [warning, setWarning] = useState(false);
   const tableRef = useRef(null);
 
   useEffect(() => {
@@ -14,6 +15,9 @@ const NotificationPage = ({ themeStyle }) => {
       .then(res => res.json())
       .then(data => {
         setExpiredList(data);
+        // Set warning if any item has expired insurance or pollution
+        const hasWarning = data.some(v => v.insuranceExpired || v.pollutionExpired);
+        setWarning(hasWarning);
         setLoading(false);
       })
       .catch(err => {
@@ -36,11 +40,8 @@ const NotificationPage = ({ themeStyle }) => {
       const pdfWidth = pageWidth - margin * 2;
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
-      // Add heading before image
       pdf.setFontSize(16);
       pdf.text('Certificates Expired Vehicle Details', pageWidth / 2, 20, { align: 'center' });
-
-      // Add image (table) below heading
       pdf.addImage(imgData, 'PNG', margin, 30, pdfWidth, pdfHeight);
       pdf.save('Expired_Certificates_Report.pdf');
     });
@@ -62,32 +63,40 @@ const NotificationPage = ({ themeStyle }) => {
       ) : expiredList.length === 0 ? (
         <p>No expired insurance or pollution certificates.</p>
       ) : (
-        <div ref={tableRef} style={{ backgroundColor: '#fff', padding: '10px' }}>
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Vehicle Number</th>
-                <th>Model</th>
-                <th>Insurance Expired</th>
-                <th>Insurance Validity</th>
-                <th>Pollution Expired</th>
-                <th>Pollution Validity</th>
-              </tr>
-            </thead>
-            <tbody>
-              {expiredList.map((v, idx) => (
-                <tr key={idx}>
-                  <td>{v.number}</td>
-                  <td>{v.model || 'N/A'}</td>
-                  <td>{v.insuranceExpired ? 'Yes' : 'No'}</td>
-                  <td>{v.insuranceValidity ? new Date(v.insuranceValidity).toLocaleDateString() : 'N/A'}</td>
-                  <td>{v.pollutionExpired ? 'Yes' : 'No'}</td>
-                  <td>{v.pollutionValidity ? new Date(v.pollutionValidity).toLocaleDateString() : 'N/A'}</td>
+        <>
+          {warning && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              ⚠️ Warning: One or more vehicles have expired insurance or pollution certificates. Please take immediate action.
+            </Alert>
+          )}
+
+          <div ref={tableRef} style={{ backgroundColor: '#fff', padding: '10px' }}>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Vehicle Number</th>
+                  <th>Model</th>
+                  <th>Insurance Expired</th>
+                  <th>Insurance Validity</th>
+                  <th>Pollution Expired</th>
+                  <th>Pollution Validity</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {expiredList.map((v, idx) => (
+                  <tr key={idx}>
+                    <td>{v.number}</td>
+                    <td>{v.model || 'N/A'}</td>
+                    <td>{v.insuranceExpired ? 'Yes' : 'No'}</td>
+                    <td>{v.insuranceValidity ? new Date(v.insuranceValidity).toLocaleDateString() : 'N/A'}</td>
+                    <td>{v.pollutionExpired ? 'Yes' : 'No'}</td>
+                    <td>{v.pollutionValidity ? new Date(v.pollutionValidity).toLocaleDateString() : 'N/A'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );

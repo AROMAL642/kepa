@@ -14,7 +14,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Badge from '@mui/material/Badge';
 import { useNavigate } from 'react-router-dom';
 
-const settings = ['Profile', 'Dashboard', 'Notifications', 'Logout'];
+const settings = ['Profile', 'Dashboard', 'Logout'];
 const DRAWER_WIDTH = 240;
 
 function ResponsiveAppBar({

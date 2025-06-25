@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
+import { Badge, Box } from '@mui/material';
 import {
   Dialog,
   DialogTitle,
@@ -25,9 +26,7 @@ const RepairAdminTable = ({ themeStyle }) => {
 
   const [verifyDialogOpen, setVerifyDialogOpen] = useState(false);
   const [verifyEntry, setVerifyEntry] = useState(null);
-
-
-  
+  const pendingCount = rows.filter(row => row.status === 'pending').length;
  
   const fetchRepairs = useCallback(async () => {
     try {
@@ -373,13 +372,25 @@ const handleConfirmVerification = async () => {
 
 
       <div style={{ marginBottom: 10 }}>
-  <Button
-    variant={activeTab === 'repair' ? 'contained' : 'outlined'}
-    onClick={() => setActiveTab('repair')}
-    style={{ marginRight: 10 }}
-  >
+ <Button
+  variant={activeTab === 'repair' ? 'contained' : 'outlined'}
+  onClick={() => setActiveTab('repair')}
+  style={{ marginRight: 10, position: 'relative' }}
+>
+  <Box display="flex" alignItems="center" position="relative">
     Repair Requests
-  </Button>
+    <Badge
+      badgeContent={pendingCount}
+      color="error"
+      anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      sx={{
+        position: 'absolute',
+        top: -8,
+        right: -12
+      }}
+    />
+  </Box>
+</Button>
   <Button
     variant={activeTab === 'mechanic' ? 'contained' : 'outlined'}
     onClick={() => setActiveTab('mechanic')}

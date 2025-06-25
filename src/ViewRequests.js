@@ -40,10 +40,10 @@ function ViewRequests({ themeStyle }) {
     }
   };
 
-  const handleVerify = async (email) => {
+  const handleVerify = async (pen) => {
     setLoading(true);
     try {
-      await axios.put(`http://localhost:5000/api/verify-user/${email}`);
+      await axios.put(`http://localhost:5000/api/verify-user/pen/${pen}`);
       setMessage('User verification successful');
       handleCloseDialog();
       fetchRequests();
@@ -107,7 +107,7 @@ function ViewRequests({ themeStyle }) {
             variant="contained"
             color="success"
             size="small"
-            onClick={() => handleVerify(params.row.email)}
+            onClick={() => handleVerify(params.row.pen)} // ✅ Use pen here
           >
             Verify
           </Button>
