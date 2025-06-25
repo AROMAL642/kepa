@@ -16,12 +16,25 @@ import AddUpdateCertificate from './admindashboardcomponents/AddUpdateCertificat
 import LicenseForm from './userdashboardcomponents/LicenseForm';
 import NotificationPage from './userdashboardcomponents/NotificationPage';
 import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
-
-
-
-// ✅ New Imports
 import Stocks from './mechanicdashboardcomponents/Stocks';
 import ViewAllStocks from './mechanicdashboardcomponents/ViewAllStocks';
+
+
+import PersonIcon from '@mui/icons-material/Person';
+import LocalGasStationIcon from '@mui/icons-material/LocalGasStation';
+import MiscellaneousServicesIcon from '@mui/icons-material/MiscellaneousServices';
+import TrackChangesIcon from '@mui/icons-material/TrackChanges';
+import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import BadgeIcon from '@mui/icons-material/Badge';
+import ReportProblemIcon from '@mui/icons-material/ReportProblem';
+import InfoIcon from '@mui/icons-material/Info';
+import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
+import InventoryIcon from '@mui/icons-material/Inventory';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+
+
+
 
 function UserDashboard() {
   const [activeTab, setActiveTab] = useState('profile');
@@ -102,21 +115,20 @@ useEffect(() => {
   };
 
   const tabMap = [
-    { key: 'profile', label: 'Profile' },
-    { key: 'fuel', label: 'Fuel' },
-    { key: 'repair', label: 'Request for Repair' },
-    { key: 'trackrepair', label: 'Track Repair Requests' },
-    { key: 'movement', label: 'Movement' },
-    { key: 'eyetest', label: 'Eye Test' },
-    { key: 'license', label: 'License' },
-    { key: 'accident', label: 'Accident' },
-    { key: 'vehicle details', label: 'Vehicle Details' },
-    { key: 'certificates', label: 'Vehicle Certificates' }, 
-    { key: 'stocks', label: 'Stocks' },              
-    { key: 'viewalltocks', label: 'View All Stock ' },   
-    { key: 'notifications', label: 'Notifications' }
- 
-  ];
+  { key: 'profile', label: 'Profile', icon: <PersonIcon /> },
+  { key: 'fuel', label: 'Fuel', icon: <LocalGasStationIcon /> },
+  { key: 'repair', label: 'Request for Repair', icon: <MiscellaneousServicesIcon /> },
+  { key: 'trackrepair', label: 'Track Repair Requests', icon: <TrackChangesIcon /> },
+  { key: 'movement', label: 'Movement', icon: <DirectionsRunIcon /> },
+  { key: 'eyetest', label: 'Eye Test', icon: <VisibilityIcon /> },
+  { key: 'license', label: 'License', icon: <BadgeIcon /> },
+  { key: 'accident', label: 'Accident', icon: <ReportProblemIcon /> },
+  { key: 'vehicle details', label: 'Vehicle Details', icon: <InfoIcon /> },
+  { key: 'certificates', label: 'Vehicle Certificates', icon: <VerifiedUserIcon /> },
+  { key: 'stocks', label: 'Stocks', icon: <InventoryIcon /> },
+  { key: 'viewallstocks', label: 'View All Stock', icon: <InventoryIcon /> },
+  { key: 'notifications', label: 'Notifications', icon: <NotificationsIcon /> },
+];
 
   return (
     <>
@@ -166,17 +178,22 @@ useEffect(() => {
 )}
 
 
-          <div className="sidebar-buttons">
-            {tabMap.map(({ key, label }) => (
-              <button
-                key={key}
-                className={`sidebar-btn ${activeTab === key ? 'active' : ''}`}
-                onClick={() => setActiveTab(key)} // ✅ Just switch tab
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+         <div className="sidebar-buttons">
+  {tabMap.map(({ key, label, icon }) => (
+    <button
+      key={key}
+      className={`sidebar-btn ${activeTab === key ? 'active' : ''}`}
+      onClick={() => setActiveTab(key)}
+    >
+      <span className="icon-label-wrapper">
+        {icon}
+        <span className="label-text">{label}</span>
+      </span>
+    </button>
+  ))}
+</div>
+
+
           <button className="logout-btn" onClick={handleLogout}>🚪 Logout</button>
         </div>
 

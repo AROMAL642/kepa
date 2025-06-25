@@ -65,11 +65,7 @@ function AddUpdateCertificate() {
   };
 
   const handleUpdate = async () => {
-    const {
-      insurancePolicyNo,
-      pollutionCertificateNo
-    } = form;
-
+    const { insurancePolicyNo, pollutionCertificateNo } = form;
     if (!insurancePolicyNo || !pollutionCertificateNo) {
       alert('Insurance Policy Number and Pollution Certificate Number are required.');
       return;
@@ -77,12 +73,10 @@ function AddUpdateCertificate() {
 
     const formData = new FormData();
     formData.append('vehicleNo', vehicleNo);
-
     formData.append('insurancePolicyNo', form.insurancePolicyNo);
     formData.append('insuranceValidity', form.insuranceValidity);
     formData.append('insuranceIssuedDate', form.insuranceIssuedDate);
     formData.append('insuranceExpense', form.insuranceExpense);
-
     formData.append('pollutionCertificateNo', form.pollutionCertificateNo);
     formData.append('pollutionValidity', form.pollutionValidity);
     formData.append('pollutionIssuedDate', form.pollutionIssuedDate);
@@ -100,7 +94,7 @@ function AddUpdateCertificate() {
       const result = await res.json();
       if (res.ok) {
         alert('Certificates updated successfully!');
-        handleSearch(); // Refresh
+        handleSearch();
       } else {
         alert(result.message || 'Update failed');
       }
@@ -115,7 +109,6 @@ function AddUpdateCertificate() {
   return (
     <div className="certificate-container">
       <h2>View & Update Certificates</h2>
-
       <div className="search-section">
         <input
           type="text"
@@ -131,102 +124,44 @@ function AddUpdateCertificate() {
       {vehicleData && (
         <div className="certificate-details">
           <h3>Latest Certificate Details</h3>
-
-          <p><strong>Insurance Policy No:</strong> {latestCert?.insurancePolicyNo || 'N/A'}</p>
-          <p><strong>Insurance Issued Date:</strong> {latestCert?.insuranceIssuedDate?.slice(0, 10) || 'N/A'}</p>
-          <p><strong>Insurance Validity:</strong> {latestCert?.insuranceValidity?.slice(0, 10) || 'N/A'}</p>
-          <p><strong>Insurance Expense:</strong> ₹{latestCert?.insuranceExpense || 'N/A'}</p>
-          {latestCert?.insuranceFile && (
-            <p><strong>Insurance File:</strong>{' '}
-              <button onClick={() => openMongoFile(latestCert.insuranceFile)}>View</button>
-            </p>
-          )}
-
-          <p><strong>Pollution Certificate No:</strong> {latestCert?.pollutionCertificateNo || 'N/A'}</p>
-          <p><strong>Pollution Issued Date:</strong> {latestCert?.pollutionIssuedDate?.slice(0, 10) || 'N/A'}</p>
-          <p><strong>Pollution Validity:</strong> {latestCert?.pollutionValidity?.slice(0, 10) || 'N/A'}</p>
-          <p><strong>Pollution Expense:</strong> ₹{latestCert?.pollutionExpense || 'N/A'}</p>
-          {latestCert?.pollutionFile && (
-            <p><strong>Pollution File:</strong>{' '}
-              <button onClick={() => openMongoFile(latestCert.pollutionFile)}>View</button>
-            </p>
-          )}
+          <div className="cert-info">
+            <p><strong>Insurance Policy No:</strong> {latestCert?.insurancePolicyNo || 'N/A'}</p>
+            <p><strong>Issued Date:</strong> {latestCert?.insuranceIssuedDate?.slice(0, 10) || 'N/A'}</p>
+            <p><strong>Validity:</strong> {latestCert?.insuranceValidity?.slice(0, 10) || 'N/A'}</p>
+            <p><strong>Expense:</strong> ₹{latestCert?.insuranceExpense || 'N/A'}</p>
+            {latestCert?.insuranceFile && <button onClick={() => openMongoFile(latestCert.insuranceFile)}>View Insurance</button>}
+            <p><strong>Pollution Certificate No:</strong> {latestCert?.pollutionCertificateNo || 'N/A'}</p>
+            <p><strong>Issued Date:</strong> {latestCert?.pollutionIssuedDate?.slice(0, 10) || 'N/A'}</p>
+            <p><strong>Validity:</strong> {latestCert?.pollutionValidity?.slice(0, 10) || 'N/A'}</p>
+            <p><strong>Expense:</strong> ₹{latestCert?.pollutionExpense || 'N/A'}</p>
+            {latestCert?.pollutionFile && <button onClick={() => openMongoFile(latestCert.pollutionFile)}>View Pollution</button>}
+          </div>
 
           <div className="update-form">
             <h4>Update Certificates</h4>
-
-            <label>Insurance Policy Number *</label>
-            <input
-              type="text"
-              value={form.insurancePolicyNo}
-              onChange={(e) => setForm({ ...form, insurancePolicyNo: e.target.value })}
-              required
-            />
-
-            <label>Insurance Issued Date</label>
-            <input
-              type="date"
-              value={form.insuranceIssuedDate}
-              onChange={(e) => setForm({ ...form, insuranceIssuedDate: e.target.value })}
-            />
-
-            <label>Insurance Validity</label>
-            <input
-              type="date"
-              value={form.insuranceValidity}
-              onChange={(e) => setForm({ ...form, insuranceValidity: e.target.value })}
-            />
-
-            <label>Insurance Expense</label>
-            <input
-              type="number"
-              value={form.insuranceExpense}
-              onChange={(e) => setForm({ ...form, insuranceExpense: e.target.value })}
-            />
-
-            <label>Insurance Certificate File</label>
-            <input
-              type="file"
-              accept="application/pdf,image/*"
-              onChange={(e) => setForm({ ...form, insuranceFile: e.target.files[0] })}
-            />
-
-            <label>Pollution Certificate Number *</label>
-            <input
-              type="text"
-              value={form.pollutionCertificateNo}
-              onChange={(e) => setForm({ ...form, pollutionCertificateNo: e.target.value })}
-              required
-            />
-
-            <label>Pollution Issued Date</label>
-            <input
-              type="date"
-              value={form.pollutionIssuedDate}
-              onChange={(e) => setForm({ ...form, pollutionIssuedDate: e.target.value })}
-            />
-
-            <label>Pollution Validity</label>
-            <input
-              type="date"
-              value={form.pollutionValidity}
-              onChange={(e) => setForm({ ...form, pollutionValidity: e.target.value })}
-            />
-
-            <label>Pollution Expense</label>
-            <input
-              type="number"
-              value={form.pollutionExpense}
-              onChange={(e) => setForm({ ...form, pollutionExpense: e.target.value })}
-            />
-
-            <label>Pollution Certificate File</label>
-            <input
-              type="file"
-              accept="application/pdf,image/*"
-              onChange={(e) => setForm({ ...form, pollutionFile: e.target.files[0] })}
-            />
-
+            {[
+              ['Insurance Policy Number *', 'insurancePolicyNo', 'text'],
+              ['Insurance Issued Date', 'insuranceIssuedDate', 'date'],
+              ['Insurance Validity', 'insuranceValidity', 'date'],
+              ['Insurance Expense', 'insuranceExpense', 'number'],
+              ['Insurance File', 'insuranceFile', 'file'],
+              ['Pollution Certificate Number *', 'pollutionCertificateNo', 'text'],
+              ['Pollution Issued Date', 'pollutionIssuedDate', 'date'],
+              ['Pollution Validity', 'pollutionValidity', 'date'],
+              ['Pollution Expense', 'pollutionExpense', 'number'],
+              ['Pollution File', 'pollutionFile', 'file']
+            ].map(([label, name, type]) => (
+              <div key={name} className="form-group">
+                <label>{label}</label>
+                <input
+                  type={type}
+                  value={type !== 'file' ? form[name] : undefined}
+                  onChange={(e) =>
+                    setForm({ ...form, [name]: type !== 'file' ? e.target.value : e.target.files[0] })
+                  }
+                />
+              </div>
+            ))}
             <button onClick={handleUpdate}>Update</button>
           </div>
         </div>

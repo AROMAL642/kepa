@@ -24,6 +24,18 @@ import Expense from './admindashboardcomponents/Expense';
 import TraineesDetails from './admindashboardcomponents/TraineesDetails';
 import NotificationPage from './admindashboardcomponents/NotificationPage';
 
+// MUI Icons
+import LocalGasStationIcon from '@mui/icons-material/LocalGasStation';
+import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
+import BuildIcon from '@mui/icons-material/Build';
+import ReportProblemIcon from '@mui/icons-material/ReportProblem';
+import PersonSearchIcon from '@mui/icons-material/PersonSearch';
+import InventoryIcon from '@mui/icons-material/Inventory';
+import PeopleIcon from '@mui/icons-material/People';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import PrintIcon from '@mui/icons-material/Print';
+import SchoolIcon from '@mui/icons-material/School';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 
 
 
@@ -203,10 +215,9 @@ const fetchRepairPendingCount = async () => {
         name={adminData.name}
         isDrawerOpen={isDrawerOpen}
         onDrawerToggle={() => setIsDrawerOpen(!isDrawerOpen)}
-        onSelectTab={handleTabSelect}   
+        onSelectTab={handleTabSelect}
         pendingRequestCount={totalNotifications}
         expiredCertCount={expiredCertCount}
-    
       />
 
       <button className="drawer-toggle-btn" onClick={() => setIsDrawerOpen(!isDrawerOpen)}>☰</button>
@@ -224,42 +235,53 @@ const fetchRepairPendingCount = async () => {
           )}
 
           <div className="sidebar-buttons">
-            <button
-              className={`sidebar-btn notification-btn ${activeTab === 'Fuel' ? 'active' : ''}`}
-              onClick={() => setActiveTab('Fuel')}
-            >
-              Fuel {pendingFuelCount > 0 && <span className="notification-badge">{pendingFuelCount}</span>}
+            <button className={`sidebar-btn notification-btn ${activeTab === 'Fuel' ? 'active' : ''}`} onClick={() => setActiveTab('Fuel')}>
+              <LocalGasStationIcon style={{ marginRight: '8px' }} /> Fuel {pendingFuelCount > 0 && <span className="notification-badge">{pendingFuelCount}</span>}
             </button>
-            <button className={`sidebar-btn ${activeTab === 'Movement' ? 'active' : ''}`} onClick={() => setActiveTab('Movement')}>Movement Register</button>
-            
-            <button className={`sidebar-btn notification-btn ${activeTab === 'Repair' ? 'active' : ''}`}
-              onClick={() => setActiveTab('Repair')}
-              >
-     Repair Reports {repairPendingCount > 0 && <span className="notification-badge">{repairPendingCount} </span>}
-    </button>
 
+            <button className={`sidebar-btn ${activeTab === 'Movement' ? 'active' : ''}`} onClick={() => setActiveTab('Movement')}>
+              <DirectionsCarIcon style={{ marginRight: '8px' }} /> Movement Register
+            </button>
 
-            <button className={`sidebar-btn notification-btn ${activeTab === 'Accident' ? 'active' : ''}`}
-              onClick={() => setActiveTab('Accident')}
-              >
-  Accident Details {pendingAccidentCount > 0 && <span className="notification-badge">{pendingAccidentCount}</span>}
-</button>
+            <button className={`sidebar-btn notification-btn ${activeTab === 'Repair' ? 'active' : ''}`} onClick={() => setActiveTab('Repair')}>
+              <BuildIcon style={{ marginRight: '8px' }} /> Repair Reports {repairPendingCount > 0 && <span className="notification-badge">{repairPendingCount}</span>}
+            </button>
 
-            <button className={`sidebar-btn ${activeTab === 'VehicleDetails' ? 'active' : ''}`} onClick={() => { setActiveTab('VehicleDetails'); setVehicleTab('main'); }}>Vehicle</button>
+            <button className={`sidebar-btn notification-btn ${activeTab === 'Accident' ? 'active' : ''}`} onClick={() => setActiveTab('Accident')}>
+              <ReportProblemIcon style={{ marginRight: '8px' }} /> Accident Details {pendingAccidentCount > 0 && <span className="notification-badge">{pendingAccidentCount}</span>}
+            </button>
+
+            <button className={`sidebar-btn ${activeTab === 'VehicleDetails' ? 'active' : ''}`} onClick={() => { setActiveTab('VehicleDetails'); setVehicleTab('main'); }}>
+              <DirectionsCarIcon style={{ marginRight: '8px' }} /> Vehicle
+            </button>
+
             <button className={`sidebar-btn notification-btn ${activeTab === 'Request' ? 'active' : ''}`} onClick={() => setActiveTab('Request')}>
-              Non Verified Users {pendingCount > 0 && <span className="notification-badge">{pendingCount}</span>}
+              <PersonSearchIcon style={{ marginRight: '8px' }} /> Non Verified Users {pendingCount > 0 && <span className="notification-badge">{pendingCount}</span>}
             </button>
-            <button className={`sidebar-btn ${activeTab === 'stocks' ? 'active' : ''}`} onClick={() => setActiveTab('stocks')}>Stock</button>
-            <button className={`sidebar-btn ${activeTab === 'VerifiedUsersTable' ? 'active' : ''}`} onClick={() => setActiveTab('VerifiedUsersTable')}>Users Details</button>
-            <button className={`sidebar-btn ${activeTab === 'AddUser' ? 'active' : ''}`} onClick={() => setActiveTab('AddUser')}>Add Users</button>
-            <button className={`sidebar-btn ${activeTab === 'PrintRegisters' ? 'active' : ''}`} onClick={() => setActiveTab('PrintRegisters')}>View/Print Registers</button>
-            <button className={`sidebar-btn ${activeTab === 'trainees' ? 'active' : ''}`} onClick={() => setActiveTab('trainees')}>Trainees Details</button>
 
+            <button className={`sidebar-btn ${activeTab === 'stocks' ? 'active' : ''}`} onClick={() => setActiveTab('stocks')}>
+              <InventoryIcon style={{ marginRight: '8px' }} /> Stock
+            </button>
 
+            <button className={`sidebar-btn ${activeTab === 'VerifiedUsersTable' ? 'active' : ''}`} onClick={() => setActiveTab('VerifiedUsersTable')}>
+              <PeopleIcon style={{ marginRight: '8px' }} /> Users Details
+            </button>
 
+            <button className={`sidebar-btn ${activeTab === 'AddUser' ? 'active' : ''}`} onClick={() => setActiveTab('AddUser')}>
+              <AddCircleOutlineIcon style={{ marginRight: '8px' }} /> Add Users
+            </button>
 
+            <button className={`sidebar-btn ${activeTab === 'PrintRegisters' ? 'active' : ''}`} onClick={() => setActiveTab('PrintRegisters')}>
+              <PrintIcon style={{ marginRight: '8px' }} /> View/Print Registers
+            </button>
 
-            <button className={`sidebar-btn ${activeTab === 'Purchases' ? 'active' : ''}`} onClick={() => setActiveTab('Purchases')}>Purchase</button>
+            <button className={`sidebar-btn ${activeTab === 'trainees' ? 'active' : ''}`} onClick={() => setActiveTab('trainees')}>
+              <SchoolIcon style={{ marginRight: '8px' }} /> Trainees Details
+            </button>
+
+            <button className={`sidebar-btn ${activeTab === 'Purchases' ? 'active' : ''}`} onClick={() => setActiveTab('Purchases')}>
+              <ShoppingCartIcon style={{ marginRight: '8px' }} /> Purchase
+            </button>
           </div>
         </div>
 

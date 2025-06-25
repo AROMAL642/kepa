@@ -304,7 +304,7 @@ router.put('/:id/mechanic-update', async (req, res) => {
 // forward to repair section by MTI Admin
 // router.get('/:id/forward-to-repair', async (req, res) => {
 
-router.put('/forward-to-repair', async (req, res) => {
+router.put('/:id/forward-to-repair', async (req, res) => {
   try {
     const request = await RepairRequest.findById(req.body.id);
     if (!request) return res.status(404).json({ message: 'Repair not found' });

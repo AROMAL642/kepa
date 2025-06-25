@@ -4,9 +4,17 @@ import SkeletonChildren from './admindashboardcomponents/SkeletonUI';
 import SearchVehicleDetails from './repairsectiondashboardcomponents/SearchVehicleDetails';
 import VerifiedUsersTable from './fuelsectiondashboardcomponents/VerifiedUsersTable';
 import RepairPendingRequest from './repairsectiondashboardcomponents/RepairPendingRequest';
-
 import './css/admindashboard.css';
 import './css/fueladmin.css';
+
+import MenuIcon from '@mui/icons-material/Menu';
+import IconButton from '@mui/material/IconButton';
+import PersonIcon from '@mui/icons-material/Person';
+import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
+import GroupIcon from '@mui/icons-material/Group';
+import BuildIcon from '@mui/icons-material/Build';
+import DescriptionIcon from '@mui/icons-material/Description';
+import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 
 const RepairEntryReview = () => <div style={{ padding: '20px' }}>Repair Entry Review Placeholder</div>;
 const EssentialityCertificate = () => <div style={{ padding: '20px' }}>Essentiality Certificate Placeholder</div>;
@@ -129,13 +137,40 @@ function RepairDashboard() {
             }}>{repairData.role}</div>
           )}
           <div className="sidebar-buttons">
-            <button className={`sidebar-btn ${activeTab === 'repair' ? 'active' : ''}`} onClick={() => setActiveTab('repair')}>Repair Entry Review</button>
-            <button className={`sidebar-btn ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>Profile</button>
-            <button className={`sidebar-btn ${activeTab === 'pending' ? 'active' : ''}`} onClick={() => setActiveTab('pending')}>View Pending Requests</button>
-            <button className={`sidebar-btn ${activeTab === 'vehicle' ? 'active' : ''}`} onClick={() => setActiveTab('vehicle')}>Vehicle Details</button>
-            <button className={`sidebar-btn ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>Users Details</button>
-            <button className={`sidebar-btn ${activeTab === 'escertif' ? 'active' : ''}`} onClick={() => setActiveTab('escertif')}>Essentiality Certificate</button>
-            <button className={`sidebar-btn ${activeTab === 'techcert' ? 'active' : ''}`} onClick={() => setActiveTab('techcert')}>Technical Certificate</button>
+            <button className={`sidebar-btn ${activeTab === 'repair' ? 'active' : ''}`} onClick={() => setActiveTab('repair')}>
+              <BuildIcon fontSize="small" style={{ marginRight: '8px' }} />
+              Repair Entry Review
+            </button>
+
+            <button className={`sidebar-btn ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>
+              <PersonIcon fontSize="small" style={{ marginRight: '8px' }} />
+              Profile
+            </button>
+
+            <button className={`sidebar-btn ${activeTab === 'pending' ? 'active' : ''}`} onClick={() => setActiveTab('pending')}>
+              <DescriptionIcon fontSize="small" style={{ marginRight: '8px' }} />
+              View Pending Requests
+            </button>
+
+            <button className={`sidebar-btn ${activeTab === 'vehicle' ? 'active' : ''}`} onClick={() => setActiveTab('vehicle')}>
+              <DirectionsCarIcon fontSize="small" style={{ marginRight: '8px' }} />
+              Vehicle Details
+            </button>
+
+            <button className={`sidebar-btn ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>
+              <GroupIcon fontSize="small" style={{ marginRight: '8px' }} />
+              Users Details
+            </button>
+
+            <button className={`sidebar-btn ${activeTab === 'escertif' ? 'active' : ''}`} onClick={() => setActiveTab('escertif')}>
+              <DescriptionIcon fontSize="small" style={{ marginRight: '8px' }} />
+              Essentiality Certificate
+            </button>
+
+            <button className={`sidebar-btn ${activeTab === 'techcert' ? 'active' : ''}`} onClick={() => setActiveTab('techcert')}>
+              <SettingsSuggestIcon fontSize="small" style={{ marginRight: '8px' }} />
+              Technical Certificate
+            </button>
           </div>
         </div>
 
