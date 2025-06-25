@@ -116,16 +116,39 @@ function ResponsiveAppBar({
 
           {/* Desktop View */}
           <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 2 }}>
-            <Button onClick={() => onSelectTab('notifications')} sx={{ my: 2, color: 'white' }}>
-              Requests
-              <Badge badgeContent={pendingRequestCount} color="error" sx={{ ml: 2 }} />
-            </Button>
-            <Button onClick={() => onSelectTab('notifications')} sx={{ my: 2, color: 'white' }}>
-              Notifications
-              {expiredCertCount > 0 && (
-                <Badge badgeContent={expiredCertCount} color="error" sx={{ ml: 2 }} />
-              )}
-            </Button>
+            <Box sx={{ position: 'relative' }}>
+              <Badge
+                badgeContent={pendingRequestCount}
+                color="error"
+                sx={{ position: 'absolute', top: -5, right: -10 }}
+              />
+              <Button onClick={() => onSelectTab('notifications')} sx={{ my: 2, color: 'white', pl: 4 }}>
+                Requests
+              </Button>
+            </Box>
+
+           <Box sx={{ position: 'relative' }}>
+  <Button
+    onClick={() => onSelectTab('notifications')}
+    sx={{ my: 2, color: 'white', pl: 4 }}
+  >
+    <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+      Notifications
+      {expiredCertCount > 0 && (
+        <Badge
+          badgeContent={expiredCertCount}
+          color="error"
+          sx={{
+            position: 'absolute',
+            top: -8,
+            right: -16,
+          }}
+        />
+      )}
+    </Box>
+  </Button>
+</Box>
+
           </Box>
 
           {/* Avatar and User Menu */}

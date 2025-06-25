@@ -29,6 +29,15 @@ function UserDashboard() {
   const navigate = useNavigate();
   const [editMode, setEditMode] = useState(false);
   const [assignedVehicle, setAssignedVehicle] = useState('');
+  const [expiredCertCount, setExpiredCertCount] = useState(0);
+
+useEffect(() => {
+  fetch('http://localhost:5000/api/notifications/expired-count')
+    .then(res => res.json())
+    .then(data => setExpiredCertCount(data.count || 0))
+    .catch(err => console.error('Error fetching expired count:', err));
+}, []);
+
 
 
   const [formData, setFormData] = useState({
@@ -118,6 +127,7 @@ function UserDashboard() {
         isDrawerOpen={isDrawerOpen}
         onDrawerToggle={() => setIsDrawerOpen(!isDrawerOpen)}
         onSelectTab={setActiveTab}
+        expiredCertCount={expiredCertCount}
       />
 
       <button className="drawer-toggle-btn" onClick={() => setIsDrawerOpen(!isDrawerOpen)}>☰</button>
