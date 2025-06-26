@@ -163,27 +163,36 @@ const fetchRepairPendingCount = async () => {
   };
 
   const handleSaveProfile = async () => {
-    try {
-      const res = await fetch('http://localhost:5000/api/update-admin', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pen: adminData.pen, updates: editedProfile }),
-      });
+  try {
+    const response = await fetch('http://localhost:5000/api/update-admin', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        pen: adminData.pen,
+        updates: editedProfile,
+      }),
+    });
 
-      if (res.ok) {
-        const updated = await res.json();
-        setAdminData(updated);
-        localStorage.setItem('adminData', JSON.stringify(updated));
-        setIsEditing(false);
-        alert('Profile updated successfully');
-      } else {
-        alert('Failed to update profile');
-      }
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      alert('Error updating profile');
+    const data = await response.json();
+
+    if (response.ok) {
+      // Update localStorage
+      localStorage.setItem('adminData', JSON.stringify(data));
+
+      // Update state
+      setAdminData(data);
+      setEditedProfile(data);
+
+      alert('Profile updated successfully');
+      setIsEditing(false);
+    } else {
+      alert(data.error || 'Update failed');
     }
-  };
+  } catch (err) {
+    alert('Error while updating profile');
+    console.error('Error updating admin profile:', err);
+  }
+};
 
  const handleTabSelect = (tab) => {
   if (tab === 'notificationsPage') {

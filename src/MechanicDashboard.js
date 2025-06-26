@@ -76,7 +76,7 @@ function MechanicDashboard() {
     });
   }, []);
 
-  useEffect(() => {
+ useEffect(() => {
   const fetchPendingCount = async () => {
     try {
       const response = await fetch('http://localhost:5000/api/repair/mechanicpending/count');

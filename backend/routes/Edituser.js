@@ -44,14 +44,15 @@ router.put('/update-admin', async (req, res) => {
   }
 
   try {
-    // Exclude fields that should not be updated
+    // Fields you want to protect from modification
     const protectedFields = ['pen', 'generalNo', '_id', 'role'];
     protectedFields.forEach(field => delete updates[field]);
 
+    // Update the admin user
     const updatedAdmin = await User.findOneAndUpdate(
-      { pen, role: 'admin' }, // only update if role is admin
-      { $set: updates },
-      { new: true }
+      { pen, role: 'admin' }, // filter: must be an admin with this pen
+      { $set: updates },       // update data
+      { new: true }            // return the updated document
     );
 
     if (!updatedAdmin) {

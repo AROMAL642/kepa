@@ -27,7 +27,7 @@ const ViewPrintRegisters = () => {
   const [rows, setRows] = useState([]);
   const [columns, setColumns] = useState([]);
   const [selectedFields, setSelectedFields] = useState([]);
-  const [totalKmTravelled, setTotalKmTravelled] = useState(null); // New
+  const [totalKmTravelled, setTotalKmTravelled] = useState(null);
 
   const validate = () => {
     if (!registerType || !fromDate || !toDate) {
@@ -75,7 +75,7 @@ const ViewPrintRegisters = () => {
         return;
       }
 
-      const dateFields = ['date', 'accidentTime', 'startTime', 'endTime'];
+      const dateFields = ['date', 'startTime', 'endTime']; // Removed 'accidentTime'
 
       const filteredData = data.map(row => {
         const cleaned = {};
@@ -132,7 +132,6 @@ const ViewPrintRegisters = () => {
       setSelectedFields(cols.map(col => col.field));
       setTotalKmTravelled(null);
 
-      // ✅ Calculate total KM travelled (movement individual)
       if (
         registerType === 'movement' &&
         vehicleOption === 'individual' &&

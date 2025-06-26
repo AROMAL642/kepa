@@ -5,9 +5,15 @@ import FuelAdmin from './fuelsectiondashboardcomponents/FuelAdmin';
 import FuelPendingRequest from './fuelsectiondashboardcomponents/fuelpendingrequest';
 import SearchVehicleDetails from './fuelsectiondashboardcomponents/SearchVehicleDetails';
 import VerifiedUsersTable from './fuelsectiondashboardcomponents/VerifiedUsersTable';
-
 import './css/admindashboard.css';
 import './css/fueladmin.css';
+
+import LocalGasStationIcon from '@mui/icons-material/LocalGasStation';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import PendingActionsIcon from '@mui/icons-material/PendingActions';
+import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
+import GroupIcon from '@mui/icons-material/Group';
+
 
 function FuelDashboard() {
   const [editMode, setEditMode] = useState(false);
@@ -93,12 +99,23 @@ function FuelDashboard() {
           )}
 
           <div className="sidebar-buttons">
-            <button className={`sidebar-btn ${activeTab === 'fuel' ? 'active' : ''}`} onClick={() => setActiveTab('fuel')}>Fuel Entry Review</button>
-            <button className={`sidebar-btn ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>Profile</button>
-            <button className={`sidebar-btn ${activeTab === 'pending' ? 'active' : ''}`} onClick={() => setActiveTab('pending')}>View Pending Requests</button>
-            <button className={`sidebar-btn ${activeTab === 'vehicle' ? 'active' : ''}`} onClick={() => setActiveTab('vehicle')}>Vehicle Details</button>
-            <button className={`sidebar-btn ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>Users Details</button>
-          </div>
+  <button className={`sidebar-btn ${activeTab === 'fuel' ? 'active' : ''}`} onClick={() => setActiveTab('fuel')}>
+    <LocalGasStationIcon style={{ marginRight: '8px' }} /> Fuel Entry Review
+  </button>
+  <button className={`sidebar-btn ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>
+    <AccountCircleIcon style={{ marginRight: '8px' }} /> Profile
+  </button>
+  <button className={`sidebar-btn ${activeTab === 'pending' ? 'active' : ''}`} onClick={() => setActiveTab('pending')}>
+    <PendingActionsIcon style={{ marginRight: '8px' }} /> View Pending Requests
+  </button>
+  <button className={`sidebar-btn ${activeTab === 'vehicle' ? 'active' : ''}`} onClick={() => setActiveTab('vehicle')}>
+    <DirectionsCarIcon style={{ marginRight: '8px' }} /> Vehicle Details
+  </button>
+  <button className={`sidebar-btn ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>
+    <GroupIcon style={{ marginRight: '8px' }} /> Users Details
+  </button>
+</div>
+
         </div>
 
         {/* Main Content */}
