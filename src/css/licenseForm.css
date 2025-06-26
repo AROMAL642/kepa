@@ -1,0 +1,110 @@
+/* LicenseForm.css */
+
+.license-container {
+  display: flex;
+  justify-content: center;
+  padding: 30px;
+}
+
+.license-formBox {
+  width: 100%;
+  max-width: 600px;
+  background-color: #ffffff;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.license-heading {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: #333;
+  text-align: center;
+}
+
+.license-label {
+  display: block;
+  font-weight: 600;
+  margin-top: 12px;
+  margin-bottom: 6px;
+  color: #444;
+}
+
+.license-input {
+  width: 100%;
+  padding: 10px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  outline: none;
+  transition: border 0.3s ease;
+}
+
+.license-input:focus {
+  border-color: #1976d2;
+}
+
+.license-fileInputBox {
+  margin-top: 10px;
+  margin-bottom: 8px;
+}
+
+.license-note {
+  font-size: 0.85rem;
+  color: #777;
+  margin-top: 4px;
+}
+
+.license-error {
+  color: red;
+  font-size: 0.9rem;
+  margin-top: 5px;
+}
+
+.license-button {
+  margin-top: 20px;
+  padding: 10px 18px;
+  font-size: 1rem;
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+.license-button:hover {
+  background-color: #155aaf;
+}
+
+.license-formBox h3 {
+  margin-top: 30px;
+  margin-bottom: 10px;
+  font-weight: 600;
+  color: #333;
+}
+
+.license-formBox ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.license-formBox li {
+  background-color: #f9f9f9;
+  padding: 10px;
+  border-radius: 8px;
+  margin-top: 10px;
+  font-size: 0.95rem;
+}
+
+.license-formBox a {
+  color: #1976d2;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.license-formBox a:hover {
+  text-decoration: underline;
+}

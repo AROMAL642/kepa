@@ -1,115 +1,49 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import CircularProgress from '@mui/material/CircularProgress'; // ✅ Import MUI loader
 import './css/loginform.css';
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const [pen, setPen] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false); // ✅ loading state
 
   const handleLogin = async (e) => {
     e.preventDefault();
-     console.log('Login button clicked'); 
+    setLoading(true); // Start loader
 
     try {
       const res = await axios.post('http://localhost:5000/login', { pen, password });
-    
-     // const res = await axios.post(`${process.env.REACT_APP_API_URL}/login`, {
-      //pen,
-      //password,
-    //});
-
-
-
       const { role } = res.data;
 
       if (role === 'admin') {
-        const adminData = {
-          name: res.data.name,
-          email: res.data.email,
-          pen: res.data.pen,
-          generalNo: res.data.generalNo,
-          phone: res.data.phone,
-          dob: res.data.dob,
-          licenseNo: res.data.licenseNo,
-          bloodGroup: res.data.bloodGroup,
-          gender: res.data.gender,
-          photo: res.data.photo,
-          signature: res.data.signature,
-          role: role || 'Admin'
-        };
-
+        const adminData = { ...res.data, role: 'admin' };
         localStorage.setItem('adminData', JSON.stringify(adminData));
         navigate('/mainadmin');
-      }
-
-      else if (role === 'mti') {
-        const mtiData = {
-          name: res.data.name,
-          email: res.data.email,
-          pen: res.data.pen,
-          generalNo: res.data.generalNo,
-          phone: res.data.phone,
-          dob: res.data.dob,
-          licenseNo: res.data.licenseNo,
-          bloodGroup: res.data.bloodGroup,
-          gender: res.data.gender,
-          photo: res.data.photo,
-          signature: res.data.signature,
-          role: 'MTI'
-        };
-
+      } else if (role === 'mti') {
+        const mtiData = { ...res.data, role: 'MTI' };
         localStorage.setItem('adminData', JSON.stringify(mtiData));
         navigate('/admin');
-      }
-
-      else if (role === 'user') {
-        const user = {
-          name: res.data.name,
-          pen: res.data.pen,
-          generalNo: res.data.generalNo,
-          email: res.data.email,
-          phone: res.data.phone,
-          dob: res.data.dob,
-          licenseNo: res.data.licenseNo,
-          bloodGroup: res.data.bloodGroup,
-          gender: res.data.gender,
-          photo: res.data.photo,
-          signature: res.data.signature
-        };
+      } else if (role === 'user') {
+        const user = { ...res.data };
         localStorage.setItem('user', JSON.stringify(user));
         navigate('/user');
-      }
-
-      else if (role === 'fuel' || role === 'mechanic' || role === 'repair') {
-        const commonData = {
-          pen: res.data.pen,
-          email: res.data.email,
-          name: res.data.name,
-          phone: res.data.phone,
-          dob: res.data.dob,
-          licenseNo: res.data.licenseNo,
-          bloodGroup: res.data.bloodGroup,
-          gender: res.data.gender,
-          photo: res.data.photo,
-          signature: res.data.signature,
-          role: res.data.role
-        };
+      } else if (role === 'fuel' || role === 'mechanic' || role === 'repair') {
+        const commonData = { ...res.data };
         localStorage.setItem('adminData', JSON.stringify(commonData));
-
-        const prefix = role;
         Object.entries(commonData).forEach(([key, value]) => {
-          const localStorageKey = `${prefix}${key.charAt(0).toUpperCase()}${key.slice(1)}`;
+          const localStorageKey = `${role}${key.charAt(0).toUpperCase()}${key.slice(1)}`;
           localStorage.setItem(localStorageKey, value);
         });
-
         navigate(`/${role}`);
       }
-
     } catch (error) {
       const msg = error.response?.data?.message || 'Network or server error';
       alert('Login failed: ' + msg);
+    } finally {
+      setLoading(false); // Stop loader
     }
   };
 
@@ -141,7 +75,10 @@ const LoginPage = () => {
             placeholder="Enter your password"
           />
         </div>
-        <button type="submit" className="buttonStyle">Login</button>
+
+        <button type="submit" className="buttonStyle" disabled={loading}>
+          {loading ? <CircularProgress size={24} color="inherit" /> : 'Login'}
+        </button>
       </form>
 
       <div style={{ textAlign: 'center', marginTop: '15px' }}>

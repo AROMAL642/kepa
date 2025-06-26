@@ -1,17 +1,10 @@
 .certificate-container {
-  max-width: 800px;
-  margin: 30px auto;
+  max-width: 900px;
+  margin: auto;
   padding: 20px;
-  background-color: #fdfdfd;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f9f9f9;
   border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  font-family: Arial, sans-serif;
-}
-
-.certificate-container h2 {
-  text-align: center;
-  color: #333;
-  margin-bottom: 20px;
 }
 
 .search-section {
@@ -19,108 +12,93 @@
   flex-wrap: wrap;
   gap: 10px;
   margin-bottom: 20px;
-  justify-content: center;
 }
 
-.search-section input[type="text"] {
+.search-section input {
   flex: 1;
-  min-width: 200px;
   padding: 10px;
   font-size: 16px;
 }
 
 .search-section button {
-  padding: 10px 16px;
+  padding: 10px 20px;
   font-size: 16px;
   background-color: #1976d2;
   color: white;
   border: none;
-  border-radius: 6px;
   cursor: pointer;
-}
-
-.search-section button:hover {
-  background-color: #155ea8;
 }
 
 .error {
   color: red;
-  text-align: center;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
 }
 
 .certificate-details {
-  background-color: #f5faff;
-  padding: 20px;
+  margin-top: 20px;
+  background-color: #fff;
   border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
 }
 
-.certificate-details h3 {
-  margin-bottom: 15px;
-  color: #1a1a1a;
-}
-
-.certificate-details p {
+.cert-info p {
   margin: 8px 0;
-  font-size: 15px;
+}
+
+.cert-info button {
+  margin-top: 10px;
+  padding: 6px 12px;
+  background-color: #009688;
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
 }
 
 .update-form {
-  margin-top: 20px;
+  margin-top: 30px;
 }
 
 .update-form h4 {
   margin-bottom: 10px;
+  color: #444;
 }
 
-.update-form input[type="text"],
-.update-form input[type="date"],
-.update-form input[type="file"] {
-  display: block;
-  width: 100%;
-  margin-bottom: 12px;
+.form-group {
+  margin-bottom: 15px;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.form-group input {
   padding: 8px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
   font-size: 15px;
 }
 
-.update-form label {
-  margin-top: 10px;
-  font-weight: bold;
-  display: block;
-}
-
-.update-btn {
+.update-form button {
   margin-top: 10px;
   padding: 10px 20px;
-  background-color: #2e7d32;
+  font-size: 16px;
+  background-color: #4caf50;
   color: white;
   border: none;
-  border-radius: 6px;
-  font-size: 16px;
   cursor: pointer;
+  border-radius: 4px;
 }
 
-.update-btn:hover {
-  background-color: #1b5e20;
-}
-
-button {
-  cursor: pointer;
-}
-
-/* Responsive Styles */
-@media (max-width: 768px) {
-  .certificate-container {
-    padding: 15px;
-  }
-
+/* Responsive */
+@media (max-width: 600px) {
   .search-section {
     flex-direction: column;
-    align-items: stretch;
   }
 
+  .form-group input,
   .search-section input,
   .search-section button {
     width: 100%;

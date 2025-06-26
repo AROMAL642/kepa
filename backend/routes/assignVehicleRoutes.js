@@ -70,8 +70,17 @@ router.patch('/assign', async (req, res) => {
   const { vehicleNumber, pen } = req.body;
 
   try {
+    const upperCaseVehicleNumber = vehicleNumber.toUpperCase();
+
+    // Step 1: Unassign this PEN from any existing vehicle
+    await Vehicle.updateMany(
+      { currentDriver: pen },
+      { $unset: { currentDriver: "" } }
+    );
+
+    // Step 2: Assign the new vehicle
     const updatedVehicle = await Vehicle.findOneAndUpdate(
-      { number: vehicleNumber },
+      { number: upperCaseVehicleNumber },
       { currentDriver: pen },
       { new: true }
     );

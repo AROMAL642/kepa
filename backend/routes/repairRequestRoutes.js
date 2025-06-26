@@ -415,6 +415,7 @@ router.put('/:id/mechanic-update', async (req, res) => {
 
 
 
+
 /**
  * PUT: Final repair marked done by admin/MTI
  */
@@ -533,20 +534,6 @@ router.put('/:id/sanction-work', upload.single('additionalBill'), async (req, re
     res.status(500).json({ error: 'Sanction forwarding failed' });
   }
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1036,9 +1023,15 @@ router.get('/completed', async (req, res) => {
 });
 
 
-
-
-
+// GET /api/repair/pending/count
+router.get('/mechanicpending/count', async (req, res) => {
+  try {
+    const count = await RepairRequest.countDocuments({ status: 'forwarded' });
+    res.status(200).json({ count });
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching pending count' });
+  }
+});
 
 
 module.exports = router;

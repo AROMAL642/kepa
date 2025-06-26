@@ -22,13 +22,15 @@ import RepairRequestForm from './userdashboardcomponents/RepairRequestForm';
 import Stocks from './mechanicdashboardcomponents/Stocks';
 import TrackRepairRequest from './userdashboardcomponents/trackrepairrequest';
 import AddUpdateCertificate from './admindashboardcomponents/AddUpdateCertificate';
+import PrivateRoute from './components/PrivateRoute';
+
 import './App.css';
 
 function AppWrapper() {
   const location = useLocation();
 
   const hideHeaderPaths = [
-    '/admin','/mainadmin', '/user', '/fuel', '/mechanic',
+    '/admin', '/mainadmin', '/user', '/fuel', '/mechanic',
     '/viewrequests', '/userdetails', '/admin/vehicles',
     '/searchvehicle', '/repair-request', '/repair'
   ];
@@ -53,28 +55,67 @@ function AppWrapper() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/resetpassword" element={<ResetPassword />} />
 
-        {/* Dashboards */}
-        <Route path="/admin" element={localStorage.getItem('adminData') ? <AdminDashboard /> : <Navigate to="/" />} />
-        <Route path="/user" element={<UserDashboard />} />
-        <Route path="/mainadmin" element={<MainAdminDashboard />} />
-        <Route path="/mechanic" element={<MechanicDashboard />} />
-        <Route path="/fuel" element={<FuelSectionDashboard />} />
-        <Route path="/fuel-admin2" element={<FuelAdmin2 />} />
-        <Route path="/repair" element={<RepairDashboard />} />
+        {/* Protected Dashboard Routes */}
+        <Route
+          path="/admin"
+          element={
+            <PrivateRoute role="MTI">
+              <AdminDashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/mainadmin"
+          element={
+            <PrivateRoute role="admin">
+              <MainAdminDashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/user"
+          element={
+            <PrivateRoute role="user">
+              <UserDashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/fuel"
+          element={
+            <PrivateRoute role="fuel">
+              <FuelSectionDashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/mechanic"
+          element={
+            <PrivateRoute role="mechanic">
+              <MechanicDashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/repair"
+          element={
+            <PrivateRoute role="repair">
+              <RepairDashboard />
+            </PrivateRoute>
+          }
+        />
 
-        {/* Feature Pages */}
-        <Route path="/viewrequests" element={<ViewRequests themeStyle={{ background: 'black', color: 'white' }} />} />
+        {/* Other Feature Pages (can be protected or left public as needed) */}
+        <Route path="/fuel-admin2" element={<FuelAdmin2 />} />
+        <Route path="/viewrequests" element={<ViewRequests />} />
         <Route path="/admin/vehicles" element={<AddRemoveVehicleForm />} />
         <Route path="/searchvehicle" element={<SearchVehicleDetails />} />
         <Route path="/repair-request" element={<RepairRequestForm />} />
-
-       <Route path="/trackrepairrequest" element={<TrackRepairRequest />} />
+        <Route path="/trackrepairrequest" element={<TrackRepairRequest />} />
         <Route path="/vehicle-certificates" element={<AddUpdateCertificate />} />
+        <Route path="/admin/stocks" element={<Stocks />} />
 
-        {/* Stock Routes */}
-        <Route path="/admin/stocks" element={<Stocks />} /> {/* ✅ FIXED: added route */}
-        
-        {/* 404 Fallback */}
+        {/* 404 Not Found */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </div>

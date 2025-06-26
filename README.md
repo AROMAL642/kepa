@@ -91,3 +91,4 @@ npm install @mui/icons-material
 FOR ERROR RESOLVING----------
 
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+npm install jspdf@2.5.1 jspdf-autotable@3.5.28

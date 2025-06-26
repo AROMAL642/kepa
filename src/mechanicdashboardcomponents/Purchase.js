@@ -7,6 +7,7 @@ import {
   DialogContent,
   DialogActions,
   Button,
+  TextField ,
   Typography
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
@@ -80,14 +81,21 @@ const Purchase = () => {
     }
   };
 
-  const handleEditClick = (purchase) => {
-    setSelectedPurchase({
-      ...purchase,
-      date: purchase.date?.substring(0, 10),
-      billFile: null
-    });
-    setEditDialogOpen(true);
-  };
+  function convertToISOFormat(dateStr) {
+  if (!dateStr || !dateStr.includes('/')) return dateStr;
+  const [dd, mm, yyyy] = dateStr.split('/');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+const handleEditClick = (purchase) => {
+  setSelectedPurchase({
+    ...purchase,
+    date: convertToISOFormat(purchase.date),
+    billFile: null
+  });
+  setEditDialogOpen(true);
+};
+
 
   const handleDeleteClick = (purchase) => {
     setSelectedPurchase(purchase);
@@ -109,9 +117,10 @@ const Purchase = () => {
         data.append('billFile', selectedPurchase.billFile);
       }
 
-      await axios.put(`http://localhost:5000/api/purchases/${selectedPurchase._id}`, data, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      await axios.put(`http://localhost:5000/api/purchases/byPurchaseId/${selectedPurchase.purchaseId}`, data, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+});
+
 
       alert('Purchase updated successfully');
       setEditDialogOpen(false);
@@ -146,7 +155,8 @@ const Purchase = () => {
     data.append('quantity', quantity);
     data.append('price', price);
     data.append('Firm', Firm);
-    data.append('date', date);
+    data.append('date', selectedPurchase.date);
+
     data.append('billNo', billNo);
     data.append('warrantyNumber', warrantyNumber);
     if (billFile) data.append('billFile', billFile);
@@ -237,7 +247,7 @@ const Purchase = () => {
       )}
 
       {/* View Bill Dialog */}
-      <Dialog open={billDialogOpen} onClose={() => setBillDialogOpen(false)} fullWidth maxWidth="md">
+      <Dialog open={billDialogOpen} onClose={() => setBillDialogOpen(false)} fullWidth maxWidth="sm">
         <DialogTitle>Bill Preview</DialogTitle>
         <DialogContent dividers>
           {billPreviewUrl.endsWith('.pdf') ? (
@@ -251,24 +261,74 @@ const Purchase = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Edit Dialog */}
-      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} fullWidth>
-        <DialogTitle>Edit Purchase</DialogTitle>
-        <DialogContent>
-          <input type="text" name="itemName" value={selectedPurchase?.itemName || ''} onChange={(e) => setSelectedPurchase({ ...selectedPurchase, itemName: e.target.value })} placeholder="Item Name" />
-          <input type="number" name="quantity" value={selectedPurchase?.quantity || ''} onChange={(e) => setSelectedPurchase({ ...selectedPurchase, quantity: e.target.value })} placeholder="Quantity" />
-          <input type="number" name="price" value={selectedPurchase?.price || ''} onChange={(e) => setSelectedPurchase({ ...selectedPurchase, price: e.target.value })} placeholder="Price" />
-          <input type="text" name="Firm" value={selectedPurchase?.Firm || ''} onChange={(e) => setSelectedPurchase({ ...selectedPurchase, Firm: e.target.value })} placeholder="Firm" />
-          <input type="date" name="date" value={selectedPurchase?.date?.substring(0, 10) || ''} onChange={(e) => setSelectedPurchase({ ...selectedPurchase, date: e.target.value })} />
-          <input type="text" name="billNo" value={selectedPurchase?.billNo || ''} onChange={(e) => setSelectedPurchase({ ...selectedPurchase, billNo: e.target.value })} placeholder="Bill No" />
-          <input type="text" name="warrantyNumber" value={selectedPurchase?.warrantyNumber || ''} onChange={(e) => setSelectedPurchase({ ...selectedPurchase, warrantyNumber: e.target.value })} placeholder="Warranty Number (Optional)" />
-          <input type="file" name="billFile" accept="application/pdf,image/*" onChange={(e) => setSelectedPurchase({ ...selectedPurchase, billFile: e.target.files[0] })} />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleEditSubmit}>Save</Button>
-        </DialogActions>
-      </Dialog>
+    <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} fullWidth maxWidth="sm">
+  <DialogTitle>Edit Purchase</DialogTitle>
+  <DialogContent dividers>
+    <TextField
+      fullWidth
+      label="Item Name"
+      margin="normal"
+      value={selectedPurchase?.itemName || ''}
+      onChange={(e) => setSelectedPurchase({ ...selectedPurchase, itemName: e.target.value })}
+    />
+    <TextField
+      fullWidth
+      label="Quantity"
+      type="number"
+      margin="normal"
+      value={selectedPurchase?.quantity || ''}
+      onChange={(e) => setSelectedPurchase({ ...selectedPurchase, quantity: e.target.value })}
+    />
+    <TextField
+      fullWidth
+      label="Price"
+      type="number"
+      margin="normal"
+      value={selectedPurchase?.price || ''}
+      onChange={(e) => setSelectedPurchase({ ...selectedPurchase, price: e.target.value })}
+    />
+    <TextField
+      fullWidth
+      label="Firm"
+      margin="normal"
+      value={selectedPurchase?.Firm || ''}
+      onChange={(e) => setSelectedPurchase({ ...selectedPurchase, Firm: e.target.value })}
+    />
+    <TextField
+      fullWidth
+      label="Date"
+      type="date"
+      margin="normal"
+      InputLabelProps={{ shrink: true }}
+      value={selectedPurchase?.date || ''}
+      onChange={(e) => setSelectedPurchase({ ...selectedPurchase, date: e.target.value || selectedPurchase.date })}
+    />
+    <TextField
+      fullWidth
+      label="Bill No"
+      margin="normal"
+      value={selectedPurchase?.billNo || ''}
+      onChange={(e) => setSelectedPurchase({ ...selectedPurchase, billNo: e.target.value })}
+    />
+    <TextField
+      fullWidth
+      label="Warranty Number (Optional)"
+      margin="normal"
+      value={selectedPurchase?.warrantyNumber || ''}
+      onChange={(e) => setSelectedPurchase({ ...selectedPurchase, warrantyNumber: e.target.value })}
+    />
+    <input
+      type="file"
+      name="billFile"
+      accept="application/pdf,image/*"
+      onChange={(e) => setSelectedPurchase({ ...selectedPurchase, billFile: e.target.files[0] })}
+    />
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+    <Button variant="contained" onClick={handleEditSubmit}>Save</Button>
+  </DialogActions>
+</Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>

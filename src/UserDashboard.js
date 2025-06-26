@@ -10,19 +10,48 @@ import RepairRequestForm from './userdashboardcomponents/RepairRequestForm';
 import AccidentReportForm from './userdashboardcomponents/AccidentReportForm';
 import './css/accidentreportform.css';
 import EyeTestReport from './userdashboardcomponents/EyeTestReport';
-import ResponsiveAppBar from './admindashboardcomponents/ResponsiveAppBar';
+import ResponsiveAppBar from './userdashboardcomponents/ResponsiveAppBar';
 import TrackRepairRequests from './userdashboardcomponents/trackrepairrequest';
 import AddUpdateCertificate from './admindashboardcomponents/AddUpdateCertificate'; 
-
-// ✅ New Imports
+import LicenseForm from './userdashboardcomponents/LicenseForm';
+import NotificationPage from './userdashboardcomponents/NotificationPage';
+import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
 import Stocks from './mechanicdashboardcomponents/Stocks';
 import ViewAllStocks from './mechanicdashboardcomponents/ViewAllStocks';
+
+
+import PersonIcon from '@mui/icons-material/Person';
+import LocalGasStationIcon from '@mui/icons-material/LocalGasStation';
+import MiscellaneousServicesIcon from '@mui/icons-material/MiscellaneousServices';
+import TrackChangesIcon from '@mui/icons-material/TrackChanges';
+import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import BadgeIcon from '@mui/icons-material/Badge';
+import ReportProblemIcon from '@mui/icons-material/ReportProblem';
+import InfoIcon from '@mui/icons-material/Info';
+import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
+import InventoryIcon from '@mui/icons-material/Inventory';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+
+
+
 
 function UserDashboard() {
   const [activeTab, setActiveTab] = useState('profile');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const navigate = useNavigate();
   const [editMode, setEditMode] = useState(false);
+  const [assignedVehicle, setAssignedVehicle] = useState('');
+  const [expiredCertCount, setExpiredCertCount] = useState(0);
+
+useEffect(() => {
+  fetch('http://localhost:5000/api/notifications/expired-count')
+    .then(res => res.json())
+    .then(data => setExpiredCertCount(data.count || 0))
+    .catch(err => console.error('Error fetching expired count:', err));
+}, []);
+
+
 
   const [formData, setFormData] = useState({
     name: '',
@@ -58,6 +87,18 @@ function UserDashboard() {
         role: user.role || 'user',
       });
     }
+
+    if (user?.pen) {
+  fetch(`http://localhost:5000/api/vehicles/assigned/${user.pen}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.vehicleNumber) {
+        setAssignedVehicle(data.vehicleNumber);
+      }
+    })
+    .catch(err => console.error('Failed to fetch assigned vehicle', err));
+}
+
   }, []);
 
   useEffect(() => {
@@ -74,18 +115,20 @@ function UserDashboard() {
   };
 
   const tabMap = [
-    { key: 'profile', label: 'Profile' },
-    { key: 'fuel', label: 'Fuel' },
-    { key: 'repair', label: 'Request for Repair' },
-    { key: 'trackrepair', label: 'Track Repair Requests' },
-    { key: 'movement', label: 'Movement' },
-    { key: 'eyetest', label: 'Eye Test' },
-    { key: 'accident', label: 'Accident' },
-    { key: 'vehicle details', label: 'Vehicle Details' },
-    { key: 'certificates', label: 'Vehicle Certificates' }, // ✅ Added here
-    { key: 'stocks', label: 'Stocks' },              // ✅ New tab
-    { key: 'viewalltocks', label: 'View All Stock ' },     // ✅ New tab
-  ];
+  { key: 'profile', label: 'Profile', icon: <PersonIcon /> },
+  { key: 'fuel', label: 'Fuel', icon: <LocalGasStationIcon /> },
+  { key: 'repair', label: 'Request for Repair', icon: <MiscellaneousServicesIcon /> },
+  { key: 'trackrepair', label: 'Track Repair Requests', icon: <TrackChangesIcon /> },
+  { key: 'movement', label: 'Movement', icon: <DirectionsRunIcon /> },
+  { key: 'eyetest', label: 'Eye Test', icon: <VisibilityIcon /> },
+  { key: 'license', label: 'License', icon: <BadgeIcon /> },
+  { key: 'accident', label: 'Accident', icon: <ReportProblemIcon /> },
+  { key: 'vehicle details', label: 'Vehicle Details', icon: <InfoIcon /> },
+  { key: 'certificates', label: 'Vehicle Certificates', icon: <VerifiedUserIcon /> },
+  { key: 'stocks', label: 'Stocks', icon: <InventoryIcon /> },
+  { key: 'viewallstocks', label: 'View All Stock', icon: <InventoryIcon /> },
+  { key: 'notifications', label: 'Notifications', icon: <NotificationsIcon /> },
+];
 
   return (
     <>
@@ -96,24 +139,61 @@ function UserDashboard() {
         isDrawerOpen={isDrawerOpen}
         onDrawerToggle={() => setIsDrawerOpen(!isDrawerOpen)}
         onSelectTab={setActiveTab}
+        expiredCertCount={expiredCertCount}
       />
 
       <button className="drawer-toggle-btn" onClick={() => setIsDrawerOpen(!isDrawerOpen)}>☰</button>
 
       <div className={`dashboard ${isDrawerOpen ? 'drawer-open' : ''}`}>
         <div className={`drawer ${isDrawerOpen ? 'open' : ''}`}>
-          <h2>Welcome {formData.name || 'User'}!</h2>
-          <div className="sidebar-buttons">
-            {tabMap.map(({ key, label }) => (
-              <button
-                key={key}
-                className={`sidebar-btn ${activeTab === key ? 'active' : ''}`}
-                onClick={() => setActiveTab(key)} // ✅ Just switch tab
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          <h2>Welcome {formData.name || 'User'}</h2>
+
+           
+
+{assignedVehicle && (
+  <div
+    style={{
+      marginBottom: '1rem',
+      color: '#1e88e5',
+      fontWeight: '600',
+      fontSize: '1.1rem',
+      backgroundColor: '#e3f2fd',
+      padding: '12px 16px',
+      borderRadius: '6px',
+      boxShadow: '0 1px 4px rgba(0, 0, 0, 0.1)',
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: '10px',
+      flexDirection: 'row'
+    }}
+  >
+    <DirectionsCarIcon style={{ color: '#1e88e5', marginTop: '2px' }} />
+    <div>
+      <div style={{ fontWeight: 'bold' }}>Assigned Vehicle:</div>
+      <div style={{ marginLeft: '10px', fontSize: '1rem', fontWeight: '500' }}>
+        {assignedVehicle}
+      </div>
+    </div>
+  </div>
+)}
+
+
+         <div className="sidebar-buttons">
+  {tabMap.map(({ key, label, icon }) => (
+    <button
+      key={key}
+      className={`sidebar-btn ${activeTab === key ? 'active' : ''}`}
+      onClick={() => setActiveTab(key)}
+    >
+      <span className="icon-label-wrapper">
+        {icon}
+        <span className="label-text">{label}</span>
+      </span>
+    </button>
+  ))}
+</div>
+
+
           <button className="logout-btn" onClick={handleLogout}>🚪 Logout</button>
         </div>
 
@@ -237,6 +317,12 @@ function UserDashboard() {
               <EyeTestReport pen={formData.pen} />
             </div>
           )}
+          {activeTab === 'license' && (
+  <div className="license-section">
+    <LicenseForm pen={formData.pen} />
+  </div>
+)}
+
           {activeTab === 'stocks' && (
   <Stocks onViewAll={() => setActiveTab('viewallstocks')} />
 )}
@@ -250,6 +336,12 @@ function UserDashboard() {
               <AddUpdateCertificate />
             </div>
           )}
+          {activeTab === 'notifications' && (
+  <div className="notification-section">
+    <NotificationPage />
+  </div>
+)}
+
 
         </div>
       </div>

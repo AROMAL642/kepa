@@ -45,8 +45,11 @@ router.post('/', upload.single('billFile'), async (req, res) => {
     const billFile = req.file
       ? { data: req.file.buffer, contentType: req.file.mimetype }
       : undefined;
-
+    
+    const purchaseId = 'PUR-' + Date.now();  
+      
     const purchase = new Purchase({
+      purchaseId,
       itemName,
       quantity,
       price,
@@ -69,14 +72,14 @@ router.post('/', upload.single('billFile'), async (req, res) => {
 /**
  * ✏️ PUT /api/purchases/:id — Update a purchase
  */
-router.put('/:id', upload.single('billFile'), async (req, res) => {
+router.put('/byPurchaseId/:purchaseId', upload.single('billFile'), async (req, res) => {
   try {
     const { itemName, quantity, price, Firm, date, billNo, pen, warrantyNumber } = req.body;
 
     const updateData = {
       itemName,
-      quantity,
-      price,
+      quantity: Number(quantity),
+      price: Number(price),
       Firm,
       date,
       billNo,
@@ -91,16 +94,17 @@ router.put('/:id', upload.single('billFile'), async (req, res) => {
       };
     }
 
-    const updated = await Purchase.findByIdAndUpdate(req.params.id, updateData, { new: true });
+    const updated = await Purchase.findOneAndUpdate({ purchaseId: req.params.purchaseId }, updateData, { new: true });
 
     if (!updated) return res.status(404).json({ message: 'Purchase not found' });
 
     res.json(updated);
   } catch (err) {
-    console.error('Error updating purchase:', err);
+    console.error('Error updating purchase by purchaseId:', err);
     res.status(500).json({ message: 'Update failed' });
   }
 });
+
 
 /**
  * 📄 GET /api/purchases/:id/bill — View bill file

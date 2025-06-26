@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
+import { Badge, Box } from '@mui/material';
 import {
   Dialog,
   DialogTitle,
@@ -30,6 +31,8 @@ const [completedRequests, setCompletedRequests] = useState([]);
 const [workBillDialogOpen, setWorkBillDialogOpen] = useState(false);
 const [workBillData, setWorkBillData] = useState(null);
 const [selectedRequest, setSelectedRequest] = useState(null);
+const pendingCount = rows.filter(row => row.status === 'pending').length;
+
 
 // Define this map once at the top of your component/file
 const STATUS_ORDER = {
@@ -505,13 +508,25 @@ const handleViewVerifiedBill = (row) => {
 
 
       <div style={{ marginBottom: 10 }}>
-  <Button
-    variant={activeTab === 'repair' ? 'contained' : 'outlined'}
-    onClick={() => setActiveTab('repair')}
-    style={{ marginRight: 10 }}
-  >
+ <Button
+  variant={activeTab === 'repair' ? 'contained' : 'outlined'}
+  onClick={() => setActiveTab('repair')}
+  style={{ marginRight: 10, position: 'relative' }}
+>
+  <Box display="flex" alignItems="center" position="relative">
     Repair Requests
-  </Button>
+    <Badge
+      badgeContent={pendingCount}
+      color="error"
+      anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      sx={{
+        position: 'absolute',
+        top: -8,
+        right: -12
+      }}
+    />
+  </Box>
+</Button>
   <Button
     variant={activeTab === 'mechanic' ? 'contained' : 'outlined'}
     onClick={() => setActiveTab('mechanic')}

@@ -9,7 +9,7 @@ body {
 }
 
 .sidebar {
-  background: linear-gradient(135deg, #1e2a38, #242e3d);
+  background: linear-gradient(135deg, #1b416d, #242e3d);
   color: #ffffff;
   width: 250px;
   padding: 20px;
@@ -36,28 +36,40 @@ body {
 }
 
 .sidebar-btn {
-  width: 100%;
-  background-color: rgba(255, 255, 255, 0.05);
-  color: #fff;
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
   border: none;
-  padding: 12px 16px;
-  font-size: 16px;
-  border-radius: 8px;
+  background: none;
+  width: 100%;
   text-align: left;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  font-weight: 500;
+  font-size: 16px;
+  transition: background 0.2s ease;
 }
 
 .sidebar-btn:hover {
-  background-color: #007bff;
-  color: #fff;
-  transform: translateX(5px);
-  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+  background-color: #f0f0f0;
 }
 
+.sidebar-btn.active {
+  background-color: #1c7e7e;
+  font-weight: bold;
+}
+
+.icon-label-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.label-text {
+  white-space: nowrap;
+}
+
+
 .toggle-btn {
-  background-color: #444;
+  background-color: #4079b9;
   color: white;
   border: none;
   padding: 10px 14px;

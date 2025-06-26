@@ -8,40 +8,49 @@ const bufferToBase64 = (buffer) => {
 };
 
 // 🔍 GET /searchvehicle?number=KL08AB1234
+// GET /searchvehicle?number=KL01AB1234
 router.get('/searchvehicle', async (req, res) => {
   try {
-    const number = req.query.number?.toUpperCase();
-    if (!number) return res.status(400).json({ error: 'Vehicle number is required' });
+    const { number } = req.query;
 
     const vehicle = await Vehicle.findOne({ number });
 
-    if (!vehicle) return res.status(404).json({ error: 'Vehicle not found' });
+    if (!vehicle) return res.status(404).json({ message: 'Vehicle not found' });
 
-    // Convert buffer fields to base64
-    const vehicleData = vehicle.toObject();
+    // Extract latest certificate entry if exists
+    const latestCert = vehicle.certificateHistory?.[vehicle.certificateHistory.length - 1];
 
-    if (vehicle.insuranceFile?.data) {
-      vehicleData.insuranceFile = {
-        buffer: vehicle.insuranceFile.data.toString('base64'),
-        mimetype: vehicle.insuranceFile.contentType,
-        originalName: vehicle.insuranceFile.originalName
-      };
-    }
+    res.json({
+      number: vehicle.number,
+      type: vehicle.type,
+      model: vehicle.model,
+      fuelType: vehicle.fuelType,
+      status: vehicle.status,
+      arrivedDate: vehicle.arrivedDate,
+      insurancePolicyNo: latestCert?.insurancePolicyNo || null,
+      insuranceValidity: latestCert?.insuranceValidity || null,
+      insuranceFile: latestCert?.insuranceFile
+        ? {
+            buffer: latestCert.insuranceFile.data.toString('base64'),
+            mimetype: latestCert.insuranceFile.contentType
+          }
+        : null,
+      pollutionCertificateNo: latestCert?.pollutionCertificateNo || null,
+      pollutionValidity: latestCert?.pollutionValidity || null,
+      pollutionFile: latestCert?.pollutionFile
+        ? {
+            buffer: latestCert.pollutionFile.data.toString('base64'),
+            mimetype: latestCert.pollutionFile.contentType
+          }
+        : null
+    });
 
-    if (vehicle.pollutionFile?.data) {
-      vehicleData.pollutionFile = {
-        buffer: vehicle.pollutionFile.data.toString('base64'),
-        mimetype: vehicle.pollutionFile.contentType,
-        originalName: vehicle.pollutionFile.originalName
-      };
-    }
-
-    res.status(200).json(vehicleData);
-  } catch (error) {
-    console.error('Error searching vehicle:', error);
-    res.status(500).json({ error: 'Server error' });
+  } catch (err) {
+    console.error('Error fetching vehicle details:', err);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
+
 
 // 📃 GET /vehicles (Optimized - excludes binary fields)
 router.get('/vehicles', async (req, res) => {

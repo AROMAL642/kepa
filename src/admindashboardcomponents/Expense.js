@@ -4,7 +4,8 @@ import {
   Typography,
   TextField,
   MenuItem,
-  Button
+  Button,
+  CircularProgress
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import axios from 'axios';
@@ -18,12 +19,17 @@ const Expense = ({ onBack, themeStyle }) => {
   const [toDate, setToDate] = useState('');
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [noData, setNoData] = useState(false);
 
   const handleViewExpense = async () => {
     if (!vehicleNo || !category || !fromDate || !toDate) {
       alert('Please fill all fields');
       return;
     }
+
+    setLoading(true);
+    setNoData(false);
 
     try {
       const res = await axios.post('http://localhost:5000/api/fuel/expense-summary', {
@@ -35,19 +41,50 @@ const Expense = ({ onBack, themeStyle }) => {
 
       const { entries, totalAmount } = res.data;
 
-      const formattedRows = entries.map((entry, index) => ({
-        id: index + 1,
-        vehicleNo,
-        date: entry.date?.substring(0, 10),
-        penName: entry.penName || `${entry.name || 'N/A'} (${entry.pen || '-'})`,
-        amount: entry.amount
-      }));
+      if (!entries || entries.length === 0) {
+        setNoData(true);
+        setRows([]);
+        setTotal(null);
+      } else {
+        let formattedRows = [];
 
-      setRows(formattedRows);
-      setTotal(totalAmount);
+        if (category === 'repair') {
+          formattedRows = entries.map((entry, index) => ({
+            id: index + 1,
+            vehicleNo: entry.vehicleNo,
+            date: entry.date?.substring(0, 10),
+            expense: entry.expense,
+            workerWage: entry.workerWage,
+            totalExpense: entry.totalExpense
+          }));
+        } else if (category === 'fuel') {
+          formattedRows = entries.map((entry, index) => ({
+            id: index + 1,
+            vehicleNo,
+            date: entry.date?.substring(0, 10),
+            penName: `${entry.name || 'N/A'} (${entry.pen || '-'})`,
+            amount: entry.amount
+          }));
+        } else {
+          // insurance or pollution
+          formattedRows = entries.map((entry, index) => ({
+            id: index + 1,
+            vehicleNo,
+            date: entry.date?.substring(0, 10),
+            policyNo: entry.policyNo || 'N/A',
+            validity: entry.validity ? entry.validity.substring(0, 10) : 'N/A',
+            amount: entry.amount
+          }));
+        }
+
+        setRows(formattedRows);
+        setTotal(totalAmount);
+      }
     } catch (error) {
       console.error('Error fetching expense:', error);
       alert('Failed to fetch expense data');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -62,15 +99,35 @@ const Expense = ({ onBack, themeStyle }) => {
     doc.text(`From: ${fromDate}  To: ${toDate}`, 14, 32);
     doc.text(`Total ${category} Expense: ₹${total}`, 14, 39);
 
-    const tableHead = category === 'insurance' || category === 'pollution'
-      ? [['Vehicle Number', 'Date', 'Amount']]
-      : [['Vehicle Number', 'Date', 'Name (PEN)', 'Amount']];
+    let tableHead, tableBody;
 
-    const tableBody = rows.map(row =>
-      category === 'insurance' || category === 'pollution'
-        ? [row.vehicleNo, row.date, row.amount]
-        : [row.vehicleNo, row.date, row.penName, row.amount]
-    );
+    if (category === 'repair') {
+      tableHead = [['Vehicle Number', 'Date', 'Expense', 'Worker Wage', 'Total Expense']];
+      tableBody = rows.map(row => [
+        row.vehicleNo,
+        row.date,
+        row.expense,
+        row.workerWage,
+        row.totalExpense
+      ]);
+    } else if (category === 'fuel') {
+      tableHead = [['Vehicle Number', 'Date', 'Name (PEN)', 'Amount']];
+      tableBody = rows.map(row => [
+        row.vehicleNo,
+        row.date,
+        row.penName,
+        row.amount
+      ]);
+    } else {
+      tableHead = [['Vehicle Number', 'Issued Date', 'Policy/Cert No', 'Validity', 'Amount']];
+      tableBody = rows.map(row => [
+        row.vehicleNo,
+        row.date,
+        row.policyNo,
+        row.validity,
+        row.amount
+      ]);
+    }
 
     doc.autoTable({
       startY: 45,
@@ -84,11 +141,22 @@ const Expense = ({ onBack, themeStyle }) => {
   const columns = [
     { field: 'vehicleNo', headerName: 'Vehicle Number', flex: 1 },
     { field: 'date', headerName: 'Date', flex: 1 },
-    ...(category === 'insurance' || category === 'pollution'
-      ? []
-      : [{ field: 'penName', headerName: 'Name (PEN)', flex: 1.5 }]
-    ),
-    { field: 'amount', headerName: 'Amount', flex: 1 }
+    ...(category === 'repair'
+      ? [
+          { field: 'expense', headerName: 'Expense', flex: 1 },
+          { field: 'workerWage', headerName: 'Worker Wage', flex: 1 },
+          { field: 'totalExpense', headerName: 'Total Expense', flex: 1 }
+        ]
+      : category === 'fuel'
+      ? [
+          { field: 'penName', headerName: 'Name (PEN)', flex: 1.5 },
+          { field: 'amount', headerName: 'Amount', flex: 1 }
+        ]
+      : [
+          { field: 'policyNo', headerName: 'Policy/Cert No', flex: 1 },
+          { field: 'validity', headerName: 'Validity', flex: 1 },
+          { field: 'amount', headerName: 'Amount', flex: 1 }
+        ])
   ];
 
   return (
@@ -128,15 +196,25 @@ const Expense = ({ onBack, themeStyle }) => {
           value={toDate}
           onChange={(e) => setToDate(e.target.value)}
         />
-        <Button variant="contained" onClick={handleViewExpense}>View Expense</Button>
-        {rows.length > 0 && (
+        <Button variant="contained" onClick={handleViewExpense} disabled={loading}>
+          {loading ? <CircularProgress size={24} color="inherit" /> : 'View Expense'}
+        </Button>
+        {rows.length > 0 && !loading && (
           <Button variant="outlined" color="secondary" onClick={handlePrintReport}>
             Print Report
           </Button>
         )}
       </Box>
 
-      {rows.length > 0 && (
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+          <CircularProgress />
+        </Box>
+      ) : noData ? (
+        <Typography sx={{ mt: 4 }} color="text.secondary">
+          No data found for the selected filters.
+        </Typography>
+      ) : rows.length > 0 && (
         <>
           <Typography variant="subtitle1" sx={{ mb: 1 }}>
             Total {category.charAt(0).toUpperCase() + category.slice(1)} Expense: ₹{total}

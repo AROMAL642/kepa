@@ -1,16 +1,7 @@
 import React, { useState } from 'react';
 import {
-  Box,
-  Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Button,
-  TextField,
-  Checkbox,
-  ListItemText,
-  OutlinedInput
+  Box, Typography, FormControl, InputLabel, Select, MenuItem,
+  Button, TextField, Checkbox, ListItemText, OutlinedInput
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import axios from 'axios';
@@ -25,7 +16,7 @@ const formatDate = (isoDate) => {
   return `${day}-${month}-${year}`;
 };
 
-const excludedFields = ['createdAt', 'updatedAt', 'hasWarranty', '__v', '_id'];
+const excludedFields = ['createdAt', 'updatedAt', 'hasWarranty', '__v', '_id', 'previousKm', 'kmpl', 'fullTank', 'file', 'fileType'];
 
 const ViewPrintRegisters = () => {
   const [registerType, setRegisterType] = useState('');
@@ -36,6 +27,7 @@ const ViewPrintRegisters = () => {
   const [rows, setRows] = useState([]);
   const [columns, setColumns] = useState([]);
   const [selectedFields, setSelectedFields] = useState([]);
+  const [totalKmTravelled, setTotalKmTravelled] = useState(null); // New
 
   const validate = () => {
     if (!registerType || !fromDate || !toDate) {
@@ -79,12 +71,12 @@ const ViewPrintRegisters = () => {
         alert('No data found');
         setRows([]);
         setColumns([]);
+        setTotalKmTravelled(null);
         return;
       }
 
       const dateFields = ['date', 'accidentTime', 'startTime', 'endTime'];
 
-      // Step 1: Filter out excluded fields
       const filteredData = data.map(row => {
         const cleaned = {};
         Object.entries(row).forEach(([key, value]) => {
@@ -95,38 +87,33 @@ const ViewPrintRegisters = () => {
         return cleaned;
       });
 
-      // Step 2: Collect all unique fields
       let fieldSet = new Set();
       filteredData.forEach(row => {
         Object.keys(row).forEach(key => fieldSet.add(key));
       });
 
-      // Always include warrantyNumber for purchase register
       if (registerType === 'purchase') {
         fieldSet.add('warrantyNumber');
       }
-// Step 3: Build columns
-let cols = Array.from(fieldSet).map((key) => ({
-  field: key,
-  headerName:
-    key === 'enteredBy' ? 'Entered By (Name - PEN)' :
-    key === 'warrantyNumber' ? 'Warranty Number' :
-    key.toUpperCase(),
-  flex: 1
-}));
 
-// For purchase register, reorder columns to put warrantyNumber after billNo
-if (registerType === 'purchase') {
-  const billNoIndex = cols.findIndex(col => col.field === 'billNo');
-  const warrantyCol = cols.find(col => col.field === 'warrantyNumber');
-  cols = cols.filter(col => col.field !== 'warrantyNumber');
-  if (billNoIndex !== -1 && warrantyCol) {
-    cols.splice(billNoIndex + 1, 0, warrantyCol);
-  }
-}
+      let cols = Array.from(fieldSet).map((key) => ({
+        field: key,
+        headerName:
+          key === 'enteredBy' ? 'Entered By (Name - PEN)' :
+          key === 'warrantyNumber' ? 'Warranty Number' :
+          key.toUpperCase(),
+        flex: 1
+      }));
 
+      if (registerType === 'purchase') {
+        const billNoIndex = cols.findIndex(col => col.field === 'billNo');
+        const warrantyCol = cols.find(col => col.field === 'warrantyNumber');
+        cols = cols.filter(col => col.field !== 'warrantyNumber');
+        if (billNoIndex !== -1 && warrantyCol) {
+          cols.splice(billNoIndex + 1, 0, warrantyCol);
+        }
+      }
 
-      // Step 4: Format rows
       const rowsWithId = filteredData.map((row, idx) => {
         const formatted = { id: idx + 1 };
         Array.from(fieldSet).forEach((key) => {
@@ -143,6 +130,26 @@ if (registerType === 'purchase') {
       setColumns(cols);
       setRows(rowsWithId);
       setSelectedFields(cols.map(col => col.field));
+      setTotalKmTravelled(null);
+
+      // ✅ Calculate total KM travelled (movement individual)
+      if (
+        registerType === 'movement' &&
+        vehicleOption === 'individual' &&
+        filteredData.length > 0
+      ) {
+        const sorted = [...filteredData].sort((a, b) =>
+          new Date(a.createdAt) - new Date(b.createdAt)
+        );
+        const first = sorted[0];
+        const last = sorted[sorted.length - 1];
+        const firstKm = Number(first?.startingkm) || 0;
+        const lastKm = Number(last?.endingkm) || 0;
+        const totalKm = lastKm - firstKm;
+        setTotalKmTravelled(totalKm);
+        alert(`Total KM Travelled: ${totalKm} km`);
+      }
+
     } catch (error) {
       console.error('Error fetching data:', error);
       alert('Failed to fetch report data.');
@@ -159,6 +166,13 @@ if (registerType === 'purchase') {
     doc.setFontSize(18);
     doc.text(`${registerType.toUpperCase()} Register Report`, 14, 22);
 
+    if (registerType === 'movement' && vehicleOption === 'individual') {
+      doc.setFontSize(12);
+      doc.text(`Vehicle No: ${vehicleNumber}`, 14, 30);
+      doc.text(`From: ${formatDate(fromDate)}   To: ${formatDate(toDate)}`, 14, 38);
+      doc.text(`Total KM Travelled: ${totalKmTravelled ?? 'N/A'} km`, 14, 46);
+    }
+
     const visibleCols = columns.filter(col => selectedFields.includes(col.field));
     const headers = visibleCols.map(col => col.headerName);
     const data = rows.map(row => visibleCols.map(col => row[col.field]));
@@ -166,7 +180,7 @@ if (registerType === 'purchase') {
     autoTable(doc, {
       head: [headers],
       body: data,
-      startY: 30,
+      startY: registerType === 'movement' && vehicleOption === 'individual' ? 52 : 30,
       styles: { fontSize: 9 },
       headStyles: { fillColor: [22, 160, 133] }
     });

@@ -17,7 +17,15 @@ import { useNavigate } from 'react-router-dom';
 const settings = ['Profile', 'Dashboard', 'Logout'];
 const DRAWER_WIDTH = 240;
 
-function ResponsiveAppBar({ photo, name, isDrawerOpen, onDrawerToggle, onSelectTab, pendingRequestCount }) {
+function ResponsiveAppBar({
+  photo,
+  name,
+  isDrawerOpen,
+  onDrawerToggle,
+  onSelectTab,
+  pendingRequestCount,
+  expiredCertCount, // ✅ NEW prop for expired certificate badge count
+}) {
   const [anchorElNav, setAnchorElNav] = React.useState(null);
   const [anchorElUser, setAnchorElUser] = React.useState(null);
   const navigate = useNavigate();
@@ -31,7 +39,7 @@ function ResponsiveAppBar({ photo, name, isDrawerOpen, onDrawerToggle, onSelectT
     if (setting === 'Logout') {
       localStorage.clear();
       navigate('/');
-    } else if (onSelectTab && (setting === 'Profile' || setting === 'Dashboard')) {
+    } else if (onSelectTab && setting.toLowerCase()) {
       onSelectTab(setting.toLowerCase());
     }
   };
@@ -89,30 +97,33 @@ function ResponsiveAppBar({ photo, name, isDrawerOpen, onDrawerToggle, onSelectT
               onClose={handleCloseNavMenu}
               sx={{ display: { xs: 'block', md: 'none' } }}
             >
-              <MenuItem onClick={handleCloseNavMenu}>
-                <Typography textAlign="center">Notifications</Typography>
-              </MenuItem>
-              <MenuItem onClick={handleCloseNavMenu}>
+              <MenuItem onClick={() => { handleCloseNavMenu(); onSelectTab('notifications'); }}>
                 <Typography textAlign="center">
-                  Requests{' '}
-                  <Badge badgeContent={pendingRequestCount} color="error" sx={{ ml: 1 }} />
+                  Requests <Badge badgeContent={pendingRequestCount} color="error" sx={{ ml: 1 }} />
+                </Typography>
+              </MenuItem>
+              <MenuItem onClick={() => { handleCloseNavMenu(); onSelectTab('notificationsPage'); }}>
+                <Typography textAlign="center">
+                  Notifications
+                  {expiredCertCount > 0 && (
+                    <Badge badgeContent={expiredCertCount} color="error" sx={{ ml: 1 }} />
+                  )}
                 </Typography>
               </MenuItem>
             </Menu>
           </Box>
 
           {/* Desktop View */}
-          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}>
-            <Button onClick={handleCloseNavMenu} sx={{ my: 2, color: 'white' }}>
-              Notifications
-            </Button>
-            <Button onClick={handleCloseNavMenu} sx={{ my: 2, color: 'white', display: 'flex', alignItems: 'center' }}>
+          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 2 }}>
+            <Button onClick={() => onSelectTab('notifications')} sx={{ my: 2, color: 'white' }}>
               Requests
-              <Badge
-                badgeContent={pendingRequestCount}
-                color="error"
-                sx={{ ml: 2 }}
-              />
+              <Badge badgeContent={pendingRequestCount} color="error" sx={{ ml: 2 }} />
+            </Button>
+            <Button onClick={() => onSelectTab('notificationsPage')} sx={{ my: 2, color: 'white' }}>
+              Notifications
+              {expiredCertCount > 0 && (
+                <Badge badgeContent={expiredCertCount} color="error" sx={{ ml: 2 }} />
+              )}
             </Button>
           </Box>
 
