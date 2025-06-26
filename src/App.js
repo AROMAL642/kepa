@@ -45,7 +45,7 @@ function AppWrapper() {
         <header className="App-header">
           <img className="App-logo" src="/images/kepa_logo.png" alt="Logo" />
           <h1>Kerala Police Academy</h1>
-          <h3>Motor Transport Wing</h3>
+          <h3>Motor Transport Management System</h3>
         </header>
       )}
 
