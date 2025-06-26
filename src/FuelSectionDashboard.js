@@ -20,6 +20,43 @@ function FuelDashboard() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('pending');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [newPhotoFile, setNewPhotoFile] = useState(null);
+  const [newSignatureFile, setNewSignatureFile] = useState(null);
+
+  const toBase64 = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file);
+  });
+};
+
+
+  const handlePhotoChange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 100 * 1024) {
+    alert('Photo must be less than 100KB');
+    return;
+  }
+  const base64 = await toBase64(file);
+  setFuelData(prev => ({ ...prev, photo: base64 }));
+  setNewPhotoFile(file);
+};
+
+const handleSignatureChange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 100 * 1024) {
+    alert('Signature must be less than 100KB');
+    return;
+  }
+  const base64 = await toBase64(file);
+  setFuelData(prev => ({ ...prev, signature: base64 }));
+  setNewSignatureFile(file);
+};
+
 
   const [fuelData, setFuelData] = useState({
     name: '',
@@ -168,37 +205,58 @@ function FuelDashboard() {
                     <button
                       className="save-btn"
                       onClick={async () => {
-                        try {
-                          const response = await fetch('http://localhost:5000/api/users/update', {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(fuelData),
-                          });
+  try {
+    const formDataObj = new FormData();
+    formDataObj.append('pen', fuelData.pen);
+    formDataObj.append('name', fuelData.name);
+    formDataObj.append('email', fuelData.email);
+    formDataObj.append('phone', fuelData.mobile);
+    formDataObj.append('dob', fuelData.dob);
+    formDataObj.append('licenseNo', fuelData.licenseNo);
 
-                          const data = await response.json();
-                          if (response.ok) {
-                            localStorage.setItem('fuelName', data.updatedUser.name || '');
-                            localStorage.setItem('fuelPen', data.updatedUser.pen || '');
-                            localStorage.setItem('fuelEmail', data.updatedUser.email || '');
-                            localStorage.setItem('fuelPhone', data.updatedUser.phone || '');
-                            localStorage.setItem('fuelDob', (data.updatedUser.dob || '').substring(0, 10));
-                            localStorage.setItem('fuelLicenseNo', data.updatedUser.licenseNo || '');
-                            localStorage.setItem('fuelBloodGroup', data.updatedUser.bloodGroup || '');
-                            localStorage.setItem('fuelGender', data.updatedUser.gender || '');
-                            localStorage.setItem('fuelPhoto', data.updatedUser.photo || '');
-                            localStorage.setItem('fuelSignature', data.updatedUser.signature || '');
-                            localStorage.setItem('fuelRole', data.updatedUser.role || '');
+    if (newPhotoFile) {
+      formDataObj.append('photo', newPhotoFile);
+    } else if (fuelData.photo) {
+      formDataObj.append('photo', fuelData.photo);
+    }
 
-                            alert('Profile updated successfully');
-                            setEditMode(false);
-                          } else {
-                            alert(data.message || 'Update failed');
-                          }
-                        } catch (error) {
-                          alert('An error occurred while updating');
-                          console.error(error);
-                        }
-                      }}
+    if (newSignatureFile) {
+      formDataObj.append('signature', newSignatureFile);
+    } else if (fuelData.signature) {
+      formDataObj.append('signature', fuelData.signature);
+    }
+
+    const response = await fetch('http://localhost:5000/api/users/update-admin', {
+      method: 'PUT',
+      body: formDataObj,
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+      const updated = data;
+      localStorage.setItem('fuelName', updated.name || '');
+      localStorage.setItem('fuelPen', updated.pen || '');
+      localStorage.setItem('fuelEmail', updated.email || '');
+      localStorage.setItem('fuelPhone', updated.phone || '');
+      localStorage.setItem('fuelDob', (updated.dob || '').substring(0, 10));
+      localStorage.setItem('fuelLicenseNo', updated.licenseNo || '');
+      localStorage.setItem('fuelBloodGroup', updated.bloodGroup || '');
+      localStorage.setItem('fuelGender', updated.gender || '');
+      localStorage.setItem('fuelPhoto', updated.photo || '');
+      localStorage.setItem('fuelSignature', updated.signature || '');
+      localStorage.setItem('fuelRole', updated.role || '');
+
+      alert('Profile updated successfully');
+      setEditMode(false);
+    } else {
+      alert(data.message || 'Update failed');
+    }
+  } catch (error) {
+    alert('An error occurred while updating');
+    console.error(error);
+  }
+}}
+
                     >
                       Save Changes
                     </button>
@@ -208,23 +266,40 @@ function FuelDashboard() {
               </div>
 
               <div className="form-right">
-                <div className="upload-section">
-                  <img
-                    src={fuelData.photo || 'https://via.placeholder.com/100'}
-                    alt="Profile"
-                    className="upload-icon"
-                  />
-                  <p>Profile Photo</p>
-                </div>
-                <div className="upload-section">
-                  <img
-                    src={fuelData.signature || 'https://via.placeholder.com/100'}
-                    alt="Signature"
-                    className="upload-icon"
-                  />
-                  <p>Signature</p>
-                </div>
-              </div>
+  <div className="upload-section">
+    <img
+      src={fuelData.photo || 'https://via.placeholder.com/100'}
+      alt="Profile"
+      className="upload-icon"
+    />
+    <p>Profile Photo</p>
+    {editMode && (
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handlePhotoChange}
+        style={{ marginTop: '8px' }}
+      />
+    )}
+  </div>
+  <div className="upload-section">
+    <img
+      src={fuelData.signature || 'https://via.placeholder.com/100'}
+      alt="Signature"
+      className="upload-icon"
+    />
+    <p>Signature</p>
+    {editMode && (
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handleSignatureChange}
+        style={{ marginTop: '8px' }}
+      />
+    )}
+  </div>
+</div>
+
             </div>
           )}
 

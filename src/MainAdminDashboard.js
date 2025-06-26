@@ -23,6 +23,8 @@ import Purchase from './mechanicdashboardcomponents/Purchase';
 import Expense from './admindashboardcomponents/Expense'; 
 import TraineesDetails from './admindashboardcomponents/TraineesDetails';
 import NotificationPage from './admindashboardcomponents/NotificationPage';
+import Dashboard from './admindashboardcomponents/Dashboard';
+
 
 // MUI Icons
 import LocalGasStationIcon from '@mui/icons-material/LocalGasStation';
@@ -36,13 +38,15 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import PrintIcon from '@mui/icons-material/Print';
 import SchoolIcon from '@mui/icons-material/School';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+
 
 
 
 import dayjs from 'dayjs';
 
 function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState('PrintRegisters');
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [vehicleTab, setVehicleTab] = useState('main');
   const [pendingCount, setPendingCount] = useState(0);
   const [pendingFuelCount, setPendingFuelCount] = useState(0);
@@ -58,6 +62,10 @@ function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editedProfile, setEditedProfile] = useState({});
+
+  const [newPhoto, setNewPhoto] = useState(null);
+  const [newSignature, setNewSignature] = useState(null);
+  const MAX_IMAGE_SIZE = 100 * 1024;
 
   const [adminData, setAdminData] = useState({
     name: '', email: '', pen: '', generalNo: '', photo: '',
@@ -162,28 +170,65 @@ const fetchRepairPendingCount = async () => {
     }
   };
 
-  const handleSaveProfile = async () => {
-    try {
-      const res = await fetch('http://localhost:5000/api/update-admin', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pen: adminData.pen, updates: editedProfile }),
-      });
+const handleFileToBase64 = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64String = reader.result;
+      resolve(base64String); // ✅ includes 'data:image/png;base64,...'
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file); // ✅ IMPORTANT: must use readAsDataURL, not readAsBinaryString
+  });
+};
 
-      if (res.ok) {
-        const updated = await res.json();
-        setAdminData(updated);
-        localStorage.setItem('adminData', JSON.stringify(updated));
-        setIsEditing(false);
-        alert('Profile updated successfully');
-      } else {
-        alert('Failed to update profile');
+
+const handleSaveProfile = async () => {
+  try {
+    const formData = new FormData();
+    formData.append('pen', adminData.pen);
+
+    // Append editable text fields
+    ['name', 'email', 'phone', 'licenseNo', 'dob'].forEach(key => {
+      if (editedProfile[key]) {
+        formData.append(key, editedProfile[key]);
       }
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      alert('Error updating profile');
+    });
+
+    // Append image files
+    if (newPhoto) {
+      formData.append('photo', newPhoto);
     }
-  };
+
+    if (newSignature) {
+      formData.append('signature', newSignature);
+    }
+
+    const response = await fetch('http://localhost:5000/api/update-admin', {
+      method: 'PUT',
+      body: formData // ✅ send as FormData
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      localStorage.setItem('adminData', JSON.stringify(data));
+      setAdminData(data);
+      setEditedProfile(data);
+      setIsEditing(false);
+      setNewPhoto(null);
+      setNewSignature(null);
+      alert('Profile updated successfully');
+    } else {
+      alert(data.error || 'Update failed');
+    }
+  } catch (err) {
+    console.error('Error updating admin profile:', err);
+    alert('Error while updating profile');
+  }
+};
+
+
 
  const handleTabSelect = (tab) => {
   if (tab === 'notificationsPage') {
@@ -233,8 +278,13 @@ const fetchRepairPendingCount = async () => {
               {adminData.role}
             </div>
           )}
-
+          
           <div className="sidebar-buttons">
+            <button className={`sidebar-btn ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
+           <DashboardIcon style={{ marginRight: '8px' }} /> Dashboard
+            </button>
+
+
             <button className={`sidebar-btn notification-btn ${activeTab === 'Fuel' ? 'active' : ''}`} onClick={() => setActiveTab('Fuel')}>
               <LocalGasStationIcon style={{ marginRight: '8px' }} /> Fuel {pendingFuelCount > 0 && <span className="notification-badge">{pendingFuelCount}</span>}
             </button>
@@ -329,17 +379,89 @@ const fetchRepairPendingCount = async () => {
                 </div>
               </div>
               <div className="form-right">
-                <div className="upload-section">
-                  <img src={adminData.photo || 'https://via.placeholder.com/100'} alt="Profile" className="upload-icon" />
-                  <p>Profile Photo</p>
-                </div>
-                <div className="upload-section">
-                  <img src={adminData.signature || 'https://via.placeholder.com/100'} alt="Signature" className="upload-icon" />
-                  <p>Signature</p>
-                </div>
-              </div>
+
+
+  <div className="upload-section">
+  <img
+    src={
+      editedProfile.photo ||
+      adminData.photo ||
+      'https://via.placeholder.com/100'
+    }
+    alt="Profile Preview"
+    className="upload-icon"
+  />
+  <p>Profile Photo</p>
+  {isEditing && (
+    <input
+      type="file"
+      accept="image/*"
+      onChange={async (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const maxSize = 100 * 1024; // 100 KB
+          if (file.size > maxSize) {
+            alert('Photo must be less than 100 KB');
+            return;
+          }
+
+          const base64 = await handleFileToBase64(file);
+          setNewPhoto(file);
+          setEditedProfile((prev) => ({ ...prev, photo: base64 }));
+        }
+      }}
+    />
+  )}
+</div>
+
+<div className="upload-section">
+  <img
+    src={
+      editedProfile.signature ||
+      adminData.signature ||
+      'https://via.placeholder.com/100'
+    }
+    alt="Signature Preview"
+    className="upload-icon"
+  />
+  <p>Signature</p>
+  {isEditing && (
+    <input
+      type="file"
+      accept="image/*"
+      onChange={async (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const maxSize = 100 * 1024; // 100 KB
+          if (file.size > maxSize) {
+            alert('Signature must be less than 100 KB');
+            return;
+          }
+
+          const base64 = await handleFileToBase64(file);
+          setNewSignature(file);
+          setEditedProfile((prev) => ({ ...prev, signature: base64 }));
+        }
+      }}
+    />
+  )}
+</div>
+
+</div>
+
             </div>
           )}
+          {activeTab === 'dashboard' && (
+  <Dashboard
+    onSelectTab={setActiveTab}
+    pendingFuelCount={pendingFuelCount}
+    repairPendingCount={repairPendingCount}
+    pendingAccidentCount={pendingAccidentCount}
+    pendingCount={pendingCount}
+    expiredCertCount={expiredCertCount}
+  />
+)}
+
           {activeTab === 'Fuel' && <FuelAdmin themeStyle={themeStyle} />}
           {activeTab === 'VerifiedUsersTable' && <VerifiedUsersTable themeStyle={themeStyle} />}
           {activeTab === 'userdetails' && (

@@ -44,6 +44,43 @@ function UserDashboard() {
   const [assignedVehicle, setAssignedVehicle] = useState('');
   const [expiredCertCount, setExpiredCertCount] = useState(0);
 
+  const [newPhotoFile, setNewPhotoFile] = useState(null);
+  const [newSignatureFile, setNewSignatureFile] = useState(null);
+
+  const toBase64 = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file);
+  });
+};
+
+  const handlePhotoChange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 100 * 1024) {
+    alert('Photo must be less than 100KB');
+    return;
+  }
+  const base64 = await toBase64(file);
+  setFormData(prev => ({ ...prev, profilePic: base64 }));
+  setNewPhotoFile(file);
+};
+
+const handleSignatureChange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 100 * 1024) {
+    alert('Signature must be less than 100KB');
+    return;
+  }
+  const base64 = await toBase64(file);
+  setFormData(prev => ({ ...prev, signature: base64 }));
+  setNewSignatureFile(file);
+};
+
+
 useEffect(() => {
   fetch('http://localhost:5000/api/notifications/expired-count')
     .then(res => res.json())
@@ -229,53 +266,93 @@ useEffect(() => {
                 ) : (
                   <>
                     <button
-                      className="save-btn"
-                      onClick={async () => {
-                        try {
-                          const response = await fetch('http://localhost:5000/api/users/update', {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(formData),
-                          });
+  className="save-btn"
+  onClick={async () => {
+    try {
+      const formDataObj = new FormData();
+      formDataObj.append('pen', formData.pen);
+      formDataObj.append('name', formData.name);
+      formDataObj.append('email', formData.email);
+      formDataObj.append('phone', formData.mobile);
+      formDataObj.append('dob', formData.dob);
+      formDataObj.append('licenseNo', formData.licenseNo);
 
-                          const data = await response.json();
-                          if (response.ok) {
-                            alert('Profile updated successfully');
-                            localStorage.setItem('user', JSON.stringify(data.updatedUser));
-                            setEditMode(false);
-                          } else {
-                            alert(data.message || 'Update failed');
-                          }
-                        } catch (error) {
-                          alert('An error occurred while updating');
-                          console.error(error);
-                        }
-                      }}
-                    >
-                      Save Changes
-                    </button>
+      // Handle photo
+      if (newPhotoFile) {
+        formDataObj.append('photo', newPhotoFile);
+      } else if (formData.profilePic) {
+        formDataObj.append('photo', formData.profilePic);
+      }
+
+      // Handle signature
+      if (newSignatureFile) {
+        formDataObj.append('signature', newSignatureFile);
+      } else if (formData.signature) {
+        formDataObj.append('signature', formData.signature);
+      }
+
+      const response = await fetch('http://localhost:5000/api/users/update-admin', {
+        method: 'PUT',
+        body: formDataObj
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert('Profile updated successfully');
+        localStorage.setItem('user', JSON.stringify(result));
+        setEditMode(false);
+      } else {
+        alert(result.message || 'Update failed');
+      }
+    } catch (error) {
+      alert('An error occurred while updating');
+      console.error(error);
+    }
+  }}
+>
+  Save Changes
+</button>
+
                     <button className="cancel-btn" onClick={() => setEditMode(false)}>Cancel</button>
                   </>
                 )}
               </div>
               <div className="form-right">
-                <div className="upload-section">
-                  <img
-                    src={formData.profilePic || 'https://via.placeholder.com/100'}
-                    alt="Profile"
-                    className="upload-icon"
-                  />
-                  <p>Profile Photo</p>
-                </div>
-                <div className="upload-section">
-                  <img
-                    src={formData.signature || 'https://via.placeholder.com/100'}
-                    alt="Signature"
-                    className="upload-icon"
-                  />
-                  <p>Signature</p>
-                </div>
-              </div>
+  <div className="upload-section">
+    <img
+      src={formData.profilePic || 'https://via.placeholder.com/100'}
+      alt="Profile"
+      className="upload-icon"
+    />
+    <p>Profile Photo</p>
+    {editMode && (
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handlePhotoChange}
+        style={{ marginTop: '8px' }}
+      />
+    )}
+  </div>
+  <div className="upload-section">
+    <img
+      src={formData.signature || 'https://via.placeholder.com/100'}
+      alt="Signature"
+      className="upload-icon"
+    />
+    <p>Signature</p>
+    {editMode && (
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handleSignatureChange}
+        style={{ marginTop: '8px' }}
+      />
+    )}
+  </div>
+</div>
+
             </div>
           )}
 

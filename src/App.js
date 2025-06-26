@@ -22,6 +22,7 @@ import RepairRequestForm from './userdashboardcomponents/RepairRequestForm';
 import Stocks from './mechanicdashboardcomponents/Stocks';
 import TrackRepairRequest from './userdashboardcomponents/trackrepairrequest';
 import AddUpdateCertificate from './admindashboardcomponents/AddUpdateCertificate';
+import Dashboard from './admindashboardcomponents/Dashboard';
 import PrivateRoute from './components/PrivateRoute';
 
 import './App.css';
@@ -114,7 +115,7 @@ function AppWrapper() {
         <Route path="/trackrepairrequest" element={<TrackRepairRequest />} />
         <Route path="/vehicle-certificates" element={<AddUpdateCertificate />} />
         <Route path="/admin/stocks" element={<Stocks />} />
-
+        <Route path="/dashboard" element={<Dashboard />} />
         {/* 404 Not Found */}
         <Route path="*" element={<NotFound />} />
       </Routes>
