@@ -74,6 +74,12 @@ const RepairRequestForm = ({ pen }) => {
   const [description, setDescription] = useState('');
   const [billFile, setBillFile] = useState(null);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+ //const [name, setName] = useState('');
+const [mr, setMr] = useState('');
+
+
+
+
 
   useEffect(() => {
     if (pen) {
@@ -101,6 +107,46 @@ const RepairRequestForm = ({ pen }) => {
     }
   };
 
+
+
+ /* // for user
+useEffect(() => {
+  if (pen) {
+    localStorage.setItem('pen', pen);
+
+    // Fetch user name based on PEN
+    const fetchName = async () => {
+      try {
+        const response = await axios.get(`http://localhost:5000/api/users/pen/${pen}`);
+        console.log("Fetched name for pen", pen, ":", response.data);
+        setName(response.data.name);
+
+      } catch (error) {
+        console.error('Error fetching name from PEN:', error);
+        setName('');
+      }
+    };
+
+    fetchName();
+  }
+}, [pen]);
+
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file && file.size > 200 * 1024) {
@@ -118,7 +164,11 @@ const RepairRequestForm = ({ pen }) => {
     const formDataToSend = new FormData();
     formDataToSend.append('vehicleNo', vehicleNo);
     formDataToSend.append('pen', pen);
+    //formDataToSend.append('name', name); 
+
     formDataToSend.append('date', date);
+    formDataToSend.append('mr', mr);
+
     formDataToSend.append('subject', subject);
     formDataToSend.append('description', description);
     if (billFile) {
@@ -136,6 +186,7 @@ const RepairRequestForm = ({ pen }) => {
       setVehicleNo('');
       setVehicleStatus('');
       setDate(new Date().toISOString().split('T')[0]);
+      setMr('');
       setSubject('');
       setDescription('');
       setBillFile(null);
@@ -191,7 +242,14 @@ const RepairRequestForm = ({ pen }) => {
               readOnly
               style={{ ...baseStyles.input, backgroundColor: '#f0f0f0' }}
             />
-
+{/*<label>User Name</label>
+<input
+  type="text"
+  value={name}
+  readOnly
+  style={{ ...baseStyles.input, backgroundColor: '#f0f0f0' }}
+/>
+*/}
            
 
             <label>Date</label>
@@ -202,6 +260,16 @@ const RepairRequestForm = ({ pen }) => {
               style={baseStyles.input}
               required
             />
+
+            <label>MR (Meter Reading)</label>
+<input
+  type="text"
+  value={mr}
+  onChange={(e) => setMr(e.target.value)}
+  placeholder="Enter current meter reading"
+  style={baseStyles.input}
+/>
+
 
             <label>Subject</label>
             <input

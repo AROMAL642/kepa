@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const repairRequestsSchema = new mongoose.Schema({
   vehicleNo: { type: String, required: true },
   pen: { type: String, required: true },
+ 
   date: { type: String, required: true },
   subject: { type: String, required: true },
   description: { type: String, required: true },
@@ -15,8 +16,9 @@ const repairRequestsSchema = new mongoose.Schema({
     enum: ['pending', 'forwarded', 'repaired', 'verification pending', 'verified', 'rejected' , 'sent_to_repair_admin' ,   'pending', 'approved certificates',
     'generating certificates',
     'certificate_ready',
-    'forwarded_to_repair_section', // ✅ Add this
-    'completed',
+    'forwarded_to_repair_section', 
+    
+    'completed','work completed',
     'Pending User Verification',
     'Check Again',
     'final_work_done_sent_to_user' , 'for_generating_certificate' ,'waiting_for_sanction',
@@ -42,7 +44,10 @@ const repairRequestsSchema = new mongoose.Schema({
   partsList: [
     {
       item: String,
-      quantity: Number
+      quantity: String,
+      previousDate: String,     
+            
+      kmAfterPrevious: String 
     }
   ],
   certificates: {
@@ -63,11 +68,48 @@ technicalCertificate: {
     data: Buffer,
     contentType: String
   },
+
+verifiedWorkBill: {
+  data: Buffer,
+  contentType: String
+},
+quotationBill: {
+  data: Buffer,
+  contentType: String
+},
+additionalBill: {
+  data: Buffer,
+  contentType: String
+},
+
   userApproval: { type: Boolean, default: false },
-  rejectedByUser: { type: Boolean, default: false }
+  rejectedByUser: { type: Boolean, default: false },
+  userRemarks: { type: String, default: '' },
+
+  expense: { type: Number, default: 0 },
+workerWage: { type: Number, default: 0 },
+  sanctionedNumber: { type: String, default: '' },
+
+ 
+ mr: { type: String, default: '' },
+kmCovered : { type: String, default: '' },
+certificateSerial: { type: Number },
+serialYear: { type: Number },
+ technicalCertificateNumber: { type: String },
+  technicalCertificateTable: [
+    {
+      date: String,
+      mr: String,
+      km: String
+    }
+  ],
+  
 }, {
   timestamps: true
 });
 
 module.exports = mongoose.model('RepairRequests', repairRequestsSchema);
 
+// previousDate: String,
+   // previousMR: String,
+    //kmAfterReplacement: String

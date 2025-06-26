@@ -20,6 +20,9 @@ const RepairSectionAdmin = () => {
   const [sanctionBillFile, setSanctionBillFile] = useState(null);
    const [sanctionedIds, setSanctionedIds] = useState(new Set());
 
+const [additionalBill, setAdditionalBill] = useState(null);
+
+  
 
 
   const fetchRequests = async () => {
@@ -27,7 +30,7 @@ const RepairSectionAdmin = () => {
       const res = await axios.get('http://localhost:5000/api/repair-request');
       const filtered = res.data.filter(req =>
         ['forwarded_to_repair_section', 'for_generating_certificate', 'generating_certificates', 'certificate_ready', 'waiting_for_sanction', 
-    'sanctioned_for_work'].includes(req.status)
+    'sanctioned_for_work','ongoing_work' , 'work completed', 'Pending User verification', 'completed' ,].includes(req.status)
       );
       setRequests(filtered);
     } catch (err) {
@@ -68,13 +71,16 @@ const RepairSectionAdmin = () => {
   const forwardSanction = async (id) => {
     const formData = new FormData();
     //formData.append('approvedNo', approvedNo);
-    formData.append('sanctionBillFile', sanctionBillFile);
+   formData.append('additionalBill', additionalBill);
+
 
 
     try {
       await axios.put(`http://localhost:5000/api/repair-request/${id}/sanction-work`, formData);
       alert('✅ Sanction forwarded to Main Admin');
       setSanctionDialogOpen(false);
+        setAdditionalBill(null);
+    
       fetchRequests();
     } catch (err) {
       console.error('Error forwarding sanction:', err);
@@ -94,6 +100,19 @@ const RepairSectionAdmin = () => {
       case 'certificate_ready': color = 'success'; label = 'Certificates Ready'; break;
       case 'waiting_for_sanction': color = 'warning'; label = 'Waiting for Sanction'; break;
       case 'sanctioned_for_work': color = 'success'; label = 'Sanctioned'; break;
+      case 'ongoing_work': color = 'success'; label = 'ongoing work '; break;
+      case 'Pending User Verification': color = 'success'; label = 'Pending User Verification'; break;
+case 'work_complete': color = 'success'; label = 'work_complete '; break;
+
+case 'completed': color = 'success'; label = 'completed '; break;
+
+
+
+
+
+
+
+
       default: color = 'default';
     }
     return <Chip label={label} color={color} variant="outlined" />;
@@ -157,10 +176,7 @@ const RepairSectionAdmin = () => {
           <Button
             variant="outlined"
             onClick={() =>
-              window.open(
-                `data:${params.row.technicalCertificate.contentType};base64,${params.row.technicalCertificate.data}`,
-                '_blank'
-              )
+             window.open(`http://localhost:5000/api/repair-request/${params.row._id}/view-tc`, '_blank')
             }
           >
             View
@@ -238,6 +254,9 @@ const RepairSectionAdmin = () => {
               <Typography><strong>PEN:</strong> {selectedEntry.pen}</Typography>
               <Typography><strong>DATE:</strong> {selectedEntry.date}</Typography>
               <Typography><strong>SUBJECT:</strong> {selectedEntry.subject}</Typography>
+              
+              
+
 
               {selectedEntry?.partsList?.length > 0 && (
                 <Box sx={{ gridColumn: '1 / -1', mt: 2 }}>
@@ -313,11 +332,11 @@ const RepairSectionAdmin = () => {
         <DialogContent>
           <Box>
             <Typography>Upload Sanction Bill:</Typography>
-            <input
-              type="file"
-              accept=".pdf,.jpg,.png"
-              onChange={(e) => setSanctionBillFile(e.target.files[0])}
-            />
+             <input
+        type="file"
+        accept=".pdf,.jpg,.png"
+        onChange={(e) => setAdditionalBill(e.target.files[0])}
+      />
           </Box>
         </DialogContent>
         <DialogActions>
@@ -331,11 +350,3 @@ const RepairSectionAdmin = () => {
 
 export default RepairSectionAdmin;
 
-
-{/*<TextField
-            fullWidth
-            margin="normal"
-            label="Approved No"
-            value={approvedNo}
-            onChange={(e) => setApprovedNo(e.target.value)}
-          />*/}

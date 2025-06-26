@@ -259,13 +259,12 @@ app.use('/api', reportRoutes);
 //repair requests
 
 const repairRequestRoutes = require('./routes/repairRequestRoutes');
-app.use('/api/repairRequestRoutes', require('./routes/repairRequestRoutes'));
 app.use('/api/repair-request', require('./routes/repairRequestRoutes'));
 
 const repairRoutes = require('./routes/repairRequestRoutes');
 app.use('/api/repairs', repairRoutes);
-app.use('/api/repair', repairRoutes);
-
+//app.use('/api/repair', repairRoutes);
+//app.use('/api/repairRequestRoutes', require('./routes/repairRequestRoutes'));
 
 
 // mechanic repair section

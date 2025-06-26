@@ -29,12 +29,26 @@ function MechanicPendingRequests() {
   const [workDoneChoice, setWorkDoneChoice] = useState('');
   const [partsList, setPartsList] = useState([{ item: '', quantity: '' }]);
   const [billFile, setBillFile] = useState(null);
+const [sentRequests, setSentRequests] = useState([]);
+const [mechanicUploadFile, setMechanicUploadFile] = useState(null);
+
+
+const [verifyModalOpen, setVerifyModalOpen] = useState(false);
+const [verifyRequest, setVerifyRequest] = useState(null);
+const [verifyFile, setVerifyFile] = useState(null);
+const [showReverifyDialog, setShowReverifyDialog] = useState(false);
+const [reverifyTargetId, setReverifyTargetId] = useState(null);
+const [reverifyReason, setReverifyReason] = useState('');
+const [expense, setExpense] = useState('');
+const [workerWage, setWorkerWage] = useState('');
 
   const theme = useTheme(); // ✅ added
   const fullScreen = useMediaQuery(theme.breakpoints.down('md')); // ✅ added
 
+
+  
   useEffect(() => {
-    fetch('http://localhost:5000/api/repairs')
+    fetch('http://localhost:5000/api/repair-request')
       .then(res => res.json())
       .then(data => {
         const formatted = data.map((req, index) => ({
@@ -50,12 +64,19 @@ function MechanicPendingRequests() {
           status: req.status,
           mechanicFeedback: req.mechanicFeedback,
           workDone: req.workDone || 'No',
+          userApproval: req.userApproval || false,
+          rejectedByUser: req.rejectedByUser || false,
+          userRemarks: req.userRemarks || '',
+           
+ 
           billImage: req.billFile
             ? {
                 url: `data:${req.billFile.contentType};base64,${req.billFile.data}`,
                 type: req.billFile.contentType
               }
-            : null
+            : null,
+            expense: req.expense || 'N/A',
+  workerWage: req.workerWage || 'N/A',
         }));
         setRequests(formatted);
         setLoading(false);
@@ -79,36 +100,93 @@ function MechanicPendingRequests() {
     setSelectedRequest(null);
   };
 
-  const handleWorkCompleted = () => {
-    fetch(`http://localhost:5000/api/repairs/${selectedRequest.id}/complete`, {
+const openReverifyDialog = (row) => {
+  setReverifyTargetId(row.id);
+  setReverifyReason(row.userRemarks || '');
+  setShowReverifyDialog(true);
+};
+
+
+
+const confirmReverify = () => {
+  handleReverify(reverifyTargetId);
+  setShowReverifyDialog(false);
+};
+
+
+
+
+
+
+
+
+
+
+
+
+  const handleWorkCompleted = async () => {
+  const currentStatus = selectedRequest.status;
+
+  // ✅ Logic: if status is "forwarded", set workDone to 'No' so user will verify
+  const updatedWorkDone = currentStatus === 'forwarded' ? 'No' : 'Yes';
+  const nextStatus = currentStatus === 'forwarded' ? 'Pending User Verification' : 'completed';
+
+  try {
+    const res = await fetch(`http://localhost:5000/api/repair-request/${selectedRequest.id}/complete`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ workDone: 'Yes' })
-    })
-      .then((res) => res.json())
-      .then((updated) => {
-        if (!updated || !updated._id) {
-          alert('Update failed.');
-          return;
-        }
-        setRequests((prev) =>
-          prev.map((r) =>
-            r.id === selectedRequest.id
-              ? {
-                  ...r,
-                  workDone: 'Yes',
-                  repairStatus: 'completed'
-                }
-              : r
-          )
-        );
-        handleCloseModal();
+      body: JSON.stringify({
+        workDone: updatedWorkDone,
+        status: nextStatus
       })
-      .catch((err) => {
-        console.error('Error updating workDone:', err);
-        alert('Failed to mark as completed.');
-      });
-  };
+    });
+
+    if (!res.ok) throw new Error('Failed to update status.');
+
+    const updated = await res.json();
+
+    setRequests((prev) =>
+      prev.map((r) =>
+        r.id === selectedRequest.id
+          ? {
+              ...r,
+              workDone: updatedWorkDone,
+              repairStatus: nextStatus,
+              status: nextStatus
+            }
+          : r
+      )
+    );
+
+    // ✅ Notify user only if forwarded-to-verification flow
+    if (nextStatus === 'Pending User Verification') {
+      await notifyUserForVerification(selectedRequest.id);
+    }
+
+    alert('✔️ Status updated and sent to user for verification.');
+    handleCloseModal();
+  } catch (err) {
+    console.error('Error:', err);
+    alert('❌ Failed to update request.');
+  }
+};
+
+
+const notifyUserForVerification = async (id) => {
+  try {
+    const res = await fetch(`http://localhost:5000/api/repair-request/${id}/send-to-user`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (!res.ok) throw new Error('User notification failed.');
+    console.log('✅ User notified for verification.');
+  } catch (err) {
+    console.error('User notify error:', err);
+  }
+};
+
+
 
   const handleViewFile = (file) => {
     setFileToPreview(file);
@@ -178,6 +256,150 @@ function MechanicPendingRequests() {
     }
   };
 
+const handleSendToUser = async (id) => {
+  try {
+    const res = await fetch(`http://localhost:5000/api/repair-request/${id}/send-to-user`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (!res.ok) throw new Error('Failed to notify user');
+
+    setRequests((prev) =>
+      prev.map((r) =>
+        r.id === id ? { ...r, status: 'Pending User Verification' } : r
+      )
+    );
+
+    // ✅ Track sent ones (optional, in case you want both logic paths)
+    setSentRequests((prev) => [...prev, id]);
+
+
+    alert('Sent to user for verification');
+    setSentRequests((prev) => [...prev, id]);  // ✅ Track as sent
+  } catch (err) {
+    console.error(err);
+    alert('Error notifying user');
+  }
+};
+
+// from user after workdone =yes
+const handleUserApproved = async (id) => {
+  const file = window.prompt('Attach final bill (optional - skip to continue)'); // replace with file dialog if needed
+
+  try {
+    const res = await fetch(`http://localhost:5000/api/repair-request/${id}/complete`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'completed', finalBill: file || '' }) // adjust payload as needed
+    });
+
+    if (!res.ok) throw new Error('Failed to forward to admin');
+
+    setRequests((prev) =>
+      prev.map((r) =>
+        r.id === id ? { ...r, status: 'completed' } : r
+      )
+    );
+
+    alert('✔️ Forwarded to admin as completed');
+  } catch (err) {
+    console.error(err);
+    alert('Error forwarding to admin');
+  }
+};
+
+// from user after work done =no
+
+const handleReverify = async (id) => {
+  try {
+    const res = await fetch(`http://localhost:5000/api/repair-request/${id}/send-to-user`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (!res.ok) throw new Error('Failed to re-send to user');
+
+    setRequests((prev) =>
+      prev.map((r) =>
+        r.id === id ? { ...r, status: 'Pending User Verification', rejectedByUser: false } : r
+      )
+    );
+
+    alert('🔁 Sent back to user for re-verification');
+  } catch (err) {
+    console.error(err);
+    alert('Re-send failed');
+  }
+};
+
+
+// mechanic send to MTI Admin after work completed
+
+const openVerifyModal = (row) => {
+  setVerifyRequest(row);
+  setExpense(row.expense || '');
+  setVerifyFile(null);
+  setVerifyModalOpen(true);
+};
+
+const handleForwardToMTI = async () => {
+  if (!verifyRequest) return alert("Missing request information.");
+
+  const formData = new FormData();
+  formData.append("workDone", "Yes");
+  formData.append("status", "completed");
+
+  if (verifyFile) {
+    formData.append("verifiedWorkBill", verifyFile); // ✅ upload bill
+  }
+
+if (expense !== '') {
+  formData.append("expense", Number(expense)); // ✅ changed to number
+}
+if (workerWage !== '') {
+  formData.append("workerWage", Number(workerWage)); // ✅ changed to number
+}
+
+
+
+
+
+  try {
+    const res = await fetch(`http://localhost:5000/api/repair-request/${verifyRequest.id}/complete`, {
+      method: 'PATCH',
+      body: formData, // ✅ send FormData directly, no headers
+    });
+
+    if (res.ok) {
+      setRequests((prev) =>
+        prev.map((r) =>
+          r.id === verifyRequest.id
+            ? { ...r, status: "completed", workDone: "Yes" }
+            : r
+        )
+      );
+      alert("✅ Forwarded to MTI with bill!");
+      setVerifyModalOpen(false);
+    } else {
+      const data = await res.json();
+      alert(`❌ Failed to forward to MTI: ${data?.error || 'Unknown error'}`);
+    }
+  } catch (err) {
+    console.error("Error forwarding to MTI:", err);
+    alert("Error forwarding to MTI.");
+  }
+};
+
+
+
+
+
+
+
+
+
+
   const columns = [
     { field: 'serial', headerName: '#', width: 60 },
     { field: 'vehicleNo', headerName: 'Vehicle No', width: 120 },
@@ -229,39 +451,182 @@ function MechanicPendingRequests() {
         </strong>
       )
     },
-    { field: 'userName', headerName: 'Requested By', width: 130 },
-    {
-      field: 'billImage',
-      headerName: 'Bill',
-      width: 100,
-      renderCell: (params) =>
-        params.value ? (
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={() => handleViewFile(params.value)}
-          >
-            View
-          </Button>
-        ) : (
-          'N/A'
-        )
-    },
-    {
-      field: 'review',
-      headerName: 'Review',
-      width: 120,
-      renderCell: (params) => (
+    //{ field: 'userName', headerName: 'Requested By', width: 130 },
+   {
+  field: 'billImage',
+  headerName: 'Bill',
+  width: 100,
+  renderCell: (params) => {
+    const { status, billImage } = params.row;
+
+    const isAllowed =
+      [
+        'forwarded',
+        'ongoing_work',
+        'completed',
+        'certificate_ready',
+        'sent_to_repair_admin',
+        'Pending User Verification',
+        'awaiting_user_verification',
+        'work_complete'
+      ].includes(status);
+
+    return (
+      <Button
+        variant="outlined"
+        size="small"
+        disabled={!billImage || !isAllowed}
+        onClick={() => handleViewFile(billImage)}
+      >
+        View
+      </Button>
+    );
+  }
+}
+
+,
+   {
+  field: 'review',
+  headerName: 'Review',
+  width: 120,
+  renderCell: (params) => {
+    const { status } = params.row;
+
+    return (
+      <Button
+        variant="contained"
+        color="primary"
+        size="small"
+        disabled={status !== 'forwarded'} // ✅ Enabled only when status is 'forwarded'
+        onClick={() => handleReviewClick(params.row)}
+      >
+        Review
+      </Button>
+    );
+  }
+}
+
+,
+
+   {
+  field: 'sendToUser',
+  headerName: 'Send to User',
+  width: 160,
+  renderCell: (params) => {
+    const { id, status, workDone } = params.row;
+
+    const sentStatuses = [
+      
+      'Pending User Verification',
+      'work completed',
+      'Check Again',
+      'completed',
+      
+    ];
+
+    // ✅ Show green Sent ✓ if already sent
+   if (sentStatuses.includes(status)) {
+      return (
         <Button
           variant="contained"
-          color="primary"
+          color="success"
           size="small"
-          onClick={() => handleReviewClick(params.row)}
+          disabled
+          startIcon={<span style={{ fontWeight: 'bold', fontSize: '16px' }}>✓</span>}
         >
-          Review
+          Send
         </Button>
-      )
+      );
     }
+
+    // ✅ Show Send button if allowed
+    if (status === 'ongoing_work' && workDone !== 'Yes') {
+      return (
+        <Button
+          variant="contained"
+          color="secondary"
+          size="small"
+          onClick={() => handleSendToUser(id)}
+        >
+          Sent
+        </Button>
+      );
+    }
+
+    // ✅ Default fallback — N/A
+    return <span style={{ color: 'gray' }}>N/A</span>;
+  }
+},
+{
+  field: 'userVerification',
+  headerName: 'Work Verification by User',
+  width: 250,
+  renderCell: (params) => {
+    const { userApproval, rejectedByUser, id , status} = params.row;
+
+ if (status === 'completed' && userApproval) {
+      return (
+        <span style={{ color: 'green', fontWeight: 'bold' }}>
+          ✓ Work Verified
+        </span>
+      );
+    }
+
+
+
+
+    if (userApproval) {
+      return (
+        <Button
+  variant="contained"
+  color="success"
+  size="small"
+  onClick={() => openVerifyModal(params.row)} // 🔁 trigger modal open
+>
+  work verified
+</Button>
+
+      );
+    }
+if (rejectedByUser) {
+  return (
+    <>
+      <Button
+        variant="contained"
+        color="error"
+        size="small"
+            onClick={() => openReverifyDialog(params.row)}
+       
+      >
+        Re-verify
+      </Button>
+      {params.row.userRemarks && (
+        <Typography sx={{ fontSize: '12px', color: 'gray', mt: 1 }}>
+          ❗ Reason: {params.row.userRemarks}
+        </Typography>
+      )}
+    </>
+  );
+}
+
+
+    return <span style={{ color: 'gray' }}>Awaiting Response</span>;
+  }
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
   ];
 
   return (
@@ -285,6 +650,35 @@ function MechanicPendingRequests() {
           </div>
         </div>
       )}
+      <Dialog open={filePreviewOpen} onClose={handleCloseFilePreview} maxWidth="md" fullWidth>
+  <DialogTitle>Uploaded Bill Preview</DialogTitle>
+  <DialogContent dividers>
+    {fileToPreview ? (
+      fileToPreview.type.startsWith('image/') ? (
+        <img
+          src={fileToPreview.url}
+          alt="Uploaded Image"
+          style={{ maxWidth: '100%', maxHeight: '500px', display: 'block', margin: 'auto' }}
+        />
+      ) : fileToPreview.type === 'application/pdf' ? (
+        <iframe
+          src={fileToPreview.url}
+          title="Bill PDF"
+          width="100%"
+          height="500"
+          style={{ border: 'none' }}
+        />
+      ) : (
+        <Typography color="error">Unsupported file format</Typography>
+      )
+    ) : (
+      <Typography>No file found to preview</Typography>
+    )}
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={handleCloseFilePreview}>Close</Button>
+  </DialogActions>
+</Dialog>
 
       {/* Modal for Review */}
       <Dialog open={modalOpen} onClose={handleCloseModal} fullWidth maxWidth="md">
@@ -335,50 +729,102 @@ function MechanicPendingRequests() {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseModal}>Close</Button>
-          {selectedRequest?.workDone !== 'Yes' && (
-            <Button variant="contained" color="success" onClick={handleWorkCompleted}>
-              Work Completed
-            </Button>
-          )}
-          {workDoneChoice === 'no' && (
-            <Button variant="contained" color="warning" onClick={handlePartsSubmit}>
-              Submit Parts Request
-            </Button>
-          )}
-        </DialogActions>
+  <Button onClick={handleCloseModal}>Close</Button>
+
+  {workDoneChoice === 'yes' && (
+    <Button variant="contained" color="success" onClick={handleWorkCompleted}>
+      Work Completed
+    </Button>
+  )}
+
+  {workDoneChoice === 'no' && (
+    <Button variant="contained" color="warning" onClick={handlePartsSubmit}>
+      Submit Parts Request
+    </Button>
+  )}
+</DialogActions>
+
       </Dialog>
 
       {/* File Preview Dialog */}
       <Dialog
-        open={filePreviewOpen}
-        onClose={handleCloseFilePreview}
-        fullScreen={fullScreen}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>Bill File Preview</DialogTitle>
-        <DialogContent dividers>
-          {fileToPreview?.type?.includes('pdf') ? (
-            <iframe
-              src={fileToPreview.url}
-              title="PDF Preview"
-              width="100%"
-              height="500px"
-              style={{ border: 'none' }}
-            />
-          ) : (
-            <img
-              src={fileToPreview?.url}
-              alt="Bill File"
-              style={{ maxWidth: '100%', maxHeight: 500, borderRadius: 6 }}
-            />
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseFilePreview}>Close</Button>
-        </DialogActions>
-      </Dialog>
+  open={verifyModalOpen}
+  onClose={() => setVerifyModalOpen(false)}
+  fullWidth
+  maxWidth="md"
+>
+  <DialogTitle>User Work Verification</DialogTitle>
+<DialogContent dividers>
+  <Typography sx={{ mb: 2 }}><strong>Work Done:</strong> Yes</Typography>
+  <Typography sx={{ mb: 1 }}>✅ User has verified the work completed.</Typography>
+
+  <Typography sx={{ mt: 2 }}><strong>Upload Verified Work Bill</strong></Typography>
+  <input
+    type="file"
+    accept="application/pdf,image/*"
+    onChange={(e) => setVerifyFile(e.target.files[0])}
+  />
+
+  <TextField
+    label="Expense (in ₹)"
+    type="number"
+    fullWidth
+    sx={{ mt: 2 }}
+    value={expense}
+onChange={(e) => setExpense(Number(e.target.value))}
+
+  />
+
+  <TextField
+  label="Worker Wage (in ₹)"
+  type="number"
+  fullWidth
+  sx={{ mt: 2 }}
+  value={workerWage}
+  onChange={(e) => setWorkerWage(Number(e.target.value))}
+
+/>
+
+
+
+</DialogContent>
+<DialogActions>
+  <Button onClick={() => setVerifyModalOpen(false)}>Cancel</Button>
+  <Button variant="contained" color="success" onClick={handleForwardToMTI}>
+    Forward to MTI
+  </Button>
+</DialogActions>
+
+
+</Dialog>
+
+
+<Dialog open={showReverifyDialog} onClose={() => setShowReverifyDialog(false)}>
+  <DialogTitle>Confirm Re-Verification</DialogTitle>
+  <DialogContent dividers>
+    <Typography gutterBottom>
+      Are you sure you want to send this back for re-verification?
+    </Typography>
+
+    {reverifyReason && (
+      <Typography sx={{ mt: 2, color: 'red' }}>
+        <strong>User Remark:</strong> {reverifyReason}
+      </Typography>
+    )}
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={() => setShowReverifyDialog(false)}>Cancel</Button>
+    <Button variant="contained" color="error" onClick={confirmReverify}>
+      Confirm Re-Verify
+    </Button>
+  </DialogActions>
+</Dialog>
+
+
+
+
+
+
     </div>
   );
 }

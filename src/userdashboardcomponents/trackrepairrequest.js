@@ -9,7 +9,8 @@ import {
   TableRow,
   Paper,
   Typography,
-  Chip,  Dialog, DialogTitle, DialogContent, DialogActions,
+  Chip,
+  Dialog, DialogTitle, DialogContent, DialogActions,
   Radio, RadioGroup, FormControlLabel,
   TextField, Button
 } from '@mui/material';
@@ -18,63 +19,10 @@ function TrackRepairRequests() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
 
-// newly added for user verification from mechanic for work done
-
-
-const [selectedRequest, setSelectedRequest] = useState(null);
-const [verifyOpen, setVerifyOpen] = useState(false);
-const [userVerification, setUserVerification] = useState('');
-const [rejectionReason, setRejectionReason] = useState('');
-
-const handleVerifyClick = (req) => {
-  setSelectedRequest(req);
-  setUserVerification('');
-  setRejectionReason('');
-  setVerifyOpen(true);
-};
-
-const handleSubmitVerification = async () => {
-  if (!selectedRequest) return;
-
-  const payload = {
-    userApproval: userVerification === 'yes',
-    rejectedByUser: userVerification === 'no',
-    userRemarks: userVerification === 'no' ? rejectionReason : ''
-  };
-
-  try {
-    const res = await fetch(`http://localhost:5000/api/repairs/${selectedRequest._id}/verify`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    if (res.ok) {
-      alert('✅ Feedback submitted');
-      setVerifyOpen(false);
-      // Reload updated data
-      setRequests((prev) =>
-        prev.map((r) =>
-          r._id === selectedRequest._id
-            ? { ...r, ...payload }
-            : r
-        )
-      );
-    } else {
-      alert('❌ Failed to submit');
-    }
-  } catch (err) {
-    console.error('Error submitting verification:', err);
-    alert('❌ Network error');
-  }
-};
-
-
-
-
-
-
-
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [verifyOpen, setVerifyOpen] = useState(false);
+  const [userVerification, setUserVerification] = useState('');
+  const [rejectionReason, setRejectionReason] = useState('');
 
   const pen = localStorage.getItem('pen');
 
@@ -89,11 +37,9 @@ const handleSubmitVerification = async () => {
     fetch(`http://localhost:5000/api/repairs/by-pen/${pen}`)
       .then(res => res.json())
       .then(data => {
-        console.log('Fetched repair data:', data);
         if (Array.isArray(data)) {
           setRequests(data);
         } else {
-          console.warn('Expected array but received:', data);
           setRequests([]);
         }
         setLoading(false);
@@ -112,51 +58,63 @@ const handleSubmitVerification = async () => {
       variant={value ? 'filled' : 'outlined'}
       size="small"
       sx={{
-        pointerEvents: 'none', // disables any click/hover
-        cursor: 'default',     // disables hand cursor
+        pointerEvents: 'none',
+        cursor: 'default',
       }}
     />
   );
-<Dialog open={verifyOpen} onClose={() => setVerifyOpen(false)} fullWidth maxWidth="sm">
-  <DialogTitle>Verify Work Completion</DialogTitle>
-  <DialogContent dividers>
-    <Typography gutterBottom>
-      Vehicle: <strong>{selectedRequest?.vehicleNo}</strong>
-    </Typography>
-    <Typography>Is the work done satisfactorily?</Typography>
-    <RadioGroup
-      row
-      value={userVerification}
-      onChange={(e) => setUserVerification(e.target.value)}
-    >
-      <FormControlLabel value="yes" control={<Radio />} label="Yes" />
-      <FormControlLabel value="no" control={<Radio />} label="No" />
-    </RadioGroup>
 
-    {userVerification === 'no' && (
-      <TextField
-        label="Reason for rejection"
-        multiline
-        rows={3}
-        fullWidth
-        margin="normal"
-        value={rejectionReason}
-        onChange={(e) => setRejectionReason(e.target.value)}
-        required
-      />
-    )}
-  </DialogContent>
-  <DialogActions>
-    <Button onClick={() => setVerifyOpen(false)}>Cancel</Button>
-    <Button
-      variant="contained"
-      onClick={handleSubmitVerification}
-      disabled={!userVerification || (userVerification === 'no' && !rejectionReason)}
-    >
-      Submit
-    </Button>
-  </DialogActions>
-</Dialog>
+  const handleVerifyClick = (req) => {
+    setSelectedRequest(req);
+    setUserVerification('');
+    setRejectionReason('');
+    setVerifyOpen(true);
+  };
+
+  const handleSubmitVerification = async () => {
+    if (!selectedRequest) return;
+
+    const payload = {
+      userApproval: userVerification === 'yes',
+      rejectedByUser: userVerification === 'no',
+      userRemarks: userVerification === 'no' ? rejectionReason : ''
+    };
+
+    try {
+      const res = await fetch(`http://localhost:5000/api/repair-request/${selectedRequest._id}/verify`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        alert('✅ Feedback submitted');
+        setVerifyOpen(false);
+        setRequests((prev) =>
+  prev.map((r) =>
+    r._id === selectedRequest._id
+      ? {
+          ...r,
+          userApproval: userVerification === 'yes',
+          rejectedByUser: userVerification === 'no',
+          userRemarks: userVerification === 'no' ? rejectionReason : '',
+          status: userVerification === 'yes' ? 'work completed' : 'Check Again',
+          workDone: userVerification === 'yes' ? 'Yes' : 'No'
+          
+        }
+      : r
+  )
+);
+
+
+      } else {
+        alert('❌ Failed to submit');
+      }
+    } catch (err) {
+      console.error('Error submitting verification:', err);
+      alert('❌ Network error');
+    }
+  };
 
   return (
     <div style={{ padding: 24 }}>
@@ -187,7 +145,6 @@ const handleSubmitVerification = async () => {
                 <TableCell>User Approval</TableCell>
                 <TableCell>Rejected</TableCell>
                 <TableCell>Check & Verify</TableCell>
-
               </TableRow>
             </TableHead>
             <TableBody>
@@ -202,21 +159,67 @@ const handleSubmitVerification = async () => {
                   <TableCell>{renderStatusChip(req.sanctioned, 'Sanctioned')}</TableCell>
                   <TableCell>{renderStatusChip(req.userApproval, 'Approved')}</TableCell>
                   <TableCell>{renderStatusChip(req.rejectedByUser, 'Rejected')}</TableCell>
-
                   <TableCell>
-  {req.status === 'awaiting_user_verification' && (
-    <Button variant="outlined" size="small" onClick={() => handleVerifyClick(req)}>
-      Check & Verify
-    </Button>
-  )}
-</TableCell>
-
+                    {req.status === 'Pending User Verification' ? (
+                      <Button variant="outlined" size="small" onClick={() => handleVerifyClick(req)}>
+                        Check & Verify
+                      </Button>
+                    ) : req.status === 'work completed' ? (
+                      <Chip label="Verified" color="success" size="small" />
+                    ) : req.rejectedByUser ? (
+                      <Chip label="Rejected" color="error" size="small" />
+                    ) : (
+                      <Chip label="N/A" variant="outlined" size="small" />
+                    )}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </TableContainer>
       )}
+
+      {/* ✅ Modal for User Verification */}
+      <Dialog open={verifyOpen} onClose={() => setVerifyOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle>Verify Work Completion</DialogTitle>
+        <DialogContent dividers>
+          <Typography gutterBottom>
+            Vehicle: <strong>{selectedRequest?.vehicleNo}</strong>
+          </Typography>
+          <Typography>Is the work done satisfactorily?</Typography>
+          <RadioGroup
+            row
+            value={userVerification}
+            onChange={(e) => setUserVerification(e.target.value)}
+          >
+            <FormControlLabel value="yes" control={<Radio />} label="Yes" />
+            <FormControlLabel value="no" control={<Radio />} label="No" />
+          </RadioGroup>
+
+          {userVerification === 'no' && (
+            <TextField
+              label="Reason for rejection"
+              multiline
+              rows={3}
+              fullWidth
+              margin="normal"
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              required
+            />
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setVerifyOpen(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={handleSubmitVerification}
+            disabled={!userVerification || (userVerification === 'no' && !rejectionReason)}
+          >
+            Submit
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }
