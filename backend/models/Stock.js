@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const stockSchema = new mongoose.Schema({
+  stockId: { type: String, unique: true, required: true },
   pen: { type: String, required: true }, 
   itemType: { type: String, required: true },
   itemName: { type: String, required: true },

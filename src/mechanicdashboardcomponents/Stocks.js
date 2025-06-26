@@ -1,3 +1,4 @@
+// frontend/src/mechanicdashboardcomponents/Stocks.js
 import React, { useState, useEffect } from 'react';
 import '../css/stocks.css';
 import axios from 'axios';
@@ -38,8 +39,6 @@ const Stocks = ({ onViewAll }) => {
       pen, itemType, itemName, serialNo, quantity,
       condition, status, warranty, warrantyNumber, date
     } = formData;
-    
-    console.log("🚨 Current form data:", formData);
 
     if (!itemType || !itemName || !serialNo || !quantity || !condition || !status || !warranty || (warranty === 'Yes' && !warrantyNumber) || !date) {
       alert("Please fill all required fields including Date");
@@ -60,7 +59,7 @@ const Stocks = ({ onViewAll }) => {
         date: new Date(date).toISOString()
       });
 
-      alert("Stock item added successfully");
+      alert("✅ Stock item added successfully");
 
       setFormData({
         pen,
@@ -75,8 +74,8 @@ const Stocks = ({ onViewAll }) => {
         date: ''
       });
     } catch (err) {
-      alert("Failed to add stock item");
-      console.error("❌ Backend error:", err);
+      alert("❌ Failed to add stock item");
+      console.error("Backend error:", err);
     }
   };
 
@@ -120,6 +119,7 @@ const Stocks = ({ onViewAll }) => {
           <option value="Yes">Yes</option>
           <option value="No">No</option>
         </select>
+
 
         {formData.warranty === 'Yes' && (
           <input
