@@ -21,6 +21,7 @@ const RepairSectionAdmin = () => {
    const [sanctionedIds, setSanctionedIds] = useState(new Set());
 
 const [additionalBill, setAdditionalBill] = useState(null);
+const [isEditingParts, setIsEditingParts] = useState(false);
 
   
 
@@ -88,13 +89,42 @@ const [additionalBill, setAdditionalBill] = useState(null);
     }
   };
 
+  const handlePartFieldChange = (index, field, value) => {
+  const updatedParts = [...selectedEntry.partsList];
+  updatedParts[index][field] = value;
+  setSelectedEntry({ ...selectedEntry, partsList: updatedParts });
+};
+
+const updatePartsDetails = async (id, updatedPartsList) => {
+  try {
+    const response = await fetch(`http://localhost:5000/api/repair-request/${id}/update-parts`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ partsList: updatedPartsList }),
+    });
+
+    if (!response.ok) throw new Error('Failed to update');
+
+    alert('✅ Parts details updated successfully');
+  } catch (error) {
+    console.error('❌ Error updating parts:', error);
+    alert('❌ Failed to save parts details');
+  }
+};
+
+
+
+
+
   const getStatusChip = (status) => {
     let color;
     let label = status;
     switch (status) {
       case 'verified': color = 'info'; label = 'Verified'; break;
       case 'forwarded_to_mechanic': color = 'warning'; break;
-      case 'sent_to_repair_admin': color = 'secondary'; break;
+      case 'sent_to_MTI': color = 'secondary'; break;
       case 'for_generating_certificate': color = 'warning'; break;
       case 'generating_certificates': color = 'info'; break;
       case 'certificate_ready': color = 'success'; label = 'Certificates Ready'; break;
@@ -259,28 +289,129 @@ case 'completed': color = 'success'; label = 'completed '; break;
 
 
               {selectedEntry?.partsList?.length > 0 && (
-                <Box sx={{ gridColumn: '1 / -1', mt: 2 }}>
-                  <Typography variant="h6" gutterBottom>Parts Required</Typography>
-                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead>
-                      <tr>
-                        <th style={{ borderBottom: '1px solid #ccc', padding: '6px' }}>Sl No</th>
-                        <th style={{ borderBottom: '1px solid #ccc', padding: '6px' }}>Item</th>
-                        <th style={{ borderBottom: '1px solid #ccc', padding: '6px' }}>Quantity</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedEntry.partsList.map((part, idx) => (
-                        <tr key={idx}>
-                          <td style={{ padding: '6px' }}>{idx + 1}</td>
-                          <td style={{ padding: '6px' }}>{part.item}</td>
-                          <td style={{ padding: '6px' }}>{part.quantity}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </Box>
-              )}
+                
+  <Box sx={{ gridColumn: '1 / -1', mt: 2 }}>
+
+
+  <TextField
+    fullWidth
+    label="TC Serial Number"
+    value={selectedEntry.tcSerialNumber || ''}
+    onChange={(e) =>
+      setSelectedEntry({ ...selectedEntry, tcSerialNumber: e.target.value })
+    }
+    sx={{ mb: 1 }}
+  />
+  <Button
+    variant="contained"
+    onClick={async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:5000/api/repair-request/${selectedEntry._id}/update-tc-serial`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tcSerialNumber: selectedEntry.tcSerialNumber }),
+          }
+        );
+
+        if (!response.ok) throw new Error('Failed to update');
+
+        alert('✅ TC Serial Number saved successfully');
+      } catch (err) {
+        console.error(err);
+        alert('❌ Failed to save TC Serial Number');
+      }
+    }}
+  >
+    Save TC Serial Number
+  </Button>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <Typography variant="h6" gutterBottom>Replacement Statement of Spares</Typography>
+    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <thead>
+        <tr>
+          <th style={{ borderBottom: '1px solid #ccc', padding: '6px' }}>Sl No</th>
+          <th style={{ borderBottom: '1px solid #ccc', padding: '6px' }}>Item</th>
+          <th style={{ borderBottom: '1px solid #ccc', padding: '6px' }}>Quantity</th>
+          <th style={{ borderBottom: '1px solid #ccc', padding: '6px' }}>Previous Date</th>
+          <th style={{ borderBottom: '1px solid #ccc', padding: '6px' }}>Previous MR</th>
+          <th style={{ borderBottom: '1px solid #ccc', padding: '6px' }}>KM After Replace</th>
+        </tr>
+      </thead>
+      <tbody>
+        {selectedEntry.partsList.map((part, idx) => (
+          <tr key={idx}>
+            <td style={{ padding: '6px' }}>{idx + 1}</td>
+            <td style={{ padding: '6px' }}>{part.item}</td>
+            <td style={{ padding: '6px' }}>{part.quantity}</td>
+
+            {isEditingParts ? (
+              <>
+                <td><input type="text" value={part.previousDate || ''} onChange={(e) => handlePartFieldChange(idx, 'previousDate', e.target.value)} /></td>
+                <td><input type="text" value={part.previousMR || ''} onChange={(e) => handlePartFieldChange(idx, 'previousMR', e.target.value)} /></td>
+                <td><input type="text" value={part.kmAfterReplacement || ''} onChange={(e) => handlePartFieldChange(idx, 'kmAfterReplacement', e.target.value)} /></td>
+              </>
+            ) : (
+              <>
+                <td style={{ padding: '6px' }}>{part.previousDate || '—'}</td>
+                <td style={{ padding: '6px' }}>{part.previousMR || '—'}</td>
+                <td style={{ padding: '6px' }}>{part.kmAfterReplacement || '—'}</td>
+              </>
+            )}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+
+    <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
+      {isEditingParts ? (
+        <>
+          <Button
+            variant="contained"
+            onClick={() => {
+              updatePartsDetails(selectedEntry._id, selectedEntry.partsList);
+              setIsEditingParts(false);
+            }}
+          >
+            Save Parts Details
+          </Button>
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={() => setIsEditingParts(false)}
+          >
+            Cancel
+          </Button>
+        </>
+      ) : (
+        <Button
+          variant="outlined"
+          onClick={() => setIsEditingParts(true)}
+        >
+          Edit
+        </Button>
+      )}
+    </Box>
+  </Box>
+)}
+
 
               {selectedEntry?.finalBillFile?.data && (
                 <Box sx={{ gridColumn: '1 / -1' }}>
@@ -315,19 +446,20 @@ case 'completed': color = 'success'; label = 'completed '; break;
         </DialogContent>
         <DialogActions>
           <Button
-            onClick={() => forwardToMainAdmin(selectedEntry._id)}
-            color="primary"
-            variant="contained"
-            disabled={certificateGenerated}
-          >
-            Forward for Approval
-          </Button>
+  onClick={() => forwardToMainAdmin(selectedEntry._id)}
+  color="primary"
+  variant="contained"
+  disabled={selectedEntry?.status !== 'certificate_ready' || certificateGenerated}
+>
+  Forward for Approval
+</Button>
+
           <Button onClick={() => setOpenDialog(false)}>Close</Button>
         </DialogActions>
       </Dialog>
 
       {/* Sanction Dialog */}
-       <Dialog open={sanctionDialogOpen} onClose={() => setSanctionDialogOpen(false)}>
+       <Dialog open={sanctionDialogOpen} maxWidth="lg" fullWidth onClose={() => setSanctionDialogOpen(false)}>
         <DialogTitle>Sanction for Work</DialogTitle>
         <DialogContent>
           <Box>

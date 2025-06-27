@@ -428,7 +428,7 @@ if (workerWage !== '') {
         color = '#007bff'; // bootstrap blue
         break;
       case 'forwarded':
-      case 'sent_to_repair_admin':
+      case 'sent_to_MTI':
         color = '#6c757d'; // gray
         break;
       default:
@@ -465,7 +465,7 @@ if (workerWage !== '') {
         'ongoing_work',
         'completed',
         'certificate_ready',
-        'sent_to_repair_admin',
+        'sent_to_MTI',
         'Pending User Verification',
         'awaiting_user_verification',
         'work_complete'
