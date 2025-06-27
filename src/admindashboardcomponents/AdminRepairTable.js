@@ -55,13 +55,13 @@ const [editedParts, setEditedParts] = useState([]);
             description: item.description,
             date: item.date,
             status: item.status || 'pending',
-             partsList: item.partsList || [],
+            // partsList: item.partsList || [],
             billFile: item.billFile?.data
               ? `data:${item.billFile.contentType};base64,${item.billFile.data}`
               : '',
              
               
-               verifiedWorkBill: item.verifiedWorkBill?.data
+          /*     verifiedWorkBill: item.verifiedWorkBill?.data
   ? `data:${item.verifiedWorkBill.contentType};base64,${item.verifiedWorkBill.data}`
   : null,
 
@@ -69,7 +69,7 @@ const [editedParts, setEditedParts] = useState([]);
      expense: item.expense || '',
 workerWage: item.workerWage || '',
 
-      verifiedWorkBillType: item.verifiedWorkBill?.contentType || '',
+      verifiedWorkBillType: item.verifiedWorkBill?.contentType || '',*/
         
 
           }))
@@ -192,7 +192,7 @@ const saveEditedParts = async () => {
 
 
   const handleViewDetails = (row) => {
-     console.log('Selected Repair:', row);
+    
     setSelectedRepair(row);
     setDialogOpen(true);
   };
@@ -279,8 +279,8 @@ const generateCertificates = async (id) => {
 
 
 
-  const handlePrepareTC = async (id) => {
-    await generateCertificates(id);};
+  //const handlePrepareEC = async (id) => {
+    //await generateCertificates(id);};
 
   const handleViewEC = (id) => {
    window.open(`http://localhost:5000/api/repair-request/${id}/view-ec`, '_blank');
@@ -445,7 +445,7 @@ const handleViewVerifiedBill = (row) => {
               onClick={() => handleViewDetails(params.row)}
               style={{ marginRight: 8 }}
             >
-              View
+              View 
             </Button>
             <Button
               variant="contained"
@@ -643,14 +643,18 @@ const handleViewVerifiedBill = (row) => {
         </td>
         {/* EC column */}
 <td style={{ padding: 10 }}>
-  <Button
+
+
+ {/* <Button
     variant="contained"
     color="primary"
     onClick={() => handlePrepareEC(cert._id)}
     disabled={cert.status !== 'for_generating_certificate'}
   >
     Prepare EC & TC
-  </Button>
+  </Button>*/}
+
+
    <Button
     variant="contained"
     style={{
@@ -694,8 +698,9 @@ const handleViewVerifiedBill = (row) => {
 <td style={{ padding: 10 }}>
   {cert.status === 'ongoing_work' || cert.status === 'work_completed' || cert.status === 'completed' ? (
     <Typography style={{ color: 'green', fontWeight: 'bold' }}>✔ Verified</Typography>
-  ) : cert.status === 'sanctioned_for_work' ? (
-    <Button
+  ) 
+  //: cert.status === 'sanctioned_for_work' ? (
+    /*<Button
       variant="outlined"
       onClick={() => {
         setVerifyEntry(cert);
@@ -704,19 +709,11 @@ const handleViewVerifiedBill = (row) => {
     >
       Verify
     </Button>
-  ) : (
+  )*/
+   : (
     <Typography variant="body2" color="textSecondary">N/A</Typography>
   )}
 </td>
-
-
-
-
-
-
-
-
-        
       </tr>
     ))}
   </tbody>
@@ -725,10 +722,13 @@ const handleViewVerifiedBill = (row) => {
 ) : null}
 
 
+
+
       {/* Repair Request Dialog */}
       <Dialog open={dialogOpen} onClose={handleClose} fullWidth maxWidth="lg">
         <DialogTitle>Repair Request Details</DialogTitle>
         <DialogContent>
+          
           {selectedRepair && (
             <>
               <Typography><strong>Vehicle No:</strong> {selectedRepair.vehicleNo}</Typography>
@@ -738,6 +738,16 @@ const handleViewVerifiedBill = (row) => {
               <Typography><strong>Description:</strong> {selectedRepair.description}</Typography>
               <Typography><strong>Status:</strong> {selectedRepair.status}</Typography>
               <br />
+{selectedRepair.billFile ? (
+                <iframe
+                  src={selectedRepair.billFile}
+                  title="Bill File"
+                  style={{ width: '100%', height: '400px', border: 'none' }}
+                />
+              ) : (
+                <Typography color="textSecondary">No Bill File Available</Typography>
+              )}
+              
               {Array.isArray(editedParts) && editedParts.length > 0 ? (
   <>
     <Typography variant="h6" style={{ marginTop: 16 }}>Replacement Statement of Spares</Typography>
@@ -799,15 +809,7 @@ const handleViewVerifiedBill = (row) => {
   </Typography>
 )}
 
-              {selectedRepair.billFile ? (
-                <iframe
-                  src={selectedRepair.billFile}
-                  title="Bill File"
-                  style={{ width: '100%', height: '400px', border: 'none' }}
-                />
-              ) : (
-                <Typography color="textSecondary">No Bill File Available</Typography>
-              )}
+             
               
 
 

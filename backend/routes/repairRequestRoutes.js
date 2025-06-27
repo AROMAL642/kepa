@@ -68,18 +68,7 @@ router.get('/', async (req, res) => {
         contentType: r.billFile.contentType
       } : null,
 
-      
-
-
-
-
-
-
-
-
-
-
-
+    
 
 
     }));
@@ -1048,7 +1037,7 @@ router.put('/:id/update-tc-serial', async (req, res) => {
 });
 
 
-//const colWidths = [80, 150, 120, 80, 60, 100];
+
 // fron mechanic to admin to see final bill
 
 // PATCH: Final bill upload and mark as completed (with verifiedWorkBill)

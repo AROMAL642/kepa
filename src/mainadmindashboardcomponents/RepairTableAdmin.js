@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
+import { Badge, Box } from '@mui/material';
 import {
   Dialog,
   DialogTitle,
@@ -9,7 +10,7 @@ import {
   Typography
 } from '@mui/material';
 
-const RepairAdminTable = ({ themeStyle }) => {
+const RepairTableAdmin = ({ themeStyle }) => {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -30,18 +31,12 @@ const [completedRequests, setCompletedRequests] = useState([]);
 const [workBillDialogOpen, setWorkBillDialogOpen] = useState(false);
 const [workBillData, setWorkBillData] = useState(null);
 const [selectedRequest, setSelectedRequest] = useState(null);
+const pendingCount = rows.filter(row => row.status === 'pending').length;
+const [editMode, setEditMode] = useState(false); // at top of your component
+const [editedParts, setEditedParts] = useState([]);
 
-// Define this map once at the top of your component/file
-const STATUS_ORDER = {
-  
-  ongoing_work: 1,
-  for_generating_certificate: 2,
-  certificate_ready: 3,
-  Pending_User_Verfication: 4,
-  work_completed: 5,
-  completed: 6
 
-};
+
 
   
  
@@ -164,7 +159,35 @@ useEffect(() => {
   }
 }, [activeTab]);
 
+useEffect(() => {
+  if (selectedRepair?.partsList) {
+    setEditedParts([...selectedRepair.partsList]);
+  }
+}, [selectedRepair]);
 
+const handleEditChange = (index, field, value) => {
+  const updated = [...editedParts];
+  updated[index][field] = value;
+  setEditedParts(updated);
+};
+
+const saveEditedParts = async () => {
+  try {
+    const res = await fetch(`http://localhost:5000/api/repair-request/${selectedRepair._id}/update-parts`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ partsList: editedParts })
+    });
+
+    if (!res.ok) throw new Error('Failed to update');
+
+    alert('✅ Parts updated successfully');
+    setEditMode(false);
+  } catch (err) {
+    console.error('❌ Error:', err);
+    alert('Failed to save parts.');
+  }
+};
 
 
 
@@ -255,11 +278,8 @@ const generateCertificates = async (id) => {
 
 
 
-   const handlePrepareEC = async (id) => {
-    await generateCertificates(id);
-  };
 
-  const handlePrepareTC = async (id) => {
+  const handlePrepareEC = async (id) => {
     await generateCertificates(id);};
 
   const handleViewEC = (id) => {
@@ -427,7 +447,7 @@ const handleViewVerifiedBill = (row) => {
             >
               View
             </Button>
-            <Button
+          {/*  <Button
               variant="contained"
               color="success"
               size="small"
@@ -435,7 +455,9 @@ const handleViewVerifiedBill = (row) => {
                 await updateStatus(params.row._id, 'verified');
                 await forwardToMechanic(params.row._id);
               }}
-              disabled={isVerified || isForwarded}
+              
+              disabled={params.row.status !== 'pending'  }
+              
               style={{ marginRight: 4 }}
             >
               Verify
@@ -448,7 +470,7 @@ const handleViewVerifiedBill = (row) => {
               disabled={isRejected}
             >
               Reject
-            </Button>
+            </Button> */}
           </>
         );
       }
@@ -461,13 +483,18 @@ const handleViewVerifiedBill = (row) => {
   renderCell: (params) => {
     const hasBill = params.row.verifiedWorkBill;
     return hasBill ? (
-      <Button
-        variant="outlined"
-        size="small"
-        onClick={() => handleViewVerifiedBill(params.row)}
-      >
-        View
-      </Button>
+     <Button
+  variant="outlined"
+  size="small"
+  onClick={() => handleViewVerifiedBill(params.row)}
+  style={{
+    backgroundColor: 'green',
+    color: 'white',
+  }}
+>
+  View
+</Button>
+
     ) : (
       <span style={{ color: 'gray' }}>Not Uploaded</span>
     );
@@ -505,13 +532,25 @@ const handleViewVerifiedBill = (row) => {
 
 
       <div style={{ marginBottom: 10 }}>
-  <Button
-    variant={activeTab === 'repair' ? 'contained' : 'outlined'}
-    onClick={() => setActiveTab('repair')}
-    style={{ marginRight: 10 }}
-  >
+ <Button
+  variant={activeTab === 'repair' ? 'contained' : 'outlined'}
+  onClick={() => setActiveTab('repair')}
+  style={{ marginRight: 10, position: 'relative' }}
+>
+  <Box display="flex" alignItems="center" position="relative">
     Repair Requests
-  </Button>
+    <Badge
+      badgeContent={pendingCount}
+      color="error"
+      anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      sx={{
+        position: 'absolute',
+        top: -8,
+        right: -12
+      }}
+    />
+  </Box>
+</Button>
   <Button
     variant={activeTab === 'mechanic' ? 'contained' : 'outlined'}
     onClick={() => setActiveTab('mechanic')}
@@ -617,22 +656,37 @@ const handleViewVerifiedBill = (row) => {
   >
     Prepare EC & TC
   </Button>
-  <Button
-    variant="outlined"
-    style={{ marginLeft: 8 }}
+   <Button
+    variant="contained"
+    style={{
+      marginLeft: 8,
+      backgroundColor: '#1CA085',  // Ocean Green
+      color: 'white'
+    }}
     onClick={() => handleViewEC(cert._id)}
     disabled={
-      !['certificate_ready', 'waiting_for_sanction', 'sanctioned_for_work' , 'ongoing_work','Pending User Verification' , 'work complete' , 'completed'].includes(cert.status)
+      ![
+        'certificate_ready', 'waiting_for_sanction', 'sanctioned_for_work',
+        'ongoing_work', 'Pending User Verification', 'work complete', 'completed'
+      ].includes(cert.status)
     }
   >
     View EC
   </Button>
+
   <Button
-    variant="outlined"
-    style={{ marginLeft: 8 }}
+    variant="contained"
+    style={{
+      marginLeft: 8,
+      backgroundColor: '#1CA085',  // Ocean Green
+      color: 'white'
+    }}
     onClick={() => handleViewTC(cert._id)}
     disabled={
-      !['certificate_ready', 'waiting_for_sanction', 'sanctioned_for_work' , 'ongoing_work', ,'Pending User Verification' , 'work complete' , 'completed'].includes(cert.status)
+      ![
+        'certificate_ready', 'waiting_for_sanction', 'sanctioned_for_work',
+        'ongoing_work', 'Pending User Verification', 'work complete', 'completed'
+      ].includes(cert.status)
     }
   >
     View TC
@@ -643,7 +697,9 @@ const handleViewVerifiedBill = (row) => {
 
 {/* VERIFY column */}
 <td style={{ padding: 10 }}>
-  {STATUS_ORDER[cert.status] === STATUS_ORDER['sanctioned_for_work'] ? (
+  {cert.status === 'ongoing_work' || cert.status === 'work_completed' || cert.status === 'completed' ? (
+    <Typography style={{ color: 'green', fontWeight: 'bold' }}>✔ Verified</Typography>
+  ) : cert.status === 'sanctioned_for_work' ? (
     <Button
       variant="outlined"
       onClick={() => {
@@ -653,12 +709,11 @@ const handleViewVerifiedBill = (row) => {
     >
       Verify
     </Button>
-  ) : STATUS_ORDER[cert.status] >= STATUS_ORDER['ongoing_work'] ? (
-    <Typography style={{ color: 'green', fontWeight: 'bold' }}>✔ Verified</Typography>
   ) : (
     <Typography variant="body2" color="textSecondary">N/A</Typography>
   )}
 </td>
+
 
 
 
@@ -676,7 +731,7 @@ const handleViewVerifiedBill = (row) => {
 
 
       {/* Repair Request Dialog */}
-      <Dialog open={dialogOpen} onClose={handleClose} fullWidth maxWidth="sm">
+      <Dialog open={dialogOpen} onClose={handleClose} fullWidth maxWidth="lg">
         <DialogTitle>Repair Request Details</DialogTitle>
         <DialogContent>
           {selectedRepair && (
@@ -688,6 +743,67 @@ const handleViewVerifiedBill = (row) => {
               <Typography><strong>Description:</strong> {selectedRepair.description}</Typography>
               <Typography><strong>Status:</strong> {selectedRepair.status}</Typography>
               <br />
+              {Array.isArray(editedParts) && editedParts.length > 0 ? (
+  <>
+    <Typography variant="h6" style={{ marginTop: 16 }}>Replacement Statement of Spares</Typography>
+    <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
+      <thead>
+        <tr>
+          <th style={{ padding: 6 }}>Sl No</th>
+          <th style={{ padding: 6 }}>Item</th>
+          <th style={{ padding: 6 }}>Quantity</th>
+          <th style={{ padding: 6 }}>Previous Date</th>
+          <th style={{ padding: 6 }}>Previous MR</th>
+          <th style={{ padding: 6 }}>KM After Replace</th>
+        </tr>
+      </thead>
+      <tbody>
+        {editedParts.map((part, idx) => (
+          <tr key={idx}>
+            <td style={{ padding: 6 }}>{idx + 1}</td>
+            <td style={{ padding: 6 }}>{part.item}</td>
+            <td style={{ padding: 6 }}>{part.quantity}</td>
+            {editMode ? (
+              <>
+                <td><input type="text" value={part.previousDate || ''} onChange={(e) => handleEditChange(idx, 'previousDate', e.target.value)} /></td>
+                <td><input type="text" value={part.previousMR || ''} onChange={(e) => handleEditChange(idx, 'previousMR', e.target.value)} /></td>
+                <td><input type="text" value={part.kmAfterReplacement || ''} onChange={(e) => handleEditChange(idx, 'kmAfterReplacement', e.target.value)} /></td>
+              </>
+            ) : (
+              <>
+                <td style={{ padding: 6 }}>{part.previousDate || '-'}</td>
+                <td style={{ padding: 6 }}>{part.previousMR || '-'}</td>
+                <td style={{ padding: 6 }}>{part.kmAfterReplacement || '-'}</td>
+              </>
+            )}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+
+    <Box mt={2} display="flex" gap={2}>
+      {!editMode ? (
+        <Button variant="outlined" onClick={() => setEditMode(true)}>
+          ✏️ Edit
+        </Button>
+      ) : (
+        <>
+          <Button variant="contained" color="success" onClick={saveEditedParts}>
+            💾 Save
+          </Button>
+          <Button variant="outlined" onClick={() => setEditMode(false)}>
+            Cancel
+          </Button>
+        </>
+      )}
+    </Box>
+  </>
+) : (
+  <Typography variant="body2" color="textSecondary" style={{ marginTop: 8 }}>
+    No parts requested.
+  </Typography>
+)}
+
               {selectedRepair.billFile ? (
                 <iframe
                   src={selectedRepair.billFile}
@@ -698,33 +814,7 @@ const handleViewVerifiedBill = (row) => {
                 <Typography color="textSecondary">No Bill File Available</Typography>
               )}
               
-{Array.isArray(selectedRepair?.partsList) && selectedRepair.partsList.length > 0 ? (
-  <>
-    <Typography variant="h6" style={{ marginTop: 16 }}>Parts Requested</Typography>
-    <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
-      <thead>
-        <tr>
-          <th style={{ borderBottom: '1px solid #ccc', padding: '6px' }}>Sl No</th>
-          <th style={{ borderBottom: '1px solid #ccc', padding: '6px' }}>Item</th>
-          <th style={{ borderBottom: '1px solid #ccc', padding: '6px' }}>Quantity</th>
-        </tr>
-      </thead>
-      <tbody>
-        {selectedRepair.partsList.map((part, idx) => (
-          <tr key={idx}>
-            <td style={{ padding: '6px' }}>{idx + 1}</td>
-            <td style={{ padding: '6px' }}>{part.item || '-'}</td>
-            <td style={{ padding: '6px' }}>{part.quantity || '-'}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </>
-) : (
-  <Typography variant="body2" color="textSecondary" style={{ marginTop: 8 }}>
-    No parts requested.
-  </Typography>
-)}
+
 
 
 
@@ -750,6 +840,17 @@ const handleViewVerifiedBill = (row) => {
 >
   <DialogTitle>Verified Work Bill & Expense</DialogTitle>
   <DialogContent dividers>
+    <Typography sx={{ mt: 2 }}>
+  <strong>Total Expense:</strong> ₹{workBillData?.expense?.toString().trim() || 'N/A'}
+</Typography>
+
+
+<Typography sx={{ mt: 2 }}>
+  <strong>Worker Wage:</strong> ₹{workBillData?.workerWage?.toString().trim() || 'N/A'}
+</Typography>
+
+
+
     {workBillData?.verifiedWorkBill ? (
       workBillData.verifiedWorkBillType?.includes('pdf') ||
       workBillData.verifiedWorkBill.startsWith('data:application/pdf') ? (
@@ -775,14 +876,7 @@ const handleViewVerifiedBill = (row) => {
     ) : (
       <Typography color="textSecondary">No bill uploaded.</Typography>
     )}
-<Typography sx={{ mt: 2 }}>
-  <strong>Expense:</strong> ₹{workBillData?.expense?.toString().trim() || 'N/A'}
-</Typography>
 
-
-<Typography sx={{ mt: 2 }}>
-  <strong>Worker Wage:</strong> ₹{workBillData?.workerWage?.toString().trim() || 'N/A'}
-</Typography>
 
 
 
@@ -962,4 +1056,4 @@ const handleViewVerifiedBill = (row) => {
   );
 };
 
-export default RepairAdminTable;
+export default RepairTableAdmin;

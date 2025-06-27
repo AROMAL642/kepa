@@ -163,7 +163,7 @@ const confirmReverify = () => {
       await notifyUserForVerification(selectedRequest.id);
     }
 
-    alert('✔️ Status updated and sent to user for verification.');
+    alert('✔️ Sent to user for verification.');
     handleCloseModal();
   } catch (err) {
     console.error('Error:', err);

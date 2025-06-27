@@ -449,7 +449,7 @@ case 'completed': color = 'success'; label = 'completed '; break;
   onClick={() => forwardToMainAdmin(selectedEntry._id)}
   color="primary"
   variant="contained"
-  disabled={selectedEntry?.status !== 'certificate_ready' || certificateGenerated}
+  disabled={selectedEntry?.status !== 'forwarded_to_repair_section' || certificateGenerated}
 >
   Forward for Approval
 </Button>

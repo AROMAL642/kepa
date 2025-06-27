@@ -15,7 +15,7 @@ import './css/verifieduserstable.css';
 import MovementAdmin from './admindashboardcomponents/MovementAdmin';
 import AccidentReportTable from './admindashboardcomponents/AccidentReportTable';
 import RegisterPage from './admindashboardcomponents/RegisterPage';
-import AdminRepairTable from './admindashboardcomponents/AdminRepairTable';
+import RepairTableAdmin from './mainadmindashboardcomponents/RepairTableAdmin';
 import ViewPrintRegisters from './admindashboardcomponents/ViewPrintRegisters';
 import AddUpdateCertificate from './admindashboardcomponents/AddUpdateCertificate';
 import AdminStocksView from './admindashboardcomponents/AdminStocksView';
@@ -512,7 +512,7 @@ const handleSaveProfile = async () => {
           {activeTab === 'Request' && <ViewRequests themeStyle={themeStyle} />}
           {activeTab === 'Movement' && <MovementAdmin themeStyle={themeStyle} />}
           {activeTab === 'Accident' && <AccidentReportTable themeStyle={themeStyle} />}
-          {activeTab === 'Repair' && <AdminRepairTable themeStyle={themeStyle} />}
+          {activeTab === 'Repair' && <RepairTableAdmin themeStyle={themeStyle} />}
           {activeTab === 'AddUser' && <RegisterPage themeStyle={themeStyle} />}
           {activeTab === 'PrintRegisters' && <ViewPrintRegisters />}
           {activeTab === 'stocks' && <AdminStocksView />}
