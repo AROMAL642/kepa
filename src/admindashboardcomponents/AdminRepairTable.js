@@ -756,8 +756,8 @@ const handleViewVerifiedBill = (row) => {
   {cert.status === 'ongoing_work' || cert.status === 'work_completed' || cert.status === 'completed' ? (
     <Typography style={{ color: 'green', fontWeight: 'bold' }}>✔ Verified</Typography>
   ) 
-  //: cert.status === 'sanctioned_for_work' ? (
-    /*<Button
+  : cert.status === 'sanctioned_for_work' ? (
+    <Button
       variant="outlined"
       onClick={() => {
         setVerifyEntry(cert);
@@ -766,7 +766,7 @@ const handleViewVerifiedBill = (row) => {
     >
       Verify
     </Button>
-  )*/
+  )
    : (
     <Typography variant="body2" color="textSecondary">N/A</Typography>
   )}
@@ -846,7 +846,7 @@ const handleViewVerifiedBill = (row) => {
     <Box mt={2} display="flex" gap={2}>
       {!editMode ? (
         <Button variant="outlined" onClick={() => setEditMode(true)}>
-          ✏️ Edit
+           Edit
         </Button>
       ) : (
         <>
@@ -955,8 +955,11 @@ const handleViewVerifiedBill = (row) => {
       >
         Download
       </Button>
+      
     )}
+    
     <Button onClick={() => setWorkBillDialogOpen(false)}>Close</Button>
+
   </DialogActions>
 </Dialog>
 

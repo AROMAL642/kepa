@@ -699,7 +699,8 @@ const handleViewVerifiedBill = (row) => {
 <td style={{ padding: 10 }}>
   {cert.status === 'ongoing_work' || cert.status === 'work_completed' || cert.status === 'completed' ? (
     <Typography style={{ color: 'green', fontWeight: 'bold' }}>✔ Verified</Typography>
-  ) : cert.status === 'sanctioned_for_work' ? (
+  )
+  /* : cert.status === 'sanctioned_for_work' ? (
     <Button
       variant="outlined"
       onClick={() => {
@@ -709,7 +710,8 @@ const handleViewVerifiedBill = (row) => {
     >
       Verify
     </Button>
-  ) : (
+  )*/
+  : (
     <Typography variant="body2" color="textSecondary">N/A</Typography>
   )}
 </td>

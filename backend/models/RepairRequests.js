@@ -26,7 +26,7 @@ const repairRequestsSchema = new mongoose.Schema({
     'Pending User Verification',
     'Check Again',
     'final_work_done_sent_to_user' , 'for_generating_certificate' ,'waiting_for_sanction',
-    'sanctioned_for_work', 'ongoing_work','awaiting_user_verification' ],
+    'sanctioned_for_work', 'ongoing_work','awaiting_user_verification', 'verified_bill_forwarded', ],
     default: 'pending'
   },
   workDone: {
