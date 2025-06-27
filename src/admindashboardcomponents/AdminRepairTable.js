@@ -10,7 +10,7 @@ import {
   Typography
 } from '@mui/material';
 
-const RepairAdminTable = ({ themeStyle }) => {
+const RepairAdminTable = ({ themeStyle, onCountsUpdate }) => {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -36,7 +36,22 @@ const [editMode, setEditMode] = useState(false); // at top of your component
 const [editedParts, setEditedParts] = useState([]);
 
 
+const certificateBadgeCount = certificateRequests.filter(req => req.status === 'for_generating_certificate').length;
+const mechanicCount = mechanicRequests.filter(req => req.forwardedToMechanic).length;
 
+
+
+// Define this map once at the top of your component/file
+const STATUS_ORDER = {
+ 
+  ongoing_work: 3,
+  for_generating_certificate: 4,
+  certificate_ready: 5,
+  Pending_User_Verfication: 6,
+  work_completed: 7,
+  completed: 8
+
+};
 
   
  
@@ -145,19 +160,37 @@ setCertificateRequests(formatted);
 
 
 
-  useEffect(() => {
-    fetchRepairs();
-    fetchMechanicRequests();
-  }, [fetchRepairs, fetchMechanicRequests]);
+
+
+useEffect(() => {
+  fetchRepairs();
+  fetchMechanicRequests();
+  fetchCertificates();
+}, [fetchRepairs, fetchMechanicRequests]);
+
+// After all fetches complete and states are populated
+useEffect(() => {
+  if (typeof onCountsUpdate === 'function') {
+    const repairCount = rows.filter(row => row.status === 'pending').length;
+    const mechanicCount = mechanicRequests.filter(req => req.forwardedToMechanic).length;
+    const certificateCount = certificateRequests.filter(req => req.status === 'for_generating_certificate').length;
+
+    onCountsUpdate({
+      repair: repairCount,
+      mechanic: mechanicCount,
+      certificate: certificateCount
+    });
+  }
+}, [rows, mechanicRequests, certificateRequests]);
 
 
  // for certificates
-useEffect(() => {
-  if (activeTab === 'certificates') {
-    fetchCertificates();
-    console.log("Fetching certificates because tab is active");
-  }
-}, [activeTab]);
+//useEffect(() => {
+  //if (activeTab === 'certificates') {
+    //fetchCertificates();
+    //console.log("Fetching certificates because tab is active");
+ // }
+//}, [activeTab]);
 
 useEffect(() => {
   if (selectedRepair?.partsList) {
@@ -500,19 +533,6 @@ const handleViewVerifiedBill = (row) => {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
   ];
 
   return (
@@ -546,6 +566,12 @@ const handleViewVerifiedBill = (row) => {
     />
   </Box>
 </Button>
+  <Badge
+  badgeContent={mechanicCount}
+  color="error"
+  invisible={mechanicCount === 0}
+  sx={{ marginRight: 2 }}
+>
   <Button
     variant={activeTab === 'mechanic' ? 'contained' : 'outlined'}
     onClick={() => setActiveTab('mechanic')}
@@ -553,25 +579,40 @@ const handleViewVerifiedBill = (row) => {
   >
     Mechanic Requests
   </Button>
+</Badge>
+
+ <Badge
+  badgeContent={certificateBadgeCount}
+  color="error"
+  invisible={certificateBadgeCount === 0}
+  sx={{ marginRight: 2 }}
+>
   <Button
     variant={activeTab === 'certificates' ? 'contained' : 'outlined'}
     onClick={() => setActiveTab('certificates')}
   >
     Certificates
   </Button>
+</Badge>
+
 </div>
 
 
      {activeTab === 'repair' ? (
   <div style={{ height: 600 }}>
-    <DataGrid
-      rows={rows}
-      columns={columns}
-      loading={loading}
-      pageSize={5}
-      rowsPerPageOptions={[5, 10]}
-      style={{ background: themeStyle?.background, color: themeStyle?.color }}
-    />
+<DataGrid
+  rows={[...rows].sort((a, b) => {
+    const aPriority = a.status === 'pending' ? 0 : 1;
+    const bPriority = b.status === 'pending' ? 0 : 1;
+    return aPriority - bPriority;
+  })}
+  columns={columns}
+  loading={loading}
+  pageSize={5}
+  rowsPerPageOptions={[5, 10]}
+  style={{ background: themeStyle?.background, color: themeStyle?.color }}
+/>
+
   </div>
 ) : activeTab === 'mechanic' ? (
   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -618,7 +659,23 @@ const handleViewVerifiedBill = (row) => {
     </tr>
   </thead>
   <tbody>
-    {certificateRequests.map((cert, index) => (
+    {[...certificateRequests]
+  .sort((a, b) => {
+    const statusOrder = {
+      for_generating_certificate: 0,
+      certificate_ready: 1,
+      waiting_for_sanction: 2,
+      sanctioned_for_work: 3,
+      ongoing_work: 4,
+      Pending_User_Verification: 5,
+      work_completed: 6,
+      completed: 7
+    };
+
+    return (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99);
+  })
+  .map((cert, index) => (
+
       <tr key={cert._id}>
         <td style={{ padding: 10 }}>{cert.slNo}</td>
         <td style={{ padding: 10 }}>{cert.date}</td>

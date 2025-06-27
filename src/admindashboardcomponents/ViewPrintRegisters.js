@@ -66,7 +66,8 @@ const ViewPrintRegisters = () => {
         payload
       );
 
-      const data = res.data;
+      let data = res.data;
+
       if (!data || data.length === 0) {
         alert('No data found');
         setRows([]);
@@ -75,7 +76,20 @@ const ViewPrintRegisters = () => {
         return;
       }
 
-      const dateFields = ['date', 'startTime', 'endTime']; // Removed 'accidentTime'
+      // ✅ Filter and remove status for movement
+      if (registerType === 'movement') {
+        data = data.filter(row => row.status?.toLowerCase() === 'completed');
+        data = data.map(row => {
+          const { status, ...rest } = row;
+          return rest;
+        });
+        if (data.length === 0) {
+          alert('No completed movement entries found.');
+          setRows([]);
+          setColumns([]);
+          return;
+        }
+      }
 
       const filteredData = data.map(row => {
         const cleaned = {};
@@ -114,6 +128,7 @@ const ViewPrintRegisters = () => {
         }
       }
 
+      const dateFields = ['date', 'startTime', 'endTime'];
       const rowsWithId = filteredData.map((row, idx) => {
         const formatted = { id: idx + 1 };
         Array.from(fieldSet).forEach((key) => {
@@ -146,7 +161,7 @@ const ViewPrintRegisters = () => {
         const lastKm = Number(last?.endingkm) || 0;
         const totalKm = lastKm - firstKm;
         setTotalKmTravelled(totalKm);
-        alert(`Total KM Travelled: ${totalKm} km`);
+        
       }
 
     } catch (error) {
@@ -162,29 +177,44 @@ const ViewPrintRegisters = () => {
     }
 
     const doc = new jsPDF();
-    doc.setFontSize(18);
-    doc.text(`${registerType.toUpperCase()} Register Report`, 14, 22);
+    const marginLeft = 14;
 
+    doc.setFontSize(18);
+    doc.text(`${registerType.toUpperCase()} Register Report`, marginLeft, 22);
+
+    doc.setFontSize(12);
+    doc.text(`From: ${formatDate(fromDate)}   To: ${formatDate(toDate)}`, marginLeft, 30);
     if (registerType === 'movement' && vehicleOption === 'individual') {
-      doc.setFontSize(12);
-      doc.text(`Vehicle No: ${vehicleNumber}`, 14, 30);
-      doc.text(`From: ${formatDate(fromDate)}   To: ${formatDate(toDate)}`, 14, 38);
-      doc.text(`Total KM Travelled: ${totalKmTravelled ?? 'N/A'} km`, 14, 46);
+      doc.text(`Vehicle No: ${vehicleNumber}`, marginLeft, 38);
+      doc.text(`Total KM Travelled: ${totalKmTravelled ?? 'N/A'} km`, marginLeft, 46);
     }
 
     const visibleCols = columns.filter(col => selectedFields.includes(col.field));
     const headers = visibleCols.map(col => col.headerName);
     const data = rows.map(row => visibleCols.map(col => row[col.field]));
+autoTable(doc, {
+  head: [headers],
+  body: data,
+  startY: registerType === 'movement' && vehicleOption === 'individual' ? 52 : 36,
+  styles: { fontSize: 9 },
+  headStyles: {
+    fillColor: [22, 160, 133],
+    textColor: [255, 255, 255],
+    halign: 'center'
+  },
+  columnStyles:
+    registerType === 'movement'
+      ? {
+          [headers.findIndex(h => h === 'Entered By (Name - PEN)')]: { cellWidth: 35 },
+          [headers.findIndex(h => h.toLowerCase() === 'purpose')]: { cellWidth: 35 }
+        }
+      : {},
+  margin: { top: 10, left: marginLeft, right: 14 },
+});
 
-    autoTable(doc, {
-      head: [headers],
-      body: data,
-      startY: registerType === 'movement' && vehicleOption === 'individual' ? 52 : 30,
-      styles: { fontSize: 9 },
-      headStyles: { fillColor: [22, 160, 133] }
-    });
 
-    doc.save(`${registerType}_selected_columns_${Date.now()}.pdf`);
+
+    doc.save(`${registerType}_report_${Date.now()}.pdf`);
   };
 
   return (

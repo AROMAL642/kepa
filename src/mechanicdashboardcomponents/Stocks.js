@@ -82,7 +82,7 @@ const Stocks = ({ onViewAll }) => {
   return (
     <div className="stock-form-container">
       <div className="stock-form-header">
-        <h2>Manage Stock Register</h2>
+        <h2> Unserviceable spare parts Stock Register</h2>
         <button className="view-all-btn" onClick={onViewAll}>📦 View All Stocks</button>
       </div>
 

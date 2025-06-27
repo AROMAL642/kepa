@@ -310,7 +310,7 @@ const handleSaveProfile = async () => {
             </button>
 
             <button className={`sidebar-btn ${activeTab === 'stocks' ? 'active' : ''}`} onClick={() => setActiveTab('stocks')}>
-              <InventoryIcon style={{ marginRight: '8px' }} /> Stock
+              <InventoryIcon style={{ marginRight: '8px' }} /> unservisable Stock
             </button>
 
             <button className={`sidebar-btn ${activeTab === 'VerifiedUsersTable' ? 'active' : ''}`} onClick={() => setActiveTab('VerifiedUsersTable')}>

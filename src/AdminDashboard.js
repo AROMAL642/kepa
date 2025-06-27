@@ -53,8 +53,12 @@ function AdminDashboard() {
   const [pendingAccidentCount, setPendingAccidentCount] = useState(0);
   const [repairPendingCount, setRepairPendingCount] = useState(0);
   const [expiredCertCount, setExpiredCertCount] = useState(0);
+  const [repairCombinedCount, setRepairCombinedCount] = useState(0);
 
+  
   const totalNotifications = pendingCount + pendingFuelCount + pendingAccidentCount + repairPendingCount;
+  
+
 
   const [loadingVerifiedUsers, setLoadingVerifiedUsers] = useState(false);
   const [verifiedUsers, setVerifiedUsers] = useState([]);
@@ -293,9 +297,17 @@ const handleSaveProfile = async () => {
               <DirectionsCarIcon style={{ marginRight: '8px' }} /> Movement Register
             </button>
 
-            <button className={`sidebar-btn notification-btn ${activeTab === 'Repair' ? 'active' : ''}`} onClick={() => setActiveTab('Repair')}>
-              <BuildIcon style={{ marginRight: '8px' }} /> Repair Reports {repairPendingCount > 0 && <span className="notification-badge">{repairPendingCount}</span>}
-            </button>
+            <button
+  className={`sidebar-btn notification-btn ${activeTab === 'Repair' ? 'active' : ''}`}
+  onClick={() => setActiveTab('Repair')}
+>
+  <BuildIcon style={{ marginRight: '8px' }} /> Repair Reports
+  {repairCombinedCount > 0 && (
+    <span className="notification-badge">{repairCombinedCount}</span>
+  )}
+</button>
+
+
 
             <button className={`sidebar-btn notification-btn ${activeTab === 'Accident' ? 'active' : ''}`} onClick={() => setActiveTab('Accident')}>
               <ReportProblemIcon style={{ marginRight: '8px' }} /> Accident Details {pendingAccidentCount > 0 && <span className="notification-badge">{pendingAccidentCount}</span>}
@@ -310,7 +322,7 @@ const handleSaveProfile = async () => {
             </button>
 
             <button className={`sidebar-btn ${activeTab === 'stocks' ? 'active' : ''}`} onClick={() => setActiveTab('stocks')}>
-              <InventoryIcon style={{ marginRight: '8px' }} /> Stock
+              <InventoryIcon style={{ marginRight: '8px' }} /> unservisable Stock
             </button>
 
             <button className={`sidebar-btn ${activeTab === 'VerifiedUsersTable' ? 'active' : ''}`} onClick={() => setActiveTab('VerifiedUsersTable')}>
@@ -512,7 +524,18 @@ const handleSaveProfile = async () => {
           {activeTab === 'Request' && <ViewRequests themeStyle={themeStyle} />}
           {activeTab === 'Movement' && <MovementAdmin themeStyle={themeStyle} />}
           {activeTab === 'Accident' && <AccidentReportTable themeStyle={themeStyle} />}
-          {activeTab === 'Repair' && <AdminRepairTable themeStyle={themeStyle} />}
+          {activeTab === 'Repair' && (
+  <AdminRepairTable
+    themeStyle={themeStyle}
+    onCountsUpdate={(counts) => {
+      // Add individual counts if available, fallback to 0
+      const total =
+        (counts.repair || 0) + (counts.mechanic || 0) + (counts.certificate || 0);
+      setRepairCombinedCount(total);
+    }}
+  />
+)}
+
           {activeTab === 'AddUser' && <RegisterPage themeStyle={themeStyle} />}
           {activeTab === 'PrintRegisters' && <ViewPrintRegisters />}
           {activeTab === 'stocks' && <AdminStocksView />}

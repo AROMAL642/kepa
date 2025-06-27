@@ -50,37 +50,44 @@ const [workerWage, setWorkerWage] = useState('');
   useEffect(() => {
     fetch('http://localhost:5000/api/repair-request')
       .then(res => res.json())
-      .then(data => {
-        const formatted = data.map((req, index) => ({
-          id: req._id,
-          serial: index + 1,
-          vehicleNo: req.vehicleNo,
-          pen: req.pen,
-          date: req.date,
-          subject: req.subject,
-          description: req.description,
-          userName: req.userName || 'N/A',
-          repairStatus: req.repairStatus,
-          status: req.status,
-          mechanicFeedback: req.mechanicFeedback,
-          workDone: req.workDone || 'No',
-          userApproval: req.userApproval || false,
-          rejectedByUser: req.rejectedByUser || false,
-          userRemarks: req.userRemarks || '',
-           
- 
-          billImage: req.billFile
-            ? {
-                url: `data:${req.billFile.contentType};base64,${req.billFile.data}`,
-                type: req.billFile.contentType
-              }
-            : null,
-            expense: req.expense || 'N/A',
-  workerWage: req.workerWage || 'N/A',
-        }));
-        setRequests(formatted);
-        setLoading(false);
-      })
+.then(data => {
+  const formatted = data.map((req, index) => ({
+    id: req._id,
+    serial: index + 1,
+    vehicleNo: req.vehicleNo,
+    pen: req.pen,
+    date: req.date,
+    subject: req.subject,
+    description: req.description,
+    userName: req.userName || 'N/A',
+    repairStatus: req.repairStatus,
+    status: req.status,
+    mechanicFeedback: req.mechanicFeedback,
+    workDone: req.workDone || 'No',
+    userApproval: req.userApproval || false,
+    rejectedByUser: req.rejectedByUser || false,
+    userRemarks: req.userRemarks || '',
+    billImage: req.billFile
+      ? {
+          url: `data:${req.billFile.contentType};base64,${req.billFile.data}`,
+          type: req.billFile.contentType
+        }
+      : null,
+    expense: req.expense || 'N/A',
+    workerWage: req.workerWage || 'N/A',
+  }));
+
+  // ✅ Sort: forwarded requests to top
+  const sorted = formatted.sort((a, b) => {
+    if (a.status === 'forwarded' && b.status !== 'forwarded') return -1;
+    if (a.status !== 'forwarded' && b.status === 'forwarded') return 1;
+    return 0;
+  });
+
+  setRequests(sorted);
+  setLoading(false);
+})
+
       .catch(err => {
         console.error('Error fetching repair requests:', err);
         setLoading(false);
@@ -721,7 +728,7 @@ if (rejectedByUser) {
                   ))}
                   <Button sx={{ mt: 1 }} onClick={addPartRow}>+ Add More</Button>
 
-                  <Typography sx={{ mt: 2 }}><strong>Upload Bill</strong></Typography>
+                  <Typography sx={{ mt: 2 }}><strong>Upload quotation</strong></Typography>
                   <input type="file" onChange={(e) => setBillFile(e.target.files[0])} />
                 </>
               )}

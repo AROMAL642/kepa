@@ -267,12 +267,21 @@ case 'completed': color = 'success'; label = 'completed '; break;
         Repair Section - Pending Requests
       </Typography>
       <Box sx={{ height: 600 }}>
-        <DataGrid
-          rows={requests.map((req, i) => ({ ...req, id: i + 1 }))}
-          columns={columns}
-          pageSize={10}
-          disableSelectionOnClick
-        />
+       <DataGrid
+  rows={
+    [...requests]
+      .sort((a, b) => {
+        if (a.status === 'forwarded_to_repair_section' && b.status !== 'forwarded_to_repair_section') return -1;
+        if (a.status !== 'forwarded_to_repair_section' && b.status === 'forwarded_to_repair_section') return 1;
+        return 0;
+      })
+      .map((req, i) => ({ ...req, id: i + 1 }))
+  }
+  columns={columns}
+  pageSize={10}
+  disableSelectionOnClick
+/>
+
       </Box>
 
       {/* Dialog for viewing request details */}
@@ -364,7 +373,7 @@ case 'completed': color = 'success'; label = 'completed '; break;
 
             {isEditingParts ? (
               <>
-                <td><input type="text" value={part.previousDate || ''} onChange={(e) => handlePartFieldChange(idx, 'previousDate', e.target.value)} /></td>
+                <td><input type="date" value={part.previousDate || ''} onChange={(e) => handlePartFieldChange(idx, 'previousDate', e.target.value)} /></td>
                 <td><input type="text" value={part.previousMR || ''} onChange={(e) => handlePartFieldChange(idx, 'previousMR', e.target.value)} /></td>
                 <td><input type="text" value={part.kmAfterReplacement || ''} onChange={(e) => handlePartFieldChange(idx, 'kmAfterReplacement', e.target.value)} /></td>
               </>
@@ -481,4 +490,3 @@ case 'completed': color = 'success'; label = 'completed '; break;
 };
 
 export default RepairSectionAdmin;
-

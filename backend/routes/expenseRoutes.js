@@ -14,6 +14,91 @@ router.post('/expense-summary', async (req, res) => {
     const to = new Date(toDate);
     to.setHours(23, 59, 59, 999);
 
+    // --------- ALL EXPENSE SUMMARY ---------
+    if (category === 'all') {
+      const responseList = [];
+
+      // FUEL
+      const fuelVehicle = await VehicleFuel.findOne({ vehicleNo });
+      let fuelAmount = 0;
+      if (fuelVehicle) {
+        const filteredEntries = fuelVehicle.fuelEntries.filter(entry => {
+          const entryDate = new Date(entry.date);
+          return entryDate >= from && entryDate <= to && entry.status === 'approved';
+        });
+        fuelAmount = filteredEntries.reduce((sum, e) => sum + (e.amount || 0), 0);
+        if (fuelAmount > 0) {
+          responseList.push({
+            vehicleNo,
+            category: 'fuel',
+            totalExpense: fuelAmount
+          });
+        }
+      }
+
+      // REPAIR
+      const repairEntries = await RepairRequest.find({
+        vehicleNo,
+        date: { $gte: fromDate, $lte: toDate },
+        status: 'completed'
+      });
+      let repairAmount = 0;
+      if (repairEntries && repairEntries.length > 0) {
+        repairAmount = repairEntries.reduce(
+          (sum, e) => sum + (e.expense || 0) + (e.workerWage || 0),
+          0
+        );
+        if (repairAmount > 0) {
+          responseList.push({
+            vehicleNo,
+            category: 'repair',
+            totalExpense: repairAmount
+          });
+        }
+      }
+
+      // INSURANCE & POLLUTION
+      const vehicle = await Vehicle.findOne({ number: vehicleNo });
+      if (vehicle) {
+        const insuranceCerts = vehicle.certificateHistory.filter(cert => {
+          const issued = new Date(cert.insuranceIssuedDate);
+          return issued >= from && issued <= to;
+        });
+
+        const insuranceTotal = insuranceCerts.reduce(
+          (sum, cert) => sum + (cert.insuranceExpense || 0),
+          0
+        );
+        if (insuranceTotal > 0) {
+          responseList.push({
+            vehicleNo,
+            category: 'insurance',
+            totalExpense: insuranceTotal
+          });
+        }
+
+        const pollutionCerts = vehicle.certificateHistory.filter(cert => {
+          const issued = new Date(cert.pollutionIssuedDate);
+          return issued >= from && issued <= to;
+        });
+
+        const pollutionTotal = pollutionCerts.reduce(
+          (sum, cert) => sum + (cert.pollutionExpense || 0),
+          0
+        );
+        if (pollutionTotal > 0) {
+          responseList.push({
+            vehicleNo,
+            category: 'pollution',
+            totalExpense: pollutionTotal
+          });
+        }
+      }
+
+      const totalAmount = responseList.reduce((sum, e) => sum + e.totalExpense, 0);
+      return res.json({ totalAmount, entries: responseList });
+    }
+
     // -------- FUEL EXPENSE --------
     if (category === 'fuel') {
       const vehicle = await VehicleFuel.findOne({ vehicleNo });
@@ -88,7 +173,7 @@ router.post('/expense-summary', async (req, res) => {
       const repairEntries = await RepairRequest.find({
         vehicleNo,
         date: { $gte: fromDate, $lte: toDate },
-        status: 'completed' // or adjust based on your definition of finalized entries
+        status: 'completed'
       });
 
       const entries = repairEntries.map(entry => ({
