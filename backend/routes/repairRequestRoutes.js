@@ -3,7 +3,16 @@ const router = express.Router();
 const multer = require('multer');
 const RepairRequest = require('../models/RepairRequests');
 const User = require('../models/User');
+const mongoose = require('mongoose');
 const PDFDocument = require('pdfkit');
+const Vehicle = require('../models/Vehicle'); // make sure the path is correct
+const VehicleMovement = require('../models/Movement');
+const path = require('path');
+const fs = require('fs');
+
+
+
+
 
 // Configure multer
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
@@ -91,7 +100,7 @@ router.get('/for-generating-certificate', async (req, res) => {
     const requests = await RepairRequest.find({
       status: {
         $in: [
-          
+          'for_generating_certificate',
           'certificate_ready',
           'waiting_for_sanction',
           'sanctioned_for_work',
@@ -210,7 +219,7 @@ router.get('/forwarded', async (req, res) => {
       forwardedToMechanic: true,
       workDone: 'No',
       needsParts: true,
-      status: 'sent_to_repair_admin',
+      status: 'sent_to_MTI',
       partsList: { $exists: true, $not: { $size: 0 } }
     }).populate('user', 'name pen');
 
@@ -391,7 +400,7 @@ router.put('/:id/mechanic-update', async (req, res) => {
       needsParts,
       partsList: needsParts ? partsList : [],
       repairStatus: 'in progress',
-      status: 'sent_to_repair_admin' // ✅ <-- this is the key change
+      status: 'sent_to_MTI' // ✅ <-- this is the key change
     };
 
     if (billFile) {
@@ -478,8 +487,15 @@ router.post('/:id/complete-certificates', async (req, res) => {
 // Inside repairRequestRoutes.js
 router.post('/:id/generate-certificates', async (req, res) => {
   try {
+    // const { signature } = req.body;
+
     const request = await RepairRequest.findById(req.params.id);
     if (!request) return res.status(404).json({ message: 'Request not found' });
+
+   //request.digitalSignature = signature; 
+   
+    
+
 
     // Simulate generated PDFs
     request.essentialityCertificate = {
@@ -497,6 +513,11 @@ router.post('/:id/generate-certificates', async (req, res) => {
     await request.save();
     return res.status(200).json({ message: 'Certificates generated successfully' ,  updatedRequest: request});
 
+
+
+
+
+    
   } catch (err) {
     console.error('Certificate generation error:', err);
     res.status(500).json({ message: 'Certificate generation failed' });
@@ -750,6 +771,10 @@ router.put('/:id/send-to-user', async (req, res) => {
 /**
  * GET: Generate and view Essentiality Certificate
  */
+
+
+
+
 router.get('/:id/view-ec', async (req, res) => {
   try {
     const request = await RepairRequest.findById(req.params.id);
@@ -844,10 +869,7 @@ router.get('/:id/view-ec', async (req, res) => {
 
 
 
-
 // GET: View Technical Certificate
-
-
 
 
 
@@ -857,85 +879,176 @@ router.get('/:id/view-tc', async (req, res) => {
     const request = await RepairRequest.findById(req.params.id);
     if (!request) return res.status(404).json({ message: 'Request not found' });
 
+    const vehicleNo = request.vehicleNo?.toString().trim();
+    const vehicle = await Vehicle.findOne({ number: vehicleNo });
+    const vehicleModel = vehicle?.model || '__________';
+
+    let latestEndingKm = '__________';
+    const movementDoc = await VehicleMovement.findOne({ vehicleno: vehicleNo });
+    if (movementDoc && Array.isArray(movementDoc.movements)) {
+      const sorted = [...movementDoc.movements]
+        .filter(m => typeof m.endingkm === 'number')
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      if (sorted.length > 0) {
+        latestEndingKm = `${sorted[0].endingkm} kms`;
+      }
+    }
+
+    // Start PDF
     const doc = new PDFDocument({ size: 'A4', margin: 50 });
-
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename="Technical_Certificate_${request.vehicleNo}.pdf"`);
-
+    res.setHeader(
+      'Content-Disposition',
+      `inline; filename="Technical_Certificate_${vehicleNo}.pdf"`
+    );
     doc.pipe(res);
 
-    const date = new Date().toLocaleDateString('en-IN');
-
-    // Header
-    doc.fontSize(12).text(`No: /${new Date().getFullYear()}/MTO/KEPA`, { align: 'left' });
-    doc.moveDown(0.5);
-    doc.fontSize(14).font('Helvetica-Bold').text('REPLACEMENT STATEMENT OF SPARES', { align: 'center' });
-
-    doc.moveDown(1);
-    doc.fontSize(12).font('Helvetica');
-    doc.text(`Reg. No.: ${request.vehicleNo}`);
-    doc.text(`Model: ${request.model || '_____'}`);
-    doc.text(`Total KM covered: ${request.kmCovered || '____'} kms`);
-    doc.moveDown(1);
-
-    // Table
-    const startX = 70;
+    // === Table Settings ===
+    const startX = 40;
     let y = doc.y;
-    const colWidths = [40, 160, 60, 60, 60, 80];
+    const fullWidth = 520;
 
-    // Table Header
-    const headers = ['Sl No', 'Items', 'Quantity', 'Date', 'MR', 'KM covered after\nprevious replace'];
+    // Unified Column Layout
+    const columnWidths = [120, 400]; // 2-column table for header & vehicle info
+    const partsColWidths = [40, 140, 80, 80, 60, 120]; // For parts table
 
-    headers.forEach((text, i) => {
-      doc.rect(startX + colWidths.slice(0, i).reduce((a, b) => a + b, 0), y, colWidths[i], 30).stroke();
-      doc.font('Helvetica-Bold').fontSize(9)
-        .text(text, startX + colWidths.slice(0, i).reduce((a, b) => a + b, 0) + 2, y + 8, {
-          width: colWidths[i] - 4,
-          align: 'center',
+    // === Row Drawers ===
+    const drawInfoRow = (label, value) => {
+      const rowHeight = 25;
+      let x = startX;
+
+      // Label cell
+      doc.rect(x, y, columnWidths[0], rowHeight).stroke();
+      doc.font('Helvetica-Bold').fontSize(10).text(label, x + 5, y + 7);
+      x += columnWidths[0];
+
+      // Value cell
+      doc.rect(x, y, columnWidths[1], rowHeight).stroke();
+      doc.font('Helvetica').fontSize(10).text(value, x + 5, y + 7);
+
+      y += rowHeight;
+    };
+
+    const drawFullRow = (text, isHeader = false) => {
+      const rowHeight = 25;
+      doc.rect(startX, y, fullWidth, rowHeight).stroke();
+      doc
+        .font(isHeader ? 'Helvetica-Bold' : 'Helvetica')
+        .fontSize(12)
+        .text(text, startX + 5, y + 7, {
+          width: fullWidth - 10,
+          align: isHeader ? 'center' : 'left',
         });
-    });
+      y += rowHeight;
+    };
 
-    y += 30;
+    const drawPartsHeader = () => {
+      let x = startX;
+      const rowHeight = 25;
+      const headers = ['Sl No', 'Items', 'Quantity', 'Previous Date', 'Previous MR', 'KM after Previous Replace'];
 
-    const parts = request.partsList || [];
+      headers.forEach((head, i) => {
+        doc.rect(x, y, partsColWidths[i], rowHeight).stroke();
+        doc.font('Helvetica-Bold').fontSize(10).text(head, x + 4, y + 7, {
+          width: partsColWidths[i] - 8,
+        });
+        x += partsColWidths[i];
+      });
+      y += rowHeight;
+    };
 
-    // Rows
-    parts.forEach((part, index) => {
-      const row = [
-        `${index + 1}`,
+    const drawPartsRow = (part, index) => {
+      let x = startX;
+      const rowHeight = 25;
+      const values = [
+        index + 1,
         part.item || '',
         part.quantity || '',
         part.previousDate || '',
-        part.mr || '',
-        part.kmAfterPrevious || ''
+        part.previousMR || '',
+        part.kmAfterReplacement || ''
       ];
 
-      row.forEach((text, i) => {
-        doc.rect(startX + colWidths.slice(0, i).reduce((a, b) => a + b, 0), y, colWidths[i], 25).stroke();
-        doc.font('Helvetica').fontSize(10)
-          .text(text, startX + colWidths.slice(0, i).reduce((a, b) => a + b, 0) + 2, y + 7, {
-            width: colWidths[i] - 4,
-            align: 'center',
-          });
+      values.forEach((val, i) => {
+        doc.rect(x, y, partsColWidths[i], rowHeight).stroke();
+        doc.font('Helvetica').fontSize(10).text(val.toString(), x + 4, y + 7, {
+          width: partsColWidths[i] - 8,
+        });
+        x += partsColWidths[i];
       });
+      y += rowHeight;
+    };
 
-      y += 25;
+    // === DRAW Unified Table ===
+   drawFullRow(`No: ${request.tcSerialNumber || '___'} /2025/MTO/KEPA`, 'left');
+
+    drawFullRow('REPLACEMENT STATEMENT OF SPARES', true); // centered heading
+    drawInfoRow('Reg. No.', vehicleNo);
+    drawInfoRow('Model', vehicleModel);
+    drawInfoRow('Total KM Covered', latestEndingKm);
+
+    drawPartsHeader();
+
+    (request.partsList || []).forEach((part, index) => {
+      drawPartsRow(part, index);
     });
 
     doc.end();
-
   } catch (err) {
-    console.error('Error generating TC PDF:', err);
-    res.status(500).json({ message: 'Failed to generate technical certificate' });
+    console.error('❌ Error generating Technical Certificate:', err);
+    if (!res.headersSent) {
+      res.status(500).json({ message: 'Failed to generate Technical Certificate' });
+    }
   }
 });
 
 
 
+router.put('/:id/update-parts', async (req, res) => {
+  try {
+    const { partsList } = req.body;
+
+    const request = await RepairRequest.findByIdAndUpdate(
+      req.params.id,
+      { partsList },
+      { new: true }
+    );
+
+    if (!request) {
+      return res.status(404).json({ message: 'Repair request not found' });
+    }
+
+    res.json(request);
+  } catch (err) {
+    console.error('Error updating parts list:', err);
+    res.status(500).json({ message: 'Failed to update parts list' });
+  }
+});
+
+// Save/Update TC Serial Number
+router.put('/:id/update-tc-serial', async (req, res) => {
+  try {
+    const { tcSerialNumber } = req.body;
+
+    const request = await RepairRequest.findByIdAndUpdate(
+      req.params.id,
+      { tcSerialNumber },
+      { new: true }
+    );
+
+    if (!request) {
+      return res.status(404).json({ message: 'Repair request not found' });
+    }
+
+    res.json(request);
+  } catch (err) {
+    console.error('Error updating TC Serial Number:', err);
+    res.status(500).json({ message: 'Failed to update TC Serial Number' });
+  }
+});
 
 
-
-
+//const colWidths = [80, 150, 120, 80, 60, 100];
 // fron mechanic to admin to see final bill
 
 // PATCH: Final bill upload and mark as completed (with verifiedWorkBill)

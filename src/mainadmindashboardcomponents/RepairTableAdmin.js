@@ -33,13 +33,13 @@ const [selectedRequest, setSelectedRequest] = useState(null);
 
 // Define this map once at the top of your component/file
 const STATUS_ORDER = {
- 
-  ongoing_work: 3,
-  for_generating_certificate: 4,
-  certificate_ready: 5,
-  Pending_User_Verfication: 6,
-  work_completed: 7,
-  completed: 8
+  
+  ongoing_work: 1,
+  for_generating_certificate: 2,
+  certificate_ready: 3,
+  Pending_User_Verfication: 4,
+  work_completed: 5,
+  completed: 6
 
 };
 
@@ -372,7 +372,7 @@ const handleViewVerifiedBill = (row) => {
       rejected: 'red',
       pending: 'gray',
       forwarded: 'blue',
-      sent_to_repair_admin: 'orange',
+      sent_to_MTI: 'orange',
       generating_certificates: 'purple',
       
       
@@ -396,7 +396,7 @@ const handleViewVerifiedBill = (row) => {
           rejected: 'red',
           pending: 'gray',
           forwarded: 'blue',
-          sent_to_repair_admin: 'orange',
+          sent_to_MTI: 'orange',
            generating_certificates: 'purple',
            forwarded_to_repair_section: 'violet',
         };

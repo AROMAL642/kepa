@@ -14,7 +14,7 @@ const repairRequestsSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'forwarded', 'repaired', 'verification pending', 'verified', 'rejected' , 'sent_to_repair_admin' ,   'pending', 'approved certificates',
+    enum: ['pending', 'forwarded', 'repaired', 'verification pending', 'verified', 'rejected' , 'sent_to_MTI' ,   'pending', 'approved certificates',
     'generating certificates',
     'certificate_ready',
     'forwarded_to_repair_section', 
@@ -50,8 +50,8 @@ const repairRequestsSchema = new mongoose.Schema({
       item: String,
       quantity: String,
       previousDate: String,     
-            
-      kmAfterPrevious: String 
+      previousMR: String,      
+        kmAfterReplacement: String 
     }
   ],
   certificates: {
@@ -121,6 +121,12 @@ serialYear: { type: Number },
       km: String
     }
   ],
+  tcSerialNumber: { type: String }, 
+signedBy: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: 'User'
+},
+
   
 }, {
   timestamps: true
@@ -128,9 +134,6 @@ serialYear: { type: Number },
 
 module.exports = mongoose.model('RepairRequests', repairRequestsSchema);
 
-// previousDate: String,
-   // previousMR: String,
-    //kmAfterReplacement: String
 // previousDate: String,
    // previousMR: String,
     //kmAfterReplacement: String

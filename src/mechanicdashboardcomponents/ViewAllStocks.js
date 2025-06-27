@@ -20,8 +20,9 @@ const ViewAllStocks = ({ onBack }) => {
       const res = await axios.get('http://localhost:5000/api/stockroutes');
       const formatted = res.data.map((item, index) => ({
         ...item,
-        id: item._id, // For DataGrid
+        id: item._id,
         sl: index + 1,
+        stockId: item.stockId || item._id
       }));
       setRows(formatted);
     } catch (err) {
@@ -42,8 +43,12 @@ const ViewAllStocks = ({ onBack }) => {
     }
   };
 
-  const handleEditClick = (item) => {
-  setEditData({ ...item, _id: item._id || item.id });
+ const handleEditClick = (item) => {
+  setEditData({
+    ...item,
+    hasWarranty: item.hasWarranty ? 'true' : 'false',
+    stockId: item._id  // ✅ Set stockId manually from item._id
+  });
   setOpen(true);
 };
 
@@ -52,45 +57,49 @@ const ViewAllStocks = ({ onBack }) => {
     const { name, value } = e.target;
     setEditData((prev) => ({
       ...prev,
-      [name]: name === 'hasWarranty' ? value : value,
+      [name]: value,
     }));
   };
 
-  const handleEditSave = async () => {
-  const id = editData._id;
+ const handleEditSave = async () => {
+  const { stockId } = editData; // ✅ extract stockId
 
-  if (!id) {
-    console.error("❌ Cannot update stock: Missing ID", editData);
+  if (!stockId) {
     alert("Stock ID missing. Cannot update.");
     return;
   }
 
   try {
-    // Convert hasWarranty to boolean
     const dataToSend = {
-      ...editData,
-      hasWarranty: editData.hasWarranty === 'true'
+      itemType: editData.itemType,
+      itemName: editData.itemName,
+      quantity: Number(editData.quantity),
+      condition: editData.condition,
+      status: editData.status,
+      hasWarranty: editData.hasWarranty === 'true',
+      warrantyNumber: editData.hasWarranty === 'true' ? editData.warrantyNumber : '',
+      date: editData.date,
+      pen: editData.pen
     };
 
-    const url = `http://localhost:5000/api/stockroutes/${id}`;
-    console.log("🔁 Sending PUT to:", url, "with data:", dataToSend);
+    const url = `http://localhost:5000/api/stockroutes/byStockId/${stockId}`; // ✅ use stockId here
 
     await axios.put(url, dataToSend);
     alert('✅ Stock updated successfully');
     setOpen(false);
     fetchStocks();
   } catch (err) {
-    console.error('❌ Save error:', err.message);
-    alert('Update failed: ' + err.message);
+    console.error('❌ Update error:', err.message);
+    alert('Update failed');
   }
 };
+
 
   const columns = [
     { field: 'sl', headerName: 'SL', width: 70 },
     { field: 'enteredBy', headerName: 'Entered By', width: 200 },
     { field: 'itemType', headerName: 'Type', width: 130 },
     { field: 'itemName', headerName: 'Name', width: 150 },
-    { field: 'serialNo', headerName: 'Serial No', width: 150 },
     { field: 'quantity', headerName: 'Qty', width: 80 },
     { field: 'condition', headerName: 'Condition', width: 100 },
     { field: 'status', headerName: 'Status', width: 100 },
@@ -168,3 +177,4 @@ const ViewAllStocks = ({ onBack }) => {
 };
 
 export default ViewAllStocks;
+

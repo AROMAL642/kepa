@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import {
   Box, Button, CircularProgress, Dialog, DialogTitle,
-  DialogContent, DialogActions, Typography, Chip
+  DialogContent, DialogActions, Typography, Chip, TextField
 } from '@mui/material';
+
 import { DataGrid } from '@mui/x-data-grid';
 import axios from 'axios';
 
@@ -12,32 +13,26 @@ const RepairSectionAdmin = () => {
   const [selectedEntry, setSelectedEntry] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [certificateGenerated, setCertificateGenerated] = useState(false);
+
+  // Sanction dialog
   const [sanctionDialogOpen, setSanctionDialogOpen] = useState(false);
-  const [additionalBill, setAdditionalBill] = useState(null);
+  const [approvedNo, setApprovedNo] = useState('');
+  const [sanctionBillFile, setSanctionBillFile] = useState(null);
+   const [sanctionedIds, setSanctionedIds] = useState(new Set());
+
+const [additionalBill, setAdditionalBill] = useState(null);
+const [isEditingParts, setIsEditingParts] = useState(false);
+
+  
+
 
   const fetchRequests = async () => {
     try {
       const res = await axios.get('http://localhost:5000/api/repair-request');
-      const filtered = res.data
-        .filter(req =>
-          [
-            'forwarded_to_repair_section',
-            'for_generating_certificate',
-            'generating_certificates',
-            'certificate_ready',
-            'waiting_for_sanction',
-            'sanctioned_for_work',
-            'ongoing_work',
-            'work completed',
-            'Pending User verification',
-            'completed'
-          ].includes(req.status)
-        )
-        .sort((a, b) => {
-          if (a.status === 'forwarded_to_repair_section' && b.status !== 'forwarded_to_repair_section') return -1;
-          if (b.status === 'forwarded_to_repair_section' && a.status !== 'forwarded_to_repair_section') return 1;
-          return 0;
-        });
+      const filtered = res.data.filter(req =>
+        ['forwarded_to_repair_section', 'for_generating_certificate', 'generating_certificates', 'certificate_ready', 'waiting_for_sanction', 
+    'sanctioned_for_work','ongoing_work' , 'work completed', 'Pending User verification', 'completed' ,].includes(req.status)
+      );
       setRequests(filtered);
     } catch (err) {
       console.error('Error fetching repair requests:', err);
@@ -76,12 +71,17 @@ const RepairSectionAdmin = () => {
 
   const forwardSanction = async (id) => {
     const formData = new FormData();
-    formData.append('additionalBill', additionalBill);
+    //formData.append('approvedNo', approvedNo);
+   formData.append('additionalBill', additionalBill);
+
+
+
     try {
       await axios.put(`http://localhost:5000/api/repair-request/${id}/sanction-work`, formData);
       alert('✅ Sanction forwarded to Main Admin');
       setSanctionDialogOpen(false);
-      setAdditionalBill(null);
+        setAdditionalBill(null);
+    
       fetchRequests();
     } catch (err) {
       console.error('Error forwarding sanction:', err);
@@ -89,30 +89,63 @@ const RepairSectionAdmin = () => {
     }
   };
 
+  const handlePartFieldChange = (index, field, value) => {
+  const updatedParts = [...selectedEntry.partsList];
+  updatedParts[index][field] = value;
+  setSelectedEntry({ ...selectedEntry, partsList: updatedParts });
+};
+
+const updatePartsDetails = async (id, updatedPartsList) => {
+  try {
+    const response = await fetch(`http://localhost:5000/api/repair-request/${id}/update-parts`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ partsList: updatedPartsList }),
+    });
+
+    if (!response.ok) throw new Error('Failed to update');
+
+    alert('✅ Parts details updated successfully');
+  } catch (error) {
+    console.error('❌ Error updating parts:', error);
+    alert('❌ Failed to save parts details');
+  }
+};
+
+
+
+
+
   const getStatusChip = (status) => {
     let color;
     let label = status;
     switch (status) {
       case 'verified': color = 'info'; label = 'Verified'; break;
       case 'forwarded_to_mechanic': color = 'warning'; break;
-      case 'sent_to_repair_admin': color = 'secondary'; break;
+      case 'sent_to_MTI': color = 'secondary'; break;
       case 'for_generating_certificate': color = 'warning'; break;
       case 'generating_certificates': color = 'info'; break;
       case 'certificate_ready': color = 'success'; label = 'Certificates Ready'; break;
       case 'waiting_for_sanction': color = 'warning'; label = 'Waiting for Sanction'; break;
       case 'sanctioned_for_work': color = 'success'; label = 'Sanctioned'; break;
-      case 'ongoing_work': color = 'success'; label = 'Ongoing Work'; break;
+      case 'ongoing_work': color = 'success'; label = 'ongoing work '; break;
       case 'Pending User Verification': color = 'success'; label = 'Pending User Verification'; break;
-      case 'work_complete': color = 'success'; label = 'Work Complete'; break;
-      case 'completed': color = 'success'; label = 'Completed'; break;
+case 'work_complete': color = 'success'; label = 'work_complete '; break;
+
+case 'completed': color = 'success'; label = 'completed '; break;
+
+
+
+
+
+
+
+
       default: color = 'default';
     }
-
-    return (
-      <Box>
-        <Chip label={label} color={color} variant="outlined" />
-      </Box>
-    );
+    return <Chip label={label} color={color} variant="outlined" />;
   };
 
   const columns = [
@@ -173,7 +206,7 @@ const RepairSectionAdmin = () => {
           <Button
             variant="outlined"
             onClick={() =>
-              window.open(`http://localhost:5000/api/repair-request/${params.row._id}/view-tc`, '_blank')
+             window.open(`http://localhost:5000/api/repair-request/${params.row._id}/view-tc`, '_blank')
             }
           >
             View
@@ -207,7 +240,7 @@ const RepairSectionAdmin = () => {
           <Button
             variant={isSanctioned ? 'contained' : 'outlined'}
             color={isSanctioned ? 'success' : 'primary'}
-            disabled={!isWaiting}
+            disabled={!isWaiting || sanctionedIds.has(params.row._id)}
             onClick={() => {
               setSelectedEntry(params.row);
               setSanctionDialogOpen(true);
@@ -234,15 +267,24 @@ const RepairSectionAdmin = () => {
         Repair Section - Pending Requests
       </Typography>
       <Box sx={{ height: 600 }}>
-        <DataGrid
-          rows={requests.map((req, i) => ({ ...req, id: i + 1 }))}
-          columns={columns}
-          pageSize={10}
-          disableSelectionOnClick
-        />
+       <DataGrid
+  rows={
+    [...requests]
+      .sort((a, b) => {
+        if (a.status === 'forwarded_to_repair_section' && b.status !== 'forwarded_to_repair_section') return -1;
+        if (a.status !== 'forwarded_to_repair_section' && b.status === 'forwarded_to_repair_section') return 1;
+        return 0;
+      })
+      .map((req, i) => ({ ...req, id: i + 1 }))
+  }
+  columns={columns}
+  pageSize={10}
+  disableSelectionOnClick
+/>
+
       </Box>
 
-      {/* Request Review Dialog */}
+      {/* Dialog for viewing request details */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
         <DialogTitle>Repair Request Details</DialogTitle>
         <DialogContent dividers>
@@ -251,34 +293,138 @@ const RepairSectionAdmin = () => {
               <Typography><strong>PEN:</strong> {selectedEntry.pen}</Typography>
               <Typography><strong>DATE:</strong> {selectedEntry.date}</Typography>
               <Typography><strong>SUBJECT:</strong> {selectedEntry.subject}</Typography>
+              
+              
+
 
               {selectedEntry?.partsList?.length > 0 && (
-                <Box sx={{ gridColumn: '1 / -1', mt: 2 }}>
-                  <Typography variant="h6" gutterBottom>Parts Required</Typography>
-                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead>
-                      <tr>
-                        <th>Sl No</th>
-                        <th>Item</th>
-                        <th>Quantity</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedEntry.partsList.map((part, idx) => (
-                        <tr key={idx}>
-                          <td>{idx + 1}</td>
-                          <td>{part.item}</td>
-                          <td>{part.quantity}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </Box>
-              )}
+                
+  <Box sx={{ gridColumn: '1 / -1', mt: 2 }}>
+
+
+  <TextField
+    fullWidth
+    label="TC Serial Number"
+    value={selectedEntry.tcSerialNumber || ''}
+    onChange={(e) =>
+      setSelectedEntry({ ...selectedEntry, tcSerialNumber: e.target.value })
+    }
+    sx={{ mb: 1 }}
+  />
+  <Button
+    variant="contained"
+    onClick={async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:5000/api/repair-request/${selectedEntry._id}/update-tc-serial`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tcSerialNumber: selectedEntry.tcSerialNumber }),
+          }
+        );
+
+        if (!response.ok) throw new Error('Failed to update');
+
+        alert('✅ TC Serial Number saved successfully');
+      } catch (err) {
+        console.error(err);
+        alert('❌ Failed to save TC Serial Number');
+      }
+    }}
+  >
+    Save TC Serial Number
+  </Button>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <Typography variant="h6" gutterBottom>Replacement Statement of Spares</Typography>
+    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <thead>
+        <tr>
+          <th style={{ borderBottom: '1px solid #ccc', padding: '6px' }}>Sl No</th>
+          <th style={{ borderBottom: '1px solid #ccc', padding: '6px' }}>Item</th>
+          <th style={{ borderBottom: '1px solid #ccc', padding: '6px' }}>Quantity</th>
+          <th style={{ borderBottom: '1px solid #ccc', padding: '6px' }}>Previous Date</th>
+          <th style={{ borderBottom: '1px solid #ccc', padding: '6px' }}>Previous MR</th>
+          <th style={{ borderBottom: '1px solid #ccc', padding: '6px' }}>KM After Replace</th>
+        </tr>
+      </thead>
+      <tbody>
+        {selectedEntry.partsList.map((part, idx) => (
+          <tr key={idx}>
+            <td style={{ padding: '6px' }}>{idx + 1}</td>
+            <td style={{ padding: '6px' }}>{part.item}</td>
+            <td style={{ padding: '6px' }}>{part.quantity}</td>
+
+            {isEditingParts ? (
+              <>
+                <td><input type="date" value={part.previousDate || ''} onChange={(e) => handlePartFieldChange(idx, 'previousDate', e.target.value)} /></td>
+                <td><input type="text" value={part.previousMR || ''} onChange={(e) => handlePartFieldChange(idx, 'previousMR', e.target.value)} /></td>
+                <td><input type="text" value={part.kmAfterReplacement || ''} onChange={(e) => handlePartFieldChange(idx, 'kmAfterReplacement', e.target.value)} /></td>
+              </>
+            ) : (
+              <>
+                <td style={{ padding: '6px' }}>{part.previousDate || '—'}</td>
+                <td style={{ padding: '6px' }}>{part.previousMR || '—'}</td>
+                <td style={{ padding: '6px' }}>{part.kmAfterReplacement || '—'}</td>
+              </>
+            )}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+
+    <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
+      {isEditingParts ? (
+        <>
+          <Button
+            variant="contained"
+            onClick={() => {
+              updatePartsDetails(selectedEntry._id, selectedEntry.partsList);
+              setIsEditingParts(false);
+            }}
+          >
+            Save Parts Details
+          </Button>
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={() => setIsEditingParts(false)}
+          >
+            Cancel
+          </Button>
+        </>
+      ) : (
+        <Button
+          variant="outlined"
+          onClick={() => setIsEditingParts(true)}
+        >
+          Edit
+        </Button>
+      )}
+    </Box>
+  </Box>
+)}
+
 
               {selectedEntry?.finalBillFile?.data && (
                 <Box sx={{ gridColumn: '1 / -1' }}>
-                  <Typography variant="subtitle1">Uploaded Bill:</Typography>
+                  <Typography variant="subtitle1" gutterBottom>Uploaded Bill:</Typography>
                   {selectedEntry.finalBillFile.contentType.includes('pdf') ? (
                     <iframe
                       src={`data:${selectedEntry.finalBillFile.contentType};base64,${selectedEntry.finalBillFile.data}`}
@@ -294,6 +440,8 @@ const RepairSectionAdmin = () => {
                       style={{
                         maxWidth: '100%',
                         maxHeight: '500px',
+                        display: 'block',
+                        margin: '0 auto',
                         objectFit: 'contain',
                         borderRadius: '6px',
                         border: '1px solid #ccc'
@@ -307,32 +455,33 @@ const RepairSectionAdmin = () => {
         </DialogContent>
         <DialogActions>
           <Button
-            onClick={() => forwardToMainAdmin(selectedEntry._id)}
-            color="primary"
-            variant="contained"
-            disabled={certificateGenerated}
-          >
-            Forward for Approval
-          </Button>
+  onClick={() => forwardToMainAdmin(selectedEntry._id)}
+  color="primary"
+  variant="contained"
+  disabled={selectedEntry?.status !== 'forwarded_to_repair_section' || certificateGenerated}
+>
+  Forward for Approval
+</Button>
+
           <Button onClick={() => setOpenDialog(false)}>Close</Button>
         </DialogActions>
       </Dialog>
 
       {/* Sanction Dialog */}
-      <Dialog open={sanctionDialogOpen} onClose={() => setSanctionDialogOpen(false)}>
+       <Dialog open={sanctionDialogOpen} maxWidth="lg" fullWidth onClose={() => setSanctionDialogOpen(false)}>
         <DialogTitle>Sanction for Work</DialogTitle>
         <DialogContent>
-          <Typography>Upload Sanction Bill:</Typography>
-          <input
-            type="file"
-            accept=".pdf,.jpg,.png"
-            onChange={(e) => setAdditionalBill(e.target.files[0])}
-          />
+          <Box>
+            <Typography>Upload Sanction Bill:</Typography>
+             <input
+        type="file"
+        accept=".pdf,.jpg,.png"
+        onChange={(e) => setAdditionalBill(e.target.files[0])}
+      />
+          </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => forwardSanction(selectedEntry._id)} variant="contained">
-            FORWARD
-          </Button>
+          <Button onClick={() => forwardSanction(selectedEntry._id)} variant="contained">FORWARD</Button>
           <Button onClick={() => setSanctionDialogOpen(false)}>CANCEL</Button>
         </DialogActions>
       </Dialog>
