@@ -336,6 +336,10 @@ const handleSaveProfile = async () => {
             <button className={`sidebar-btn ${activeTab === 'PrintRegisters' ? 'active' : ''}`} onClick={() => setActiveTab('PrintRegisters')}>
               <PrintIcon style={{ marginRight: '8px' }} /> View/Print Registers
             </button>
+            <button className={`sidebar-btn ${activeTab === 'repairStock' ? 'active' : ''}`} onClick={() => setActiveTab('repairStock')}>
+               <InventoryIcon style={{ marginRight: '8px' }} /> Repair Stock                      
+            </button>
+
 
             <button className={`sidebar-btn ${activeTab === 'trainees' ? 'active' : ''}`} onClick={() => setActiveTab('trainees')}>
               <SchoolIcon style={{ marginRight: '8px' }} /> Trainees Details
@@ -475,6 +479,15 @@ const handleSaveProfile = async () => {
 )}
 
           {activeTab === 'Fuel' && <FuelAdmin themeStyle={themeStyle} />}
+
+          {activeTab === 'repairStock' && (
+  <div style={{ padding: '20px' }}>
+    <h2>Repair Stock Management</h2>
+    <p>This section will handle repair-related stock (replace with real component).</p>
+  </div>
+)}
+
+
           {activeTab === 'VerifiedUsersTable' && <VerifiedUsersTable themeStyle={themeStyle} />}
           {activeTab === 'userdetails' && (
             <div>
