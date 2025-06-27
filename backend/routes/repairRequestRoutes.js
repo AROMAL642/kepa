@@ -773,15 +773,16 @@ router.put('/:id/send-to-user', async (req, res) => {
  */
 
 
+
+
 router.get('/:id/view-ec', async (req, res) => {
   try {
-    const request = await RepairRequest.findById(req.params.id)
-      .populate('signedBy', 'name signature'); // ✅ Fetch signer details
-
+    const request = await RepairRequest.findById(req.params.id);
     if (!request) return res.status(404).json({ message: 'Request not found' });
 
     const currentYear = new Date().getFullYear();
 
+    // 🔍 If already has serial for this year, reuse
     if (!request.certificateSerial || request.serialYear !== currentYear) {
       const lastSerial = await RepairRequest.findOne({ serialYear: currentYear })
         .sort({ certificateSerial: -1 })
@@ -802,7 +803,11 @@ router.get('/:id/view-ec', async (req, res) => {
 
     doc.pipe(res);
 
-    doc.fontSize(12).text(`No. ${request.certificateSerial}/${currentYear}/AD(T&MTS)/KEPA`, { align: 'right' });
+    // ✅ Header with certificate number
+    doc.fontSize(12).text(
+      `No. ${request.certificateSerial} /${currentYear}/AD(T&MTS)/KEPA`,
+      { align: 'right' }
+    );
     doc.text(`Office of the Asst.Director(Tech & MT Studies)`, { align: 'right' });
     doc.text(`Kerala Police Academy, R.V.Puram,Thrissur`, { align: 'right' });
     doc.text(`Date: ${new Date().toLocaleDateString('en-IN')}`, { align: 'right' });
@@ -825,7 +830,7 @@ router.get('/:id/view-ec', async (req, res) => {
 
     doc.moveDown(1.5);
 
-    // Table Header
+    // ======= Table =======
     const startX = 70;
     let startY = doc.y;
     const colWidths = [50, 300, 100];
@@ -854,46 +859,12 @@ router.get('/:id/view-ec', async (req, res) => {
       startY += 25;
     });
 
-    // ✅ Add signature image and name
-    doc.moveDown(3);
-    
-// Always fetch the user with pen 1111
-const signer = await User.findById(req.user._id); // Logged-in user
-
-
-doc.moveDown(3);
-doc.fontSize(12).text(`Signed by: ${signer?.name || 'Authorized Officer'}`, {
-  align: 'right'
-});
-
-if (request.digitalSignature?.startsWith('data:image')) {
-  try {
-    const base64 = request.digitalSignature.split(',')[1];
-    const buffer = Buffer.from(base64, 'base64');
-
-    doc.moveDown(); // optional spacing
-    doc.fontSize(10).text("Signed by:", { align: 'right' });
-
-    const imageWidth = 120;
-    const imageX = doc.page.width - imageWidth - 50; // 50px right margin
-    const imageY = doc.y + 5;
-
-    doc.image(buffer, imageX, imageY, { width: imageWidth });
-  } catch (err) {
-    console.error("❌ Error rendering signature image:", err.message);
-    doc.fontSize(10).text("Signature unavailable", { align: 'right' });
-  }
-}
-
-
-
     doc.end();
   } catch (err) {
     console.error('Error generating EC PDF:', err);
     res.status(500).json({ message: 'Failed to generate certificate' });
   }
 });
-
 
 
 
