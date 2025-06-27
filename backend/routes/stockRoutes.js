@@ -1,7 +1,12 @@
+
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
 const Stock = require('../models/Stock');
 const User = require('../models/User');
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
 // ✅ GET: All stock items with enteredBy as "Name (pen)"
 router.get('/', async (req, res) => {
@@ -24,7 +29,7 @@ router.get('/', async (req, res) => {
     });
 
     res.json(formatted);
-  } catch (err) {
+  }  catch (err) {
     console.error('❌ Error fetching stocks:', err.message);
     res.status(500).send('Server Error');
   }
@@ -46,11 +51,16 @@ router.post('/', async (req, res) => {
       date
     } = req.body;
 
-    if (!pen || !itemType || !itemName || !serialNo || !quantity || !condition || !status || hasWarranty === undefined || !date) {
+    if (
+      !pen || !itemType || !itemName || !serialNo || !quantity || !condition || !status || hasWarranty === undefined || !date
+    ) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
+    const stockId = 'STK-' + Date.now(); // Generate unique stock ID
+
     const newStock = new Stock({
+      stockId,
       pen,
       itemType,
       itemName,
@@ -71,22 +81,63 @@ router.post('/', async (req, res) => {
   }
 });
 
-// ✅ PUT: Update stock item by ID
-router.put('/:id', async (req, res) => {
+// ✅ PUT: Update stock item by MongoDB _id
+router.put('/byStockId/:stockId', async (req, res) => {
+  const { stockId } = req.params;
   try {
-    console.log("🛠️ PUT request received");
-    console.log("➡️ ID:", req.params.id); // 👈 Add this
-    console.log("📦 Data:", req.body);     // 👈 Add this
-
-    const updatedStock = await Stock.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!updatedStock) return res.status(404).send('Stock not found');
-    res.json(updatedStock);
+    const updated = await Stock.findByIdAndUpdate(stockId, req.body, { new: true });
+    if (!updated) return res.status(404).json({ message: 'Stock not found' });
+    res.json(updated);
   } catch (err) {
-    console.error('❌ Error updating stock:', err.message); // 👈 Add this
-    res.status(500).send('Server Error');
+    console.error('Stock update error:', err);
+    res.status(500).json({ error: 'Failed to update stock' });
   }
 });
 
+
+// ✅ PUT: Update stock item by stockId (like purchaseId)
+router.put('/byStockId/:stockId', async (req, res) => {
+  try {
+    const {
+      itemType,
+      itemName,
+      serialNo,
+      quantity,
+      condition,
+      status,
+      hasWarranty,
+      warrantyNumber,
+      date,
+      pen
+    } = req.body;
+
+    const updateData = {
+      itemType,
+      itemName,
+      serialNo,
+      quantity,
+      condition,
+      status,
+      hasWarranty,
+      warrantyNumber,
+      date,
+      pen
+    };
+
+    const updated = await Stock.findOneAndUpdate(
+      { stockId: req.params.stockId },
+      updateData,
+      { new: true }
+    );
+
+    if (!updated) return res.status(404).json({ message: 'Stock item not found' });
+
+    res.json(updated);
+  } catch (err) {
+    console.error('❌ Error updating stock by stockId:', err.message);
+    res.status(500).json({ message: 'Update failed' });
+  }
+});
 // ✅ DELETE: Delete stock item by ID
 router.delete('/:id', async (req, res) => {
   try {

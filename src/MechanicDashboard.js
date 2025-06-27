@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import ResponsiveAppBar from './admindashboardcomponents/ResponsiveAppBar';
+import ResponsiveAppBar from './mechanicdashboardcomponents/ResponsiveAppBar';
 import SkeletonChildren from './admindashboardcomponents/SkeletonUI';
 import SearchVehicleDetails from './repairsectiondashboardcomponents/SearchVehicleDetails';
 import VerifiedUsersTable from './fuelsectiondashboardcomponents/VerifiedUsersTable';
@@ -40,11 +40,49 @@ function MechanicDashboard() {
   const [isEditing, setIsEditing] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
 
+  const [newPhotoFile, setNewPhotoFile] = useState(null);
+  const [newSignatureFile, setNewSignatureFile] = useState(null);
+
+  const toBase64 = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file);
+  });
+};
+
+
+  const handlePhotoChange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 100 * 1024) {
+    alert('Photo must be less than 100 KB');
+    return;
+  }
+  const base64 = await toBase64(file);
+  setMechanicData(prev => ({ ...prev, photo: base64 }));
+  setNewPhotoFile(file);
+};
+
+const handleSignatureChange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 100 * 1024) {
+    alert('Signature must be less than 100 KB');
+    return;
+  }
+  const base64 = await toBase64(file);
+  setMechanicData(prev => ({ ...prev, signature: base64 }));
+  setNewSignatureFile(file);
+};
+
 
   const [mechanicData, setMechanicData] = useState({
     name: '',
     email: '',
     pen: '',
+    generalNo: '',
     phone: '',
     dob: '',
     licenseNo: '',
@@ -65,6 +103,7 @@ function MechanicDashboard() {
       name: localStorage.getItem('mechanicName') || '',
       email: localStorage.getItem('mechanicEmail') || '',
       pen: localStorage.getItem('mechanicPen') || '',
+      generalNo: localStorage.getItem('mechanicGeneralNo') || '',
       phone: localStorage.getItem('mechanicPhone') || '',
       dob: (localStorage.getItem('mechanicDob') || '').substring(0, 10),
       licenseNo: localStorage.getItem('mechanicLicenseNo') || '',
@@ -76,7 +115,7 @@ function MechanicDashboard() {
     });
   }, []);
 
-  useEffect(() => {
+ useEffect(() => {
   const fetchPendingCount = async () => {
     try {
       const response = await fetch('http://localhost:5000/api/repair/mechanicpending/count');
@@ -103,41 +142,64 @@ function MechanicDashboard() {
   };
 
   const handleSave = async () => {
-    try {
-      const response = await fetch('http://localhost:5000/api/users/update', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(mechanicData),
+  try {
+    const formData = new FormData();
+    formData.append('pen', mechanicData.pen);
+    formData.append('name', mechanicData.name);
+    formData.append('email', mechanicData.email);
+    formData.append('phone', mechanicData.phone);
+    formData.append('dob', mechanicData.dob);
+    formData.append('licenseNo', mechanicData.licenseNo);
+
+    // Attach photo
+    if (newPhotoFile) {
+      formData.append('photo', newPhotoFile);
+    } else if (mechanicData.photo) {
+      formData.append('photo', mechanicData.photo); // base64
+    }
+
+    // Attach signature
+    if (newSignatureFile) {
+      formData.append('signature', newSignatureFile);
+    } else if (mechanicData.signature) {
+      formData.append('signature', mechanicData.signature); // base64
+    }
+
+    const response = await fetch('http://localhost:5000/api/users/update-admin', {
+      method: 'PUT',
+      body: formData,
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+      const updated = data;
+
+      // Update localStorage
+      Object.entries(updated).forEach(([key, value]) => {
+        if (key === 'dob') {
+          localStorage.setItem(`mechanic${capitalize(key)}`, (value || '').substring(0, 10));
+        } else {
+          localStorage.setItem(`mechanic${capitalize(key)}`, value || '');
+        }
       });
 
-      const data = await response.json();
-      if (response.ok) {
-        const updated = data.updatedUser;
+      setMechanicData(prev => ({
+        ...prev,
+        ...updated,
+        dob: (updated.dob || '').substring(0, 10)
+      }));
 
-        Object.entries(updated).forEach(([key, value]) => {
-          if (key === 'dob') {
-            localStorage.setItem(`mechanic${capitalize(key)}`, (value || '').substring(0, 10));
-          } else {
-            localStorage.setItem(`mechanic${capitalize(key)}`, value || '');
-          }
-        });
-
-        setMechanicData(prev => ({
-          ...prev,
-          ...updated,
-          dob: (updated.dob || '').substring(0, 10)
-        }));
-
-        alert('Profile updated successfully');
-        setIsEditing(false);
-      } else {
-        alert(data.message || 'Update failed');
-      }
-    } catch (err) {
-      alert('Error while updating profile');
-      console.error(err);
+      alert('Profile updated successfully');
+      setIsEditing(false);
+    } else {
+      alert(data.message || 'Update failed');
     }
-  };
+  } catch (err) {
+    alert('Error while updating profile');
+    console.error(err);
+  }
+};
+
 
   const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
 
@@ -147,14 +209,16 @@ function MechanicDashboard() {
 
   return (
     <div>
-      <ResponsiveAppBar
-        photo={mechanicData.photo}
-        name={mechanicData.name}
-        role={mechanicData.role}
-        isDrawerOpen={isDrawerOpen}
-        onDrawerToggle={() => setIsDrawerOpen(!isDrawerOpen)}
-        onSelectTab={setActiveTab}
-      />
+     <ResponsiveAppBar
+  photo={mechanicData.photo}
+  name={mechanicData.name}
+  role={mechanicData.role}
+  isDrawerOpen={isDrawerOpen}
+  onDrawerToggle={() => setIsDrawerOpen(!isDrawerOpen)}
+  onSelectTab={setActiveTab}
+  pendingRequestCount={pendingCount} // ✅ pass count
+/>
+
 
      <IconButton
   edge="start"
@@ -229,6 +293,7 @@ function MechanicDashboard() {
                 {[
                   { label: 'Name', name: 'name' },
                   { label: 'PEN Number', name: 'pen', readOnly: true },
+                  { label: 'General Number', name: 'generalNo', readOnly: true },
                   { label: 'Email', name: 'email' },
                   { label: 'Mobile', name: 'phone' },
                   { label: 'Date of Birth', name: 'dob', type: 'date' },
@@ -249,8 +314,8 @@ function MechanicDashboard() {
                   </div>
                 ))}
 
-                <button onClick={handleEditToggle} className="edit-btn">
-                  {isEditing ? 'Cancel' : 'Edit'}
+                <button onClick={handleEditToggle} className="submit-btn">
+                  {isEditing ? 'Cancel' : 'Edit Profile'}
                 </button>
                 {isEditing && (
                   <button onClick={handleSave} className="save-btn">Save</button>
@@ -258,15 +323,41 @@ function MechanicDashboard() {
               </div>
 
               <div className="form-right">
-                <div className="upload-section">
-                  <img src={mechanicData.photo || 'https://via.placeholder.com/100'} alt="Profile" className="upload-icon" />
-                  <p>Profile Photo</p>
-                </div>
-                <div className="upload-section">
-                  <img src={mechanicData.signature || 'https://via.placeholder.com/100'} alt="Signature" className="upload-icon" />
-                  <p>Signature</p>
-                </div>
-              </div>
+  <div className="upload-section">
+    <img
+      src={mechanicData.photo || 'https://via.placeholder.com/100'}
+      alt="Profile"
+      className="upload-icon"
+    />
+    <p>Profile Photo</p>
+    {isEditing && (
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handlePhotoChange}
+        style={{ marginTop: '5px' }}
+      />
+    )}
+  </div>
+
+  <div className="upload-section">
+    <img
+      src={mechanicData.signature || 'https://via.placeholder.com/100'}
+      alt="Signature"
+      className="upload-icon"
+    />
+    <p>Signature</p>
+    {isEditing && (
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handleSignatureChange}
+        style={{ marginTop: '5px' }}
+      />
+    )}
+  </div>
+</div>
+
             </div>
           )}
 

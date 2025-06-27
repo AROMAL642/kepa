@@ -5,15 +5,58 @@ import FuelAdmin from './fuelsectiondashboardcomponents/FuelAdmin';
 import FuelPendingRequest from './fuelsectiondashboardcomponents/fuelpendingrequest';
 import SearchVehicleDetails from './fuelsectiondashboardcomponents/SearchVehicleDetails';
 import VerifiedUsersTable from './fuelsectiondashboardcomponents/VerifiedUsersTable';
-
 import './css/admindashboard.css';
 import './css/fueladmin.css';
+
+import LocalGasStationIcon from '@mui/icons-material/LocalGasStation';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import PendingActionsIcon from '@mui/icons-material/PendingActions';
+import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
+import GroupIcon from '@mui/icons-material/Group';
+
 
 function FuelDashboard() {
   const [editMode, setEditMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('pending');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [newPhotoFile, setNewPhotoFile] = useState(null);
+  const [newSignatureFile, setNewSignatureFile] = useState(null);
+
+  const toBase64 = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file);
+  });
+};
+
+
+  const handlePhotoChange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 100 * 1024) {
+    alert('Photo must be less than 100KB');
+    return;
+  }
+  const base64 = await toBase64(file);
+  setFuelData(prev => ({ ...prev, photo: base64 }));
+  setNewPhotoFile(file);
+};
+
+const handleSignatureChange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 100 * 1024) {
+    alert('Signature must be less than 100KB');
+    return;
+  }
+  const base64 = await toBase64(file);
+  setFuelData(prev => ({ ...prev, signature: base64 }));
+  setNewSignatureFile(file);
+};
+
 
   const [fuelData, setFuelData] = useState({
     name: '',
@@ -93,12 +136,23 @@ function FuelDashboard() {
           )}
 
           <div className="sidebar-buttons">
-            <button className={`sidebar-btn ${activeTab === 'fuel' ? 'active' : ''}`} onClick={() => setActiveTab('fuel')}>Fuel Entry Review</button>
-            <button className={`sidebar-btn ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>Profile</button>
-            <button className={`sidebar-btn ${activeTab === 'pending' ? 'active' : ''}`} onClick={() => setActiveTab('pending')}>View Pending Requests</button>
-            <button className={`sidebar-btn ${activeTab === 'vehicle' ? 'active' : ''}`} onClick={() => setActiveTab('vehicle')}>Vehicle Details</button>
-            <button className={`sidebar-btn ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>Users Details</button>
-          </div>
+  <button className={`sidebar-btn ${activeTab === 'fuel' ? 'active' : ''}`} onClick={() => setActiveTab('fuel')}>
+    <LocalGasStationIcon style={{ marginRight: '8px' }} /> Fuel Entry Review
+  </button>
+  <button className={`sidebar-btn ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>
+    <AccountCircleIcon style={{ marginRight: '8px' }} /> Profile
+  </button>
+  <button className={`sidebar-btn ${activeTab === 'pending' ? 'active' : ''}`} onClick={() => setActiveTab('pending')}>
+    <PendingActionsIcon style={{ marginRight: '8px' }} /> View Pending Requests
+  </button>
+  <button className={`sidebar-btn ${activeTab === 'vehicle' ? 'active' : ''}`} onClick={() => setActiveTab('vehicle')}>
+    <DirectionsCarIcon style={{ marginRight: '8px' }} /> Vehicle Details
+  </button>
+  <button className={`sidebar-btn ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>
+    <GroupIcon style={{ marginRight: '8px' }} /> Users Details
+  </button>
+</div>
+
         </div>
 
         {/* Main Content */}
@@ -151,37 +205,58 @@ function FuelDashboard() {
                     <button
                       className="save-btn"
                       onClick={async () => {
-                        try {
-                          const response = await fetch('http://localhost:5000/api/users/update', {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(fuelData),
-                          });
+  try {
+    const formDataObj = new FormData();
+    formDataObj.append('pen', fuelData.pen);
+    formDataObj.append('name', fuelData.name);
+    formDataObj.append('email', fuelData.email);
+    formDataObj.append('phone', fuelData.mobile);
+    formDataObj.append('dob', fuelData.dob);
+    formDataObj.append('licenseNo', fuelData.licenseNo);
 
-                          const data = await response.json();
-                          if (response.ok) {
-                            localStorage.setItem('fuelName', data.updatedUser.name || '');
-                            localStorage.setItem('fuelPen', data.updatedUser.pen || '');
-                            localStorage.setItem('fuelEmail', data.updatedUser.email || '');
-                            localStorage.setItem('fuelPhone', data.updatedUser.phone || '');
-                            localStorage.setItem('fuelDob', (data.updatedUser.dob || '').substring(0, 10));
-                            localStorage.setItem('fuelLicenseNo', data.updatedUser.licenseNo || '');
-                            localStorage.setItem('fuelBloodGroup', data.updatedUser.bloodGroup || '');
-                            localStorage.setItem('fuelGender', data.updatedUser.gender || '');
-                            localStorage.setItem('fuelPhoto', data.updatedUser.photo || '');
-                            localStorage.setItem('fuelSignature', data.updatedUser.signature || '');
-                            localStorage.setItem('fuelRole', data.updatedUser.role || '');
+    if (newPhotoFile) {
+      formDataObj.append('photo', newPhotoFile);
+    } else if (fuelData.photo) {
+      formDataObj.append('photo', fuelData.photo);
+    }
 
-                            alert('Profile updated successfully');
-                            setEditMode(false);
-                          } else {
-                            alert(data.message || 'Update failed');
-                          }
-                        } catch (error) {
-                          alert('An error occurred while updating');
-                          console.error(error);
-                        }
-                      }}
+    if (newSignatureFile) {
+      formDataObj.append('signature', newSignatureFile);
+    } else if (fuelData.signature) {
+      formDataObj.append('signature', fuelData.signature);
+    }
+
+    const response = await fetch('http://localhost:5000/api/users/update-admin', {
+      method: 'PUT',
+      body: formDataObj,
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+      const updated = data;
+      localStorage.setItem('fuelName', updated.name || '');
+      localStorage.setItem('fuelPen', updated.pen || '');
+      localStorage.setItem('fuelEmail', updated.email || '');
+      localStorage.setItem('fuelPhone', updated.phone || '');
+      localStorage.setItem('fuelDob', (updated.dob || '').substring(0, 10));
+      localStorage.setItem('fuelLicenseNo', updated.licenseNo || '');
+      localStorage.setItem('fuelBloodGroup', updated.bloodGroup || '');
+      localStorage.setItem('fuelGender', updated.gender || '');
+      localStorage.setItem('fuelPhoto', updated.photo || '');
+      localStorage.setItem('fuelSignature', updated.signature || '');
+      localStorage.setItem('fuelRole', updated.role || '');
+
+      alert('Profile updated successfully');
+      setEditMode(false);
+    } else {
+      alert(data.message || 'Update failed');
+    }
+  } catch (error) {
+    alert('An error occurred while updating');
+    console.error(error);
+  }
+}}
+
                     >
                       Save Changes
                     </button>
@@ -191,23 +266,40 @@ function FuelDashboard() {
               </div>
 
               <div className="form-right">
-                <div className="upload-section">
-                  <img
-                    src={fuelData.photo || 'https://via.placeholder.com/100'}
-                    alt="Profile"
-                    className="upload-icon"
-                  />
-                  <p>Profile Photo</p>
-                </div>
-                <div className="upload-section">
-                  <img
-                    src={fuelData.signature || 'https://via.placeholder.com/100'}
-                    alt="Signature"
-                    className="upload-icon"
-                  />
-                  <p>Signature</p>
-                </div>
-              </div>
+  <div className="upload-section">
+    <img
+      src={fuelData.photo || 'https://via.placeholder.com/100'}
+      alt="Profile"
+      className="upload-icon"
+    />
+    <p>Profile Photo</p>
+    {editMode && (
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handlePhotoChange}
+        style={{ marginTop: '8px' }}
+      />
+    )}
+  </div>
+  <div className="upload-section">
+    <img
+      src={fuelData.signature || 'https://via.placeholder.com/100'}
+      alt="Signature"
+      className="upload-icon"
+    />
+    <p>Signature</p>
+    {editMode && (
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handleSignatureChange}
+        style={{ marginTop: '8px' }}
+      />
+    )}
+  </div>
+</div>
+
             </div>
           )}
 

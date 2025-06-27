@@ -26,6 +26,44 @@ function RepairDashboard() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
+  const [newPhotoFile, setNewPhotoFile] = useState(null);
+  const [newSignatureFile, setNewSignatureFile] = useState(null);
+  
+
+  const toBase64 = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file);
+  });
+};
+
+  const handlePhotoChange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 100 * 1024) {
+    alert('Photo must be less than 100KB');
+    return;
+  }
+  const base64 = await toBase64(file);
+  setRepairData(prev => ({ ...prev, photo: base64 }));
+  setNewPhotoFile(file);
+};
+
+const handleSignatureChange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 100 * 1024) {
+    alert('Signature must be less than 100KB');
+    return;
+  }
+  const base64 = await toBase64(file);
+  setRepairData(prev => ({ ...prev, signature: base64 }));
+  setNewSignatureFile(file);
+};
+
+
   const [repairData, setRepairData] = useState({
     name: '',
     email: '',
@@ -70,43 +108,64 @@ function RepairDashboard() {
     setIsEditing(!isEditing);
   };
 
-  const handleSave = async () => {
-    try {
-      const response = await fetch('http://localhost:5000/api/users/update', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(repairData),
+ const handleSave = async () => {
+  try {
+    const formDataObj = new FormData();
+    formDataObj.append('pen', repairData.pen);
+    formDataObj.append('name', repairData.name);
+    formDataObj.append('email', repairData.email);
+    formDataObj.append('phone', repairData.phone);
+    formDataObj.append('dob', repairData.dob);
+    formDataObj.append('licenseNo', repairData.licenseNo);
+
+    if (newPhotoFile) {
+      formDataObj.append('photo', newPhotoFile);
+    } else if (repairData.photo) {
+      formDataObj.append('photo', repairData.photo);
+    }
+
+    if (newSignatureFile) {
+      formDataObj.append('signature', newSignatureFile);
+    } else if (repairData.signature) {
+      formDataObj.append('signature', repairData.signature);
+    }
+
+    const response = await fetch('http://localhost:5000/api/users/update-admin', {
+      method: 'PUT',
+      body: formDataObj,
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      const updated = data;
+
+      // Update localStorage
+      Object.entries(updated).forEach(([key, value]) => {
+        if (key === 'dob') {
+          localStorage.setItem(`repair${capitalize(key)}`, (value || '').substring(0, 10));
+        } else {
+          localStorage.setItem(`repair${capitalize(key)}`, value || '');
+        }
       });
 
-      const data = await response.json();
-      if (response.ok) {
-        const updated = data.updatedUser;
+      setRepairData(prev => ({
+        ...prev,
+        ...updated,
+        dob: (updated.dob || '').substring(0, 10)
+      }));
 
-        // Update localStorage
-        Object.entries(updated).forEach(([key, value]) => {
-          if (key === 'dob') {
-            localStorage.setItem(`repair${capitalize(key)}`, (value || '').substring(0, 10));
-          } else {
-            localStorage.setItem(`repair${capitalize(key)}`, value || '');
-          }
-        });
-
-        setRepairData(prev => ({
-          ...prev,
-          ...updated,
-          dob: (updated.dob || '').substring(0, 10)
-        }));
-
-        alert('Profile updated successfully');
-        setIsEditing(false);
-      } else {
-        alert(data.message || 'Update failed');
-      }
-    } catch (err) {
-      alert('Error while updating profile');
-      console.error(err);
+      alert('Profile updated successfully');
+      setIsEditing(false);
+    } else {
+      alert(data.message || 'Update failed');
     }
-  };
+  } catch (err) {
+    alert('Error while updating profile');
+    console.error(err);
+  }
+};
+
 
   const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
 
@@ -203,7 +262,7 @@ function RepairDashboard() {
                   </div>
                 ))}
 
-                <button onClick={handleEditToggle} className="edit-btn">
+                <button onClick={handleEditToggle} className="submit-btn">
                   {isEditing ? 'Cancel' : 'Edit'}
                 </button>
                 {isEditing && (
@@ -212,15 +271,22 @@ function RepairDashboard() {
               </div>
 
               <div className="form-right">
-                <div className="upload-section">
-                  <img src={repairData.photo || 'https://via.placeholder.com/100'} alt="Profile" className="upload-icon" />
-                  <p>Profile Photo</p>
-                </div>
-                <div className="upload-section">
-                  <img src={repairData.signature || 'https://via.placeholder.com/100'} alt="Signature" className="upload-icon" />
-                  <p>Signature</p>
-                </div>
-              </div>
+  <div className="upload-section">
+    <img src={repairData.photo || 'https://via.placeholder.com/100'} alt="Profile" className="upload-icon" />
+    <p>Profile Photo</p>
+    {isEditing && (
+      <input type="file" accept="image/*" onChange={handlePhotoChange} style={{ marginTop: '8px' }} />
+    )}
+  </div>
+  <div className="upload-section">
+    <img src={repairData.signature || 'https://via.placeholder.com/100'} alt="Signature" className="upload-icon" />
+    <p>Signature</p>
+    {isEditing && (
+      <input type="file" accept="image/*" onChange={handleSignatureChange} style={{ marginTop: '8px' }} />
+    )}
+  </div>
+</div>
+
             </div>
           )}
 
