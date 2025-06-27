@@ -32,6 +32,7 @@ const [workBillDialogOpen, setWorkBillDialogOpen] = useState(false);
 const [workBillData, setWorkBillData] = useState(null);
 const [selectedRequest, setSelectedRequest] = useState(null);
 const pendingCount = rows.filter(row => row.status === 'pending').length;
+const mechanicCount = mechanicRequests.filter(req => req.forwardedToMechanic).length;
 
 
 // Define this map once at the top of your component/file
@@ -527,6 +528,12 @@ const handleViewVerifiedBill = (row) => {
     />
   </Box>
 </Button>
+  <Badge
+  badgeContent={mechanicCount}
+  color="error"
+  invisible={mechanicCount === 0}
+  sx={{ marginRight: 2 }}
+>
   <Button
     variant={activeTab === 'mechanic' ? 'contained' : 'outlined'}
     onClick={() => setActiveTab('mechanic')}
@@ -534,6 +541,8 @@ const handleViewVerifiedBill = (row) => {
   >
     Mechanic Requests
   </Button>
+</Badge>
+
   <Button
     variant={activeTab === 'certificates' ? 'contained' : 'outlined'}
     onClick={() => setActiveTab('certificates')}

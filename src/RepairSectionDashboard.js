@@ -28,6 +28,27 @@ function RepairDashboard() {
 
   const [newPhotoFile, setNewPhotoFile] = useState(null);
   const [newSignatureFile, setNewSignatureFile] = useState(null);
+  const [pendingCount, setPendingCount] = useState(0);
+
+useEffect(() => {
+  const fetchPendingRequestsCount = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/repair-request');
+      const data = await res.json();
+      const count = data.filter(req => req.status === 'forwarded_to_repair_section').length;
+      setPendingCount(count);
+    } catch (err) {
+      console.error('Error fetching pending requests:', err);
+    }
+  };
+
+  fetchPendingRequestsCount();
+
+  // Optional: Poll every minute
+  const interval = setInterval(fetchPendingRequestsCount, 60000);
+  return () => clearInterval(interval);
+}, []);
+
   
 
   const toBase64 = (file) => {
@@ -205,11 +226,23 @@ const handleSignatureChange = async (e) => {
               <PersonIcon fontSize="small" style={{ marginRight: '8px' }} />
               Profile
             </button>
+<button
+  className={`sidebar-btn ${activeTab === 'pending' ? 'active' : ''}`}
+  onClick={() => setActiveTab('pending')}
+  style={{ position: 'relative', display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}
+>
+  <span className="icon-label-wrapper">
+    <DescriptionIcon fontSize="small" style={{ marginRight: '8px' }} />
+    View Pending Requests
+  </span>
+  {pendingCount > 0 && (
+    <span className="notification-badge">
+      {pendingCount}
+    </span>
+  )}
+</button>
 
-            <button className={`sidebar-btn ${activeTab === 'pending' ? 'active' : ''}`} onClick={() => setActiveTab('pending')}>
-              <DescriptionIcon fontSize="small" style={{ marginRight: '8px' }} />
-              View Pending Requests
-            </button>
+
 
             <button className={`sidebar-btn ${activeTab === 'vehicle' ? 'active' : ''}`} onClick={() => setActiveTab('vehicle')}>
               <DirectionsCarIcon fontSize="small" style={{ marginRight: '8px' }} />

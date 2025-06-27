@@ -65,8 +65,14 @@ const Expense = ({ onBack, themeStyle }) => {
             penName: `${entry.name || 'N/A'} (${entry.pen || '-'})`,
             amount: entry.amount
           }));
+        } else if (category === 'all') {
+          formattedRows = entries.map((entry, index) => ({
+            id: index + 1,
+            vehicleNo: entry.vehicleNo,
+            category: entry.category,
+            totalExpense: entry.totalExpense
+          }));
         } else {
-          // insurance or pollution
           formattedRows = entries.map((entry, index) => ({
             id: index + 1,
             vehicleNo,
@@ -90,16 +96,17 @@ const Expense = ({ onBack, themeStyle }) => {
 
   const handlePrintReport = () => {
     const doc = new jsPDF();
-    const title = `${category.charAt(0).toUpperCase() + category.slice(1)} Expense Report`;
+    const title = category === 'all' ? 'All Expenses Summary' : `${category.charAt(0).toUpperCase() + category.slice(1)} Expense Report`;
 
     doc.setFontSize(14);
     doc.text(title, 14, 15);
     doc.setFontSize(11);
     doc.text(`Vehicle No: ${vehicleNo}`, 14, 25);
     doc.text(`From: ${fromDate}  To: ${toDate}`, 14, 32);
-    doc.text(`Total ${category} Expense: ₹${total}`, 14, 39);
+    doc.text(`Total Expense: ${total}`, 14, 39);
 
-    let tableHead, tableBody;
+    let tableHead = [];
+    let tableBody = [];
 
     if (category === 'repair') {
       tableHead = [['Vehicle Number', 'Date', 'Expense', 'Worker Wage', 'Total Expense']];
@@ -117,6 +124,13 @@ const Expense = ({ onBack, themeStyle }) => {
         row.date,
         row.penName,
         row.amount
+      ]);
+    } else if (category === 'all') {
+      tableHead = [['Vehicle Number', 'Category', 'Total Expense']];
+      tableBody = rows.map(row => [
+        row.vehicleNo,
+        row.category,
+        row.totalExpense
       ]);
     } else {
       tableHead = [['Vehicle Number', 'Issued Date', 'Policy/Cert No', 'Validity', 'Amount']];
@@ -138,26 +152,38 @@ const Expense = ({ onBack, themeStyle }) => {
     doc.save(`${category}_Expense_Report_${vehicleNo}_${fromDate}_to_${toDate}.pdf`);
   };
 
-  const columns = [
-    { field: 'vehicleNo', headerName: 'Vehicle Number', flex: 1 },
-    { field: 'date', headerName: 'Date', flex: 1 },
-    ...(category === 'repair'
-      ? [
-          { field: 'expense', headerName: 'Expense', flex: 1 },
-          { field: 'workerWage', headerName: 'Worker Wage', flex: 1 },
-          { field: 'totalExpense', headerName: 'Total Expense', flex: 1 }
-        ]
-      : category === 'fuel'
-      ? [
-          { field: 'penName', headerName: 'Name (PEN)', flex: 1.5 },
-          { field: 'amount', headerName: 'Amount', flex: 1 }
-        ]
-      : [
-          { field: 'policyNo', headerName: 'Policy/Cert No', flex: 1 },
-          { field: 'validity', headerName: 'Validity', flex: 1 },
-          { field: 'amount', headerName: 'Amount', flex: 1 }
-        ])
-  ];
+  const columns = (() => {
+    if (category === 'repair') {
+      return [
+        { field: 'vehicleNo', headerName: 'Vehicle Number', flex: 1 },
+        { field: 'date', headerName: 'Date', flex: 1 },
+        { field: 'expense', headerName: 'Expense', flex: 1 },
+        { field: 'workerWage', headerName: 'Worker Wage', flex: 1 },
+        { field: 'totalExpense', headerName: 'Total Expense', flex: 1 }
+      ];
+    } else if (category === 'fuel') {
+      return [
+        { field: 'vehicleNo', headerName: 'Vehicle Number', flex: 1 },
+        { field: 'date', headerName: 'Date', flex: 1 },
+        { field: 'penName', headerName: 'Name (PEN)', flex: 1.5 },
+        { field: 'amount', headerName: 'Amount', flex: 1 }
+      ];
+    } else if (category === 'all') {
+      return [
+        { field: 'vehicleNo', headerName: 'Vehicle Number', flex: 1 },
+        { field: 'category', headerName: 'Category', flex: 1 },
+        { field: 'totalExpense', headerName: 'Total Expense', flex: 1 }
+      ];
+    } else {
+      return [
+        { field: 'vehicleNo', headerName: 'Vehicle Number', flex: 1 },
+        { field: 'date', headerName: 'Issued Date', flex: 1 },
+        { field: 'policyNo', headerName: 'Policy/Cert No', flex: 1 },
+        { field: 'validity', headerName: 'Validity', flex: 1 },
+        { field: 'amount', headerName: 'Amount', flex: 1 }
+      ];
+    }
+  })();
 
   return (
     <Box sx={{ p: 4 }} style={themeStyle}>
@@ -181,6 +207,7 @@ const Expense = ({ onBack, themeStyle }) => {
           <MenuItem value="repair">Repair</MenuItem>
           <MenuItem value="insurance">Insurance</MenuItem>
           <MenuItem value="pollution">Pollution</MenuItem>
+          <MenuItem value="all">All Expense</MenuItem>
         </TextField>
         <TextField
           label="From Date"
@@ -217,7 +244,7 @@ const Expense = ({ onBack, themeStyle }) => {
       ) : rows.length > 0 && (
         <>
           <Typography variant="subtitle1" sx={{ mb: 1 }}>
-            Total {category.charAt(0).toUpperCase() + category.slice(1)} Expense: ₹{total}
+            Total Expense: ₹{total}
           </Typography>
           <Box sx={{ height: 400, width: '100%' }}>
             <DataGrid rows={rows} columns={columns} />
