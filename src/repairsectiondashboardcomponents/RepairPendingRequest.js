@@ -92,6 +92,21 @@ const [isEditingParts, setIsEditingParts] = useState(false);
   const handlePartFieldChange = (index, field, value) => {
   const updatedParts = [...selectedEntry.partsList];
   updatedParts[index][field] = value;
+
+
+  // Automatically calculate kmAfterReplacement if previousMR is updated
+  if (field === 'previousMR') {
+    const previousMR = parseInt(value);
+    const currentMR = parseInt(selectedEntry?.mr);
+
+    if (!isNaN(previousMR) && !isNaN(currentMR)) {
+      updatedParts[index].kmAfterReplacement = currentMR - previousMR;
+    } else {
+      updatedParts[index].kmAfterReplacement = '';
+    }
+  }
+
+
   setSelectedEntry({ ...selectedEntry, partsList: updatedParts });
 };
 
@@ -375,7 +390,14 @@ case 'completed': color = 'success'; label = 'completed '; break;
               <>
                 <td><input type="date" value={part.previousDate || ''} onChange={(e) => handlePartFieldChange(idx, 'previousDate', e.target.value)} /></td>
                 <td><input type="text" value={part.previousMR || ''} onChange={(e) => handlePartFieldChange(idx, 'previousMR', e.target.value)} /></td>
-                <td><input type="text" value={part.kmAfterReplacement || ''} onChange={(e) => handlePartFieldChange(idx, 'kmAfterReplacement', e.target.value)} /></td>
+               <td>
+  <input
+    type="text"
+    value={part.kmAfterReplacement || ''}
+    readOnly
+  />
+</td>
+
               </>
             ) : (
               <>
@@ -472,7 +494,7 @@ case 'completed': color = 'success'; label = 'completed '; break;
         <DialogTitle>Sanction for Work</DialogTitle>
         <DialogContent>
           <Box>
-            <Typography>Upload Sanction Bill:</Typography>
+            <Typography>Upload Order Bill:</Typography>
              <input
         type="file"
         accept=".pdf,.jpg,.png"

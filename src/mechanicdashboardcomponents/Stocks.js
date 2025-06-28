@@ -1,140 +1,87 @@
-// frontend/src/mechanicdashboardcomponents/Stocks.js
-import React, { useState, useEffect } from 'react';
-import '../css/stocks.css';
+import React, { useEffect, useState } from 'react';
+import { DataGrid } from '@mui/x-data-grid';
 import axios from 'axios';
+import { Button } from '@mui/material';
 
-const Stocks = ({ onViewAll }) => {
-  const [formData, setFormData] = useState({
-    pen: '',
-    itemType: '',
-    itemName: '',
-    serialNo: '',
-    quantity: '',
-    condition: '',
-    status: '',
-    warranty: '',
-    warrantyNumber: '',
-    date: '',
-  });
+const AllStocks = () => {
+  const [rows, setRows] = useState([]);
+  const [viewAll, setViewAll] = useState(false);
+
+  const fetchStockData = async () => {
+    try {
+      const res = await axios.get('http://localhost:5000/api/repair-request/mechanic-requests'); // ✅ Correct route
+
+     const filteredRequests = res.data.filter(req =>
+      viewAll
+        ? ['sanctioned_for_work', 'ongoing_work', 'work_completed', 'completed'].includes(req.status)
+        : ['sanctioned_for_work', 'ongoing_work', 'work_completed'].includes(req.status)
+    );
+
+      const extractedRows = [];
+         let globalSerial = 1;
+
+      filteredRequests.forEach((req, ) => {
+        if (req.partsList && Array.isArray(req.partsList)) {
+          req.partsList.forEach((part, partIndex) => {
+            extractedRows.push({
+              id: `${req._id}-${partIndex}`,
+              slno:globalSerial++,
+              vehicleNo: req.vehicleNo || 'N/A',
+              itemName: part.item || 'N/A', // ✅ Correct key
+              quantity: part.quantity || 0,
+              date: part.date
+                ? new Date(part.date).toLocaleDateString()
+                : req.date
+                  ? new Date(req.date).toLocaleDateString()
+                  : 'N/A',
+              status: req.status
+            });
+          });
+        }
+      });
+
+      setRows(extractedRows);
+    } catch (error) {
+      console.error('❌ Error fetching parts data:', error);
+    }
+  };
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('adminData');
-    if (storedUser) {
-      const user = JSON.parse(storedUser);
-      setFormData((prev) => ({ ...prev, pen: user.pen }));
-    }
-  }, []);
+    fetchStockData();
+  }, [viewAll]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-      ...(name === 'warranty' && value === 'No' ? { warrantyNumber: '' } : {}),
-    }));
-  };
-
-  const handleSubmit = async () => {
-    const {
-      pen, itemType, itemName, serialNo, quantity,
-      condition, status, warranty, warrantyNumber, date
-    } = formData;
-
-    if (!itemType || !itemName || !serialNo || !quantity || !condition || !status || !warranty || (warranty === 'Yes' && !warrantyNumber) || !date) {
-      alert("Please fill all required fields including Date");
-      return;
-    }
-
-    try {
-      await axios.post('http://localhost:5000/api/stockroutes', {
-        pen,
-        itemType,
-        itemName,
-        serialNo,
-        quantity: Number(quantity),
-        condition,
-        status,
-        hasWarranty: warranty === 'Yes',
-        warrantyNumber: warranty === 'Yes' ? warrantyNumber : '',
-        date: new Date(date).toISOString()
-      });
-
-      alert("✅ Stock item added successfully");
-
-      setFormData({
-        pen,
-        itemType: '',
-        itemName: '',
-        serialNo: '',
-        quantity: '',
-        condition: '',
-        status: '',
-        warranty: '',
-        warrantyNumber: '',
-        date: ''
-      });
-    } catch (err) {
-      alert("❌ Failed to add stock item");
-      console.error("Backend error:", err);
-    }
-  };
+  const columns = [
+    { field: 'slno', headerName: 'Sl No', width: 80 },
+    { field: 'vehicleNo', headerName: 'Vehicle No', width: 130 },
+    { field: 'itemName', headerName: 'Item Name', width: 180 },
+    { field: 'quantity', headerName: 'Quantity', width: 100 },
+    { field: 'date', headerName: 'Date', width: 130 },
+    { field: 'status', headerName: 'Status', width: 160 },
+  ];
 
   return (
-    <div className="stock-form-container">
-      <div className="stock-form-header">
-        <h2> Unserviceable spare parts Stock Register</h2>
-        <button className="view-all-btn" onClick={onViewAll}>📦 View All Stocks</button>
+    <div style={{ padding: '20px', height: '100vh', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <h2 style={{ margin: 0 }}>🛠️ Stocks of Spare Parts</h2>
+        <Button
+  variant="contained"
+  color="primary"
+  onClick={() => setViewAll(prev => !prev)}
+>
+  {viewAll ? 'View Only Sanctioned' : 'View All'}
+</Button>
+
       </div>
-
-      <div className="form-grid">
-        <select name="itemType" value={formData.itemType} onChange={handleChange}>
-          <option value="">Select Type</option>
-          <option value="Spare Part">Spare Part</option>
-          <option value="Battery">Battery</option>
-          <option value="Oil">Oil</option>
-          <option value="Tyre">Tyre</option>
-        </select>
-
-        <input type="text" name="itemName" placeholder="Item Name" value={formData.itemName} onChange={handleChange} />
-        <input type="text" name="serialNo" placeholder="Serial No." value={formData.serialNo} onChange={handleChange} />
-        <input type="number" name="quantity" placeholder="Quantity" value={formData.quantity} onChange={handleChange} />
-        <input type="date" name="date" value={formData.date} onChange={handleChange} />
-
-        <select name="condition" value={formData.condition} onChange={handleChange}>
-          <option value="">Condition</option>
-          <option value="New">New</option>
-          <option value="Used">Used</option>
-          <option value="Damaged">Damaged</option>
-        </select>
-
-        <select name="status" value={formData.status} onChange={handleChange}>
-          <option value="">Status</option>
-          <option value="Available">Available</option>
-          <option value="In Use">In Use</option>
-          <option value="Damaged">Damaged</option>
-        </select>
-
-        <select name="warranty" value={formData.warranty} onChange={handleChange}>
-          <option value="">Warranty</option>
-          <option value="Yes">Yes</option>
-          <option value="No">No</option>
-        </select>
-
-
-        {formData.warranty === 'Yes' && (
-          <input
-            type="text"
-            name="warrantyNumber"
-            placeholder="Warranty Number"
-            value={formData.warrantyNumber}
-            onChange={handleChange}
-          />
-        )}
-
-        <button onClick={handleSubmit}>➕ Add Stock</button>
+      <div style={{ flexGrow: 1 }}>
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          pageSize={10}
+          rowsPerPageOptions={[5, 10, 20]}
+        />
       </div>
     </div>
   );
 };
 
-export default Stocks;
+export default AllStocks;

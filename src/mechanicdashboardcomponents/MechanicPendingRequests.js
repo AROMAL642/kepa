@@ -42,6 +42,7 @@ const [reverifyReason, setReverifyReason] = useState('');
 const [expense, setExpense] = useState('');
 const [workerWage, setWorkerWage] = useState('');
 
+
   const theme = useTheme(); // ✅ added
   const fullScreen = useMediaQuery(theme.breakpoints.down('md')); // ✅ added
 
@@ -125,6 +126,9 @@ const confirmReverify = () => {
 
 
 
+const removePartRow = (index) => {
+  setPartsList(prev => prev.filter((_, idx) => idx !== index));
+};
 
 
 
@@ -724,6 +728,15 @@ if (rejectedByUser) {
                         value={part.quantity}
                         onChange={(e) => handlePartChange(idx, 'quantity', e.target.value)}
                       />
+                       {partsList.length > 1 && (
+      <Button
+        variant="outlined"
+        color="error"
+        onClick={() => removePartRow(idx)}
+      >
+        Delete
+      </Button>
+    )}
                     </div>
                   ))}
                   <Button sx={{ mt: 1 }} onClick={addPartRow}>+ Add More</Button>

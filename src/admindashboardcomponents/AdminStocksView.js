@@ -1,61 +1,100 @@
 import React, { useEffect, useState } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import axios from 'axios';
-import dayjs from 'dayjs'; 
+import { Button } from '@mui/material';
 
-const AdminStocksView = () => {
+const AdminAllStocks = () => {
   const [rows, setRows] = useState([]);
 
-  useEffect(() => {
-    fetchStocks();
-  }, []);
-
-  const fetchStocks = async () => {
+  const fetchStockData = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/stockroutes');
-      const formatted = res.data.map((item, index) => ({
-        ...item,
-        id: item._id,
-        sl: index + 1,
-      }));
-      setRows(formatted);
-    } catch (err) {
-      console.error('❌ Error fetching stocks:', err.message);
+      const res = await axios.get('http://localhost:5000/api/repair-request/mechanic-requests');
+
+      const allowedStatuses = [
+        'sanctioned_for_work',
+        'ongoing_work',
+        'work_completed',
+        'completed'
+      ];
+
+      const filtered = res.data.filter(
+        (req) =>
+          allowedStatuses.includes(req.status) &&
+          Array.isArray(req.partsList) &&
+          req.partsList.length > 0
+      );
+
+      let serial = 1;
+      const extractedRows = [];
+
+      filtered.forEach((req) => {
+        req.partsList.forEach((part, idx) => {
+          extractedRows.push({
+            id: `${req._id}-${idx}`,
+            slno: serial++,
+            vehicleNo: req.vehicleNo || 'N/A',
+            itemName: part.item || 'N/A',
+            quantity: part.quantity || 0,
+            date: part.date
+              ? new Date(part.date).toLocaleDateString()
+              : req.date
+              ? new Date(req.date).toLocaleDateString()
+              : 'N/A',
+            status: req.status,
+          });
+        });
+      });
+
+      setRows(extractedRows);
+    } catch (error) {
+      console.error('❌ Error fetching stock data:', error);
     }
   };
 
-const columns = [
-  { field: 'sl', headerName: 'SL', width: 70 },
-  { field: 'itemType', headerName: 'Type', width: 130 },
-  { field: 'itemName', headerName: 'Name', width: 150 },
-  { field: 'quantity', headerName: 'Qty', width: 80 },
-  { field: 'condition', headerName: 'Condition', width: 100 },
-  { field: 'status', headerName: 'Status', width: 100 },
-  {
-    field: 'hasWarranty',
-    headerName: 'Warranty',
-    width: 100,
-    renderCell: (params) => (params.value ? 'Yes' : 'No')
-  },
-  { field: 'warrantyNumber', headerName: 'Warranty No', width: 150 },
-  {
-    field: 'date',
-    headerName: 'Date',
-    width: 130,
-    renderCell: (params) =>
-      params.value ? dayjs(params.value).format('DD-MM-YYYY') : ''
-  }
-];
+  useEffect(() => {
+    fetchStockData();
+  }, []);
 
+  const columns = [
+    { field: 'slno', headerName: 'Sl No', width: 80 },
+    { field: 'vehicleNo', headerName: 'Vehicle No', width: 130 },
+    { field: 'itemName', headerName: 'Item Name', width: 180 },
+    { field: 'quantity', headerName: 'Quantity', width: 100 },
+    { field: 'date', headerName: 'Date', width: 130 },
+    { field: 'status', headerName: 'Status', width: 160 },
+  ];
 
   return (
-    <div style={{ padding: 20 }}>
-      <h2 style={{ marginBottom: 20 }}> All Stock Entries </h2>
-      <div style={{ height: 500, width: '100%' }}>
-        <DataGrid rows={rows} columns={columns} pageSize={7} />
+    <div
+      style={{
+        padding: '20px',
+        height: '100vh',
+        boxSizing: 'border-box',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 16,
+        }}
+      >
+        <h2 style={{ margin: 0 }}>🛠️All Stocks </h2>
+       
+      </div>
+      <div style={{ flexGrow: 1 }}>
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          pageSize={10}
+          rowsPerPageOptions={[5, 10, 20]}
+        />
       </div>
     </div>
   );
 };
 
-export default AdminStocksView;
+export default AdminAllStocks;

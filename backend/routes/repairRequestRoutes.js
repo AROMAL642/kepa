@@ -230,6 +230,29 @@ router.get('/forwarded', async (req, res) => {
 });
 
 
+// ✅ GET: Mechanic-submitted requests with partsList and status filtering
+router.get('/mechanic-requests', async (req, res) => {
+  try {
+    const allowedStatuses = [
+      'sanctioned_for_work',
+      'ongoing_work',
+      'work_completed',
+      'completed'
+    ];
+
+    const requests = await RepairRequest.find({
+      status: { $in: allowedStatuses },
+      partsList: { $exists: true, $not: { $size: 0 } }
+    });
+
+    res.json(requests);
+  } catch (err) {
+    console.error('❌ Error fetching mechanic requests:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
 // forward to repair section by MTI Admin
 
 

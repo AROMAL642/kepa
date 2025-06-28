@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useCallback } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import { Badge, Box } from '@mui/material';
@@ -10,7 +11,7 @@ import {
   Typography
 } from '@mui/material';
 
-const RepairTableAdmin = ({ themeStyle }) => {
+const AdminRepairTable = ({ themeStyle }) => {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -34,6 +35,8 @@ const [selectedRequest, setSelectedRequest] = useState(null);
 const pendingCount = rows.filter(row => row.status === 'pending').length;
 const [editMode, setEditMode] = useState(false); // at top of your component
 const [editedParts, setEditedParts] = useState([]);
+
+const [billDialogOpen, setBillDialogOpen] = useState(false);
 
 
 
@@ -115,9 +118,14 @@ const fetchCertificates = async () => {
       description: item.description,
 
        partsList: item.partsList || [],
-      billFile: item.finalBillFile?.data
+    
+
+
+
+finalBillFile: item.finalBillFile?.data
   ? `data:${item.finalBillFile.contentType};base64,${item.finalBillFile.data}`
   : '',
+
   verifiedWorkBill: item.verifiedWorkBill?.data
         ? `data:${item.verifiedWorkBill.contentType};base64,${item.verifiedWorkBill.data}`
         : null,
@@ -191,11 +199,11 @@ const saveEditedParts = async () => {
 
 
 
-  const handleViewDetails = (row) => {
-     console.log('Selected Repair:', row);
-    setSelectedRepair(row);
-    setDialogOpen(true);
-  };
+ const handleViewDetails = (row) => {
+  setSelectedRepair(row);
+  setBillDialogOpen(true);
+};
+
 
   const handleClose = () => {
    
@@ -447,7 +455,7 @@ const handleViewVerifiedBill = (row) => {
             >
               View
             </Button>
-          {/*  <Button
+            <Button
               variant="contained"
               color="success"
               size="small"
@@ -470,7 +478,7 @@ const handleViewVerifiedBill = (row) => {
               disabled={isRejected}
             >
               Reject
-            </Button> */}
+            </Button>
           </>
         );
       }
@@ -483,18 +491,13 @@ const handleViewVerifiedBill = (row) => {
   renderCell: (params) => {
     const hasBill = params.row.verifiedWorkBill;
     return hasBill ? (
-     <Button
-  variant="outlined"
-  size="small"
-  onClick={() => handleViewVerifiedBill(params.row)}
-  style={{
-    backgroundColor: 'green',
-    color: 'white',
-  }}
->
-  View
-</Button>
-
+      <Button
+        variant="outlined"
+        size="small"
+        onClick={() => handleViewVerifiedBill(params.row)}
+      >
+        View
+      </Button>
     ) : (
       <span style={{ color: 'gray' }}>Not Uploaded</span>
     );
@@ -630,8 +633,8 @@ const handleViewVerifiedBill = (row) => {
         <td style={{ padding: 10 }}>{cert.pen}</td>
         <td style={{ padding: 10 }}>{statusStyle(cert.status)}</td>
         
-        <td style={{ padding: 10 }}>
-         {cert.billFile ? (
+       <td style={{ padding: 10 }}>
+ {cert.finalBillFile ? (
   <Button
     variant="outlined"
     onClick={() => {
@@ -645,17 +648,21 @@ const handleViewVerifiedBill = (row) => {
   <Typography variant="body2" color="textSecondary">No File</Typography>
 )}
 
+
+
+
         </td>
         {/* EC column */}
 <td style={{ padding: 10 }}>
-  <Button
+ <Button
     variant="contained"
     color="primary"
     onClick={() => handlePrepareEC(cert._id)}
     disabled={cert.status !== 'for_generating_certificate'}
   >
     Prepare EC & TC
-  </Button>
+  </Button> 
+  
    <Button
     variant="contained"
     style={{
@@ -699,9 +706,8 @@ const handleViewVerifiedBill = (row) => {
 <td style={{ padding: 10 }}>
   {cert.status === 'ongoing_work' || cert.status === 'work_completed' || cert.status === 'completed' ? (
     <Typography style={{ color: 'green', fontWeight: 'bold' }}>✔ Verified</Typography>
-  )
-  /* : cert.status === 'sanctioned_for_work' ? (
-    <Button
+  ) : cert.status === 'sanctioned_for_work' ? (
+    {/*<Button
       variant="outlined"
       onClick={() => {
         setVerifyEntry(cert);
@@ -709,9 +715,8 @@ const handleViewVerifiedBill = (row) => {
       }}
     >
       Verify
-    </Button>
-  )*/
-  : (
+    </Button> */}
+  ) : (
     <Typography variant="body2" color="textSecondary">N/A</Typography>
   )}
 </td>
@@ -732,102 +737,188 @@ const handleViewVerifiedBill = (row) => {
 ) : null}
 
 
-      {/* Repair Request Dialog */}
-      <Dialog open={dialogOpen} onClose={handleClose} fullWidth maxWidth="lg">
-        <DialogTitle>Repair Request Details</DialogTitle>
-        <DialogContent>
-          {selectedRepair && (
-            <>
-              <Typography><strong>Vehicle No:</strong> {selectedRepair.vehicleNo}</Typography>
-              <Typography><strong>PEN:</strong> {selectedRepair.pen}</Typography>
-              <Typography><strong>Date:</strong> {selectedRepair.date}</Typography>
-              <Typography><strong>Subject:</strong> {selectedRepair.subject}</Typography>
-              <Typography><strong>Description:</strong> {selectedRepair.description}</Typography>
-              <Typography><strong>Status:</strong> {selectedRepair.status}</Typography>
-              <br />
-              {Array.isArray(editedParts) && editedParts.length > 0 ? (
-  <>
-    <Typography variant="h6" style={{ marginTop: 16 }}>Replacement Statement of Spares</Typography>
-    <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
-      <thead>
-        <tr>
-          <th style={{ padding: 6 }}>Sl No</th>
-          <th style={{ padding: 6 }}>Item</th>
-          <th style={{ padding: 6 }}>Quantity</th>
-          <th style={{ padding: 6 }}>Previous Date</th>
-          <th style={{ padding: 6 }}>Previous MR</th>
-          <th style={{ padding: 6 }}>KM After Replace</th>
-        </tr>
-      </thead>
-      <tbody>
-        {editedParts.map((part, idx) => (
-          <tr key={idx}>
-            <td style={{ padding: 6 }}>{idx + 1}</td>
-            <td style={{ padding: 6 }}>{part.item}</td>
-            <td style={{ padding: 6 }}>{part.quantity}</td>
-            {editMode ? (
-              <>
-                <td><input type="text" value={part.previousDate || ''} onChange={(e) => handleEditChange(idx, 'previousDate', e.target.value)} /></td>
-                <td><input type="text" value={part.previousMR || ''} onChange={(e) => handleEditChange(idx, 'previousMR', e.target.value)} /></td>
-                <td><input type="text" value={part.kmAfterReplacement || ''} onChange={(e) => handleEditChange(idx, 'kmAfterReplacement', e.target.value)} /></td>
-              </>
-            ) : (
-              <>
-                <td style={{ padding: 6 }}>{part.previousDate || '-'}</td>
-                <td style={{ padding: 6 }}>{part.previousMR || '-'}</td>
-                <td style={{ padding: 6 }}>{part.kmAfterReplacement || '-'}</td>
-              </>
-            )}
-          </tr>
-        ))}
-      </tbody>
-    </table>
-
-    <Box mt={2} display="flex" gap={2}>
-      {!editMode ? (
-        <Button variant="outlined" onClick={() => setEditMode(true)}>
-          ✏️ Edit
-        </Button>
+     
+      <Dialog open={billDialogOpen} onClose={() => setBillDialogOpen(false)} maxWidth="md" fullWidth>
+  <DialogTitle>Uploaded Bill</DialogTitle>
+  <DialogContent dividers>
+    {selectedRepair?.billFile ? (
+      typeof selectedRepair.billFile === 'object' && selectedRepair.billFile.data ? (
+        selectedRepair.billFile.contentType?.includes('pdf') ? (
+          <iframe
+            src={`data:${selectedRepair.billFile.contentType};base64,${selectedRepair.billFile.data}`}
+            title="Bill File"
+            style={{ width: '100%', height: '400px', border: 'none' }}
+          />
+        ) : (
+          <img
+            src={`data:${selectedRepair.billFile.contentType};base64,${selectedRepair.billFile.data}`}
+            alt="Bill"
+            style={{ maxWidth: '100%', height: 'auto', marginTop: 10 }}
+          />
+        )
+      ) : typeof selectedRepair.billFile === 'string' ? (
+        selectedRepair.billFile.includes('.pdf') || selectedRepair.billFile.startsWith('data:application/pdf') ? (
+          <iframe
+            src={selectedRepair.billFile}
+            title="Bill File"
+            style={{ width: '100%', height: '400px', border: 'none' }}
+          />
+        ) : (
+          <img
+            src={selectedRepair.billFile}
+            alt="Bill"
+            style={{ maxWidth: '100%', height: 'auto', marginTop: 10 }}
+          />
+        )
       ) : (
-        <>
-          <Button variant="contained" color="success" onClick={saveEditedParts}>
-            💾 Save
-          </Button>
-          <Button variant="outlined" onClick={() => setEditMode(false)}>
-            Cancel
-          </Button>
-        </>
-      )}
-    </Box>
-  </>
-) : (
-  <Typography variant="body2" color="textSecondary" style={{ marginTop: 8 }}>
-    No parts requested.
-  </Typography>
-)}
+        <Typography color="textSecondary">Unsupported file format</Typography>
+      )
+    ) : (
+      <Typography color="textSecondary">No Bill File Available</Typography>
+    )}
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={() => setBillDialogOpen(false)}>Close</Button>
+  </DialogActions>
+</Dialog>
 
-              {selectedRepair.billFile ? (
-                <iframe
-                  src={selectedRepair.billFile}
-                  title="Bill File"
-                  style={{ width: '100%', height: '400px', border: 'none' }}
-                />
+
+
+
+<Dialog open={dialogOpen} onClose={handleClose} fullWidth maxWidth="lg">
+  <DialogTitle>Repair Request Details</DialogTitle>
+  <DialogContent dividers>
+    {selectedRepair && (
+      <>
+        <Typography><strong>Vehicle No:</strong> {selectedRepair.vehicleNo}</Typography>
+        <Typography><strong>PEN:</strong> {selectedRepair.pen}</Typography>
+        <Typography><strong>Date:</strong> {selectedRepair.date}</Typography>
+        <Typography><strong>Subject:</strong> {selectedRepair.subject}</Typography>
+        <Typography><strong>Description:</strong> {selectedRepair.description}</Typography>
+        <Typography><strong>Status:</strong> {selectedRepair.status}</Typography>
+        <br />
+
+        {/* ✅ Replacement Statement of Spares */}
+        {Array.isArray(editedParts) && editedParts.length > 0 ? (
+          <>
+            <Typography variant="h6" style={{ marginTop: 16 }}>
+              Replacement Statement of Spares
+            </Typography>
+            <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
+              <thead>
+                <tr>
+                  <th style={{ padding: 6 }}>Sl No</th>
+                  <th style={{ padding: 6 }}>Item</th>
+                  <th style={{ padding: 6 }}>Quantity</th>
+                  <th style={{ padding: 6 }}>Previous Date</th>
+                  <th style={{ padding: 6 }}>Previous MR</th>
+                  <th style={{ padding: 6 }}>KM After Replace</th>
+                </tr>
+              </thead>
+              <tbody>
+                {editedParts.map((part, idx) => (
+                  <tr key={idx}>
+                    <td style={{ padding: 6 }}>{idx + 1}</td>
+                    <td style={{ padding: 6 }}>{part.item}</td>
+                    <td style={{ padding: 6 }}>{part.quantity}</td>
+                    {editMode ? (
+                      <>
+                        <td>
+                          <input
+                            type="text"
+                            value={part.previousDate || ''}
+                            onChange={(e) => handleEditChange(idx, 'previousDate', e.target.value)}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="text"
+                            value={part.previousMR || ''}
+                            onChange={(e) => handleEditChange(idx, 'previousMR', e.target.value)}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="text"
+                            value={part.kmAfterReplacement || ''}
+                            onChange={(e) => handleEditChange(idx, 'kmAfterReplacement', e.target.value)}
+                          />
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td style={{ padding: 6 }}>{part.previousDate || '-'}</td>
+                        <td style={{ padding: 6 }}>{part.previousMR || '-'}</td>
+                        <td style={{ padding: 6 }}>{part.kmAfterReplacement || '-'}</td>
+                      </>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <Box mt={2} display="flex" gap={2}>
+              {!editMode ? (
+                <Button variant="outlined" onClick={() => setEditMode(true)}>✏️ Edit</Button>
               ) : (
-                <Typography color="textSecondary">No Bill File Available</Typography>
+                <>
+                  <Button variant="contained" color="success" onClick={saveEditedParts}>💾 Save</Button>
+                  <Button variant="outlined" onClick={() => setEditMode(false)}>Cancel</Button>
+                </>
               )}
-              
+            </Box>
+          </>
+        ) : (
+          <Typography variant="body2" color="textSecondary" style={{ marginTop: 8 }}>
+            No parts requested.
+          </Typography>
+        )}
+
+        {/* ✅ Final Bill File Viewer */}
+       {selectedRepair.finalBillFile ? (
+      selectedRepair.finalBillFile.includes('pdf') ? (
+        <iframe
+          src={selectedRepair.finalBillFile}
+          title="Final Bill"
+          style={{ width: '100%', height: '400px', marginTop: 10, border: 'none' }}
+        />
+      ) : (
+        <img
+          src={selectedRepair.finalBillFile}
+          alt="Final Bill"
+          style={{ maxWidth: '100%', height: 'auto', marginTop: 10 }}
+        />
+      )
+    ) : (
+      <Typography color="textSecondary" sx={{ mt: 2 }}>
+        No final bill uploaded
+      </Typography>
+    )}
+
+        
+      </>
+    )}
+  </DialogContent>
+</Dialog>
 
 
 
 
-            </>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose} variant="contained">Close</Button>
-        </DialogActions>
-      </Dialog>
-      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <Dialog
   open={workBillDialogOpen}
   onClose={() => setWorkBillDialogOpen(false)}
@@ -1058,4 +1149,4 @@ const handleViewVerifiedBill = (row) => {
   );
 };
 
-export default RepairTableAdmin;
+export default AdminRepairTable;

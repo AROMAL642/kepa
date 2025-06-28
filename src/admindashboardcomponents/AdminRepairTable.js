@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useCallback } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import { Badge, Box } from '@mui/material';
@@ -10,7 +11,7 @@ import {
   Typography
 } from '@mui/material';
 
-const RepairAdminTable = ({ themeStyle, onCountsUpdate }) => {
+const AdminRepairTable = ({ themeStyle }) => {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -35,23 +36,10 @@ const pendingCount = rows.filter(row => row.status === 'pending').length;
 const [editMode, setEditMode] = useState(false); // at top of your component
 const [editedParts, setEditedParts] = useState([]);
 
-
-const certificateBadgeCount = certificateRequests.filter(req => req.status === 'for_generating_certificate').length;
-const mechanicCount = mechanicRequests.filter(req => req.forwardedToMechanic).length;
+const [billDialogOpen, setBillDialogOpen] = useState(false);
 
 
 
-// Define this map once at the top of your component/file
-const STATUS_ORDER = {
- 
-  ongoing_work: 3,
-  for_generating_certificate: 4,
-  certificate_ready: 5,
-  Pending_User_Verfication: 6,
-  work_completed: 7,
-  completed: 8
-
-};
 
   
  
@@ -70,13 +58,13 @@ const STATUS_ORDER = {
             description: item.description,
             date: item.date,
             status: item.status || 'pending',
-            // partsList: item.partsList || [],
+             partsList: item.partsList || [],
             billFile: item.billFile?.data
               ? `data:${item.billFile.contentType};base64,${item.billFile.data}`
               : '',
              
               
-          /*     verifiedWorkBill: item.verifiedWorkBill?.data
+               verifiedWorkBill: item.verifiedWorkBill?.data
   ? `data:${item.verifiedWorkBill.contentType};base64,${item.verifiedWorkBill.data}`
   : null,
 
@@ -84,7 +72,7 @@ const STATUS_ORDER = {
      expense: item.expense || '',
 workerWage: item.workerWage || '',
 
-      verifiedWorkBillType: item.verifiedWorkBill?.contentType || '',*/
+      verifiedWorkBillType: item.verifiedWorkBill?.contentType || '',
         
 
           }))
@@ -130,9 +118,14 @@ const fetchCertificates = async () => {
       description: item.description,
 
        partsList: item.partsList || [],
-      billFile: item.finalBillFile?.data
+    
+
+
+
+finalBillFile: item.finalBillFile?.data
   ? `data:${item.finalBillFile.contentType};base64,${item.finalBillFile.data}`
   : '',
+
   verifiedWorkBill: item.verifiedWorkBill?.data
         ? `data:${item.verifiedWorkBill.contentType};base64,${item.verifiedWorkBill.data}`
         : null,
@@ -160,37 +153,19 @@ setCertificateRequests(formatted);
 
 
 
-
-
-useEffect(() => {
-  fetchRepairs();
-  fetchMechanicRequests();
-  fetchCertificates();
-}, [fetchRepairs, fetchMechanicRequests]);
-
-// After all fetches complete and states are populated
-useEffect(() => {
-  if (typeof onCountsUpdate === 'function') {
-    const repairCount = rows.filter(row => row.status === 'pending').length;
-    const mechanicCount = mechanicRequests.filter(req => req.forwardedToMechanic).length;
-    const certificateCount = certificateRequests.filter(req => req.status === 'for_generating_certificate').length;
-
-    onCountsUpdate({
-      repair: repairCount,
-      mechanic: mechanicCount,
-      certificate: certificateCount
-    });
-  }
-}, [rows, mechanicRequests, certificateRequests]);
+  useEffect(() => {
+    fetchRepairs();
+    fetchMechanicRequests();
+  }, [fetchRepairs, fetchMechanicRequests]);
 
 
  // for certificates
-//useEffect(() => {
-  //if (activeTab === 'certificates') {
-    //fetchCertificates();
-    //console.log("Fetching certificates because tab is active");
- // }
-//}, [activeTab]);
+useEffect(() => {
+  if (activeTab === 'certificates') {
+    fetchCertificates();
+    console.log("Fetching certificates because tab is active");
+  }
+}, [activeTab]);
 
 useEffect(() => {
   if (selectedRepair?.partsList) {
@@ -224,11 +199,11 @@ const saveEditedParts = async () => {
 
 
 
-  const handleViewDetails = (row) => {
-    
-    setSelectedRepair(row);
-    setDialogOpen(true);
-  };
+ const handleViewDetails = (row) => {
+  setSelectedRepair(row);
+  setBillDialogOpen(true);
+};
+
 
   const handleClose = () => {
    
@@ -312,8 +287,8 @@ const generateCertificates = async (id) => {
 
 
 
-  //const handlePrepareEC = async (id) => {
-    //await generateCertificates(id);};
+  const handlePrepareEC = async (id) => {
+    await generateCertificates(id);};
 
   const handleViewEC = (id) => {
    window.open(`http://localhost:5000/api/repair-request/${id}/view-ec`, '_blank');
@@ -478,7 +453,7 @@ const handleViewVerifiedBill = (row) => {
               onClick={() => handleViewDetails(params.row)}
               style={{ marginRight: 8 }}
             >
-              View 
+              View
             </Button>
             <Button
               variant="contained"
@@ -533,6 +508,19 @@ const handleViewVerifiedBill = (row) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
   ];
 
   return (
@@ -566,12 +554,6 @@ const handleViewVerifiedBill = (row) => {
     />
   </Box>
 </Button>
-  <Badge
-  badgeContent={mechanicCount}
-  color="error"
-  invisible={mechanicCount === 0}
-  sx={{ marginRight: 2 }}
->
   <Button
     variant={activeTab === 'mechanic' ? 'contained' : 'outlined'}
     onClick={() => setActiveTab('mechanic')}
@@ -579,40 +561,25 @@ const handleViewVerifiedBill = (row) => {
   >
     Mechanic Requests
   </Button>
-</Badge>
-
- <Badge
-  badgeContent={certificateBadgeCount}
-  color="error"
-  invisible={certificateBadgeCount === 0}
-  sx={{ marginRight: 2 }}
->
   <Button
     variant={activeTab === 'certificates' ? 'contained' : 'outlined'}
     onClick={() => setActiveTab('certificates')}
   >
     Certificates
   </Button>
-</Badge>
-
 </div>
 
 
      {activeTab === 'repair' ? (
   <div style={{ height: 600 }}>
-<DataGrid
-  rows={[...rows].sort((a, b) => {
-    const aPriority = a.status === 'pending' ? 0 : 1;
-    const bPriority = b.status === 'pending' ? 0 : 1;
-    return aPriority - bPriority;
-  })}
-  columns={columns}
-  loading={loading}
-  pageSize={5}
-  rowsPerPageOptions={[5, 10]}
-  style={{ background: themeStyle?.background, color: themeStyle?.color }}
-/>
-
+    <DataGrid
+      rows={rows}
+      columns={columns}
+      loading={loading}
+      pageSize={5}
+      rowsPerPageOptions={[5, 10]}
+      style={{ background: themeStyle?.background, color: themeStyle?.color }}
+    />
   </div>
 ) : activeTab === 'mechanic' ? (
   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -659,31 +626,15 @@ const handleViewVerifiedBill = (row) => {
     </tr>
   </thead>
   <tbody>
-    {[...certificateRequests]
-  .sort((a, b) => {
-    const statusOrder = {
-      for_generating_certificate: 0,
-      certificate_ready: 1,
-      waiting_for_sanction: 2,
-      sanctioned_for_work: 3,
-      ongoing_work: 4,
-      Pending_User_Verification: 5,
-      work_completed: 6,
-      completed: 7
-    };
-
-    return (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99);
-  })
-  .map((cert, index) => (
-
+    {certificateRequests.map((cert, index) => (
       <tr key={cert._id}>
         <td style={{ padding: 10 }}>{cert.slNo}</td>
         <td style={{ padding: 10 }}>{cert.date}</td>
         <td style={{ padding: 10 }}>{cert.pen}</td>
         <td style={{ padding: 10 }}>{statusStyle(cert.status)}</td>
         
-        <td style={{ padding: 10 }}>
-         {cert.billFile ? (
+       <td style={{ padding: 10 }}>
+ {cert.finalBillFile ? (
   <Button
     variant="outlined"
     onClick={() => {
@@ -697,11 +648,12 @@ const handleViewVerifiedBill = (row) => {
   <Typography variant="body2" color="textSecondary">No File</Typography>
 )}
 
+
+
+
         </td>
         {/* EC column */}
 <td style={{ padding: 10 }}>
-
-
  {/* <Button
     variant="contained"
     color="primary"
@@ -709,9 +661,8 @@ const handleViewVerifiedBill = (row) => {
     disabled={cert.status !== 'for_generating_certificate'}
   >
     Prepare EC & TC
-  </Button>*/}
-
-
+  </Button> */}
+  
    <Button
     variant="contained"
     style={{
@@ -755,8 +706,7 @@ const handleViewVerifiedBill = (row) => {
 <td style={{ padding: 10 }}>
   {cert.status === 'ongoing_work' || cert.status === 'work_completed' || cert.status === 'completed' ? (
     <Typography style={{ color: 'green', fontWeight: 'bold' }}>✔ Verified</Typography>
-  ) 
-  : cert.status === 'sanctioned_for_work' ? (
+  ) : cert.status === 'sanctioned_for_work' ? (
     <Button
       variant="outlined"
       onClick={() => {
@@ -766,11 +716,19 @@ const handleViewVerifiedBill = (row) => {
     >
       Verify
     </Button>
-  )
-   : (
+  ) : (
     <Typography variant="body2" color="textSecondary">N/A</Typography>
   )}
 </td>
+
+
+
+
+
+
+
+
+        
       </tr>
     ))}
   </tbody>
@@ -779,107 +737,188 @@ const handleViewVerifiedBill = (row) => {
 ) : null}
 
 
-
-
-      {/* Repair Request Dialog */}
-      <Dialog open={dialogOpen} onClose={handleClose} fullWidth maxWidth="lg">
-        <DialogTitle>Repair Request Details</DialogTitle>
-        <DialogContent>
-          
-          {selectedRepair && (
-            <>
-              <Typography><strong>Vehicle No:</strong> {selectedRepair.vehicleNo}</Typography>
-              <Typography><strong>PEN:</strong> {selectedRepair.pen}</Typography>
-              <Typography><strong>Date:</strong> {selectedRepair.date}</Typography>
-              <Typography><strong>Subject:</strong> {selectedRepair.subject}</Typography>
-              <Typography><strong>Description:</strong> {selectedRepair.description}</Typography>
-              <Typography><strong>Status:</strong> {selectedRepair.status}</Typography>
-              <br />
-{selectedRepair.billFile ? (
-                <iframe
-                  src={selectedRepair.billFile}
-                  title="Bill File"
-                  style={{ width: '100%', height: '400px', border: 'none' }}
-                />
-              ) : (
-                <Typography color="textSecondary">No Bill File Available</Typography>
-              )}
-              
-              {Array.isArray(editedParts) && editedParts.length > 0 ? (
-  <>
-    <Typography variant="h6" style={{ marginTop: 16 }}>Replacement Statement of Spares</Typography>
-    <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
-      <thead>
-        <tr>
-          <th style={{ padding: 6 }}>Sl No</th>
-          <th style={{ padding: 6 }}>Item</th>
-          <th style={{ padding: 6 }}>Quantity</th>
-          <th style={{ padding: 6 }}>Previous Date</th>
-          <th style={{ padding: 6 }}>Previous MR</th>
-          <th style={{ padding: 6 }}>KM After Replace</th>
-        </tr>
-      </thead>
-      <tbody>
-        {editedParts.map((part, idx) => (
-          <tr key={idx}>
-            <td style={{ padding: 6 }}>{idx + 1}</td>
-            <td style={{ padding: 6 }}>{part.item}</td>
-            <td style={{ padding: 6 }}>{part.quantity}</td>
-            {editMode ? (
-              <>
-                <td><input type="text" value={part.previousDate || ''} onChange={(e) => handleEditChange(idx, 'previousDate', e.target.value)} /></td>
-                <td><input type="text" value={part.previousMR || ''} onChange={(e) => handleEditChange(idx, 'previousMR', e.target.value)} /></td>
-                <td><input type="text" value={part.kmAfterReplacement || ''} onChange={(e) => handleEditChange(idx, 'kmAfterReplacement', e.target.value)} /></td>
-              </>
-            ) : (
-              <>
-                <td style={{ padding: 6 }}>{part.previousDate || '-'}</td>
-                <td style={{ padding: 6 }}>{part.previousMR || '-'}</td>
-                <td style={{ padding: 6 }}>{part.kmAfterReplacement || '-'}</td>
-              </>
-            )}
-          </tr>
-        ))}
-      </tbody>
-    </table>
-
-    <Box mt={2} display="flex" gap={2}>
-      {!editMode ? (
-        <Button variant="outlined" onClick={() => setEditMode(true)}>
-           Edit
-        </Button>
+     
+      <Dialog open={billDialogOpen} onClose={() => setBillDialogOpen(false)} maxWidth="md" fullWidth>
+  <DialogTitle>Uploaded Bill</DialogTitle>
+  <DialogContent dividers>
+    {selectedRepair?.billFile ? (
+      typeof selectedRepair.billFile === 'object' && selectedRepair.billFile.data ? (
+        selectedRepair.billFile.contentType?.includes('pdf') ? (
+          <iframe
+            src={`data:${selectedRepair.billFile.contentType};base64,${selectedRepair.billFile.data}`}
+            title="Bill File"
+            style={{ width: '100%', height: '400px', border: 'none' }}
+          />
+        ) : (
+          <img
+            src={`data:${selectedRepair.billFile.contentType};base64,${selectedRepair.billFile.data}`}
+            alt="Bill"
+            style={{ maxWidth: '100%', height: 'auto', marginTop: 10 }}
+          />
+        )
+      ) : typeof selectedRepair.billFile === 'string' ? (
+        selectedRepair.billFile.includes('.pdf') || selectedRepair.billFile.startsWith('data:application/pdf') ? (
+          <iframe
+            src={selectedRepair.billFile}
+            title="Bill File"
+            style={{ width: '100%', height: '400px', border: 'none' }}
+          />
+        ) : (
+          <img
+            src={selectedRepair.billFile}
+            alt="Bill"
+            style={{ maxWidth: '100%', height: 'auto', marginTop: 10 }}
+          />
+        )
       ) : (
-        <>
-          <Button variant="contained" color="success" onClick={saveEditedParts}>
-            💾 Save
-          </Button>
-          <Button variant="outlined" onClick={() => setEditMode(false)}>
-            Cancel
-          </Button>
-        </>
-      )}
-    </Box>
-  </>
-) : (
-  <Typography variant="body2" color="textSecondary" style={{ marginTop: 8 }}>
-    No parts requested.
-  </Typography>
-)}
-
-             
-              
+        <Typography color="textSecondary">Unsupported file format</Typography>
+      )
+    ) : (
+      <Typography color="textSecondary">No Bill File Available</Typography>
+    )}
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={() => setBillDialogOpen(false)}>Close</Button>
+  </DialogActions>
+</Dialog>
 
 
 
 
-            </>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose} variant="contained">Close</Button>
-        </DialogActions>
-      </Dialog>
-      
+<Dialog open={dialogOpen} onClose={handleClose} fullWidth maxWidth="lg">
+  <DialogTitle>Repair Request Details</DialogTitle>
+  <DialogContent dividers>
+    {selectedRepair && (
+      <>
+        <Typography><strong>Vehicle No:</strong> {selectedRepair.vehicleNo}</Typography>
+        <Typography><strong>PEN:</strong> {selectedRepair.pen}</Typography>
+        <Typography><strong>Date:</strong> {selectedRepair.date}</Typography>
+        <Typography><strong>Subject:</strong> {selectedRepair.subject}</Typography>
+        <Typography><strong>Description:</strong> {selectedRepair.description}</Typography>
+        <Typography><strong>Status:</strong> {selectedRepair.status}</Typography>
+        <br />
+
+        {/* ✅ Replacement Statement of Spares */}
+        {Array.isArray(editedParts) && editedParts.length > 0 ? (
+          <>
+            <Typography variant="h6" style={{ marginTop: 16 }}>
+              Replacement Statement of Spares
+            </Typography>
+            <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
+              <thead>
+                <tr>
+                  <th style={{ padding: 6 }}>Sl No</th>
+                  <th style={{ padding: 6 }}>Item</th>
+                  <th style={{ padding: 6 }}>Quantity</th>
+                  <th style={{ padding: 6 }}>Previous Date</th>
+                  <th style={{ padding: 6 }}>Previous MR</th>
+                  <th style={{ padding: 6 }}>KM After Replace</th>
+                </tr>
+              </thead>
+              <tbody>
+                {editedParts.map((part, idx) => (
+                  <tr key={idx}>
+                    <td style={{ padding: 6 }}>{idx + 1}</td>
+                    <td style={{ padding: 6 }}>{part.item}</td>
+                    <td style={{ padding: 6 }}>{part.quantity}</td>
+                    {editMode ? (
+                      <>
+                        <td>
+                          <input
+                            type="text"
+                            value={part.previousDate || ''}
+                            onChange={(e) => handleEditChange(idx, 'previousDate', e.target.value)}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="text"
+                            value={part.previousMR || ''}
+                            onChange={(e) => handleEditChange(idx, 'previousMR', e.target.value)}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="text"
+                            value={part.kmAfterReplacement || ''}
+                            onChange={(e) => handleEditChange(idx, 'kmAfterReplacement', e.target.value)}
+                          />
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td style={{ padding: 6 }}>{part.previousDate || '-'}</td>
+                        <td style={{ padding: 6 }}>{part.previousMR || '-'}</td>
+                        <td style={{ padding: 6 }}>{part.kmAfterReplacement || '-'}</td>
+                      </>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <Box mt={2} display="flex" gap={2}>
+              {!editMode ? (
+                <Button variant="outlined" onClick={() => setEditMode(true)}>✏️ Edit</Button>
+              ) : (
+                <>
+                  <Button variant="contained" color="success" onClick={saveEditedParts}>💾 Save</Button>
+                  <Button variant="outlined" onClick={() => setEditMode(false)}>Cancel</Button>
+                </>
+              )}
+            </Box>
+          </>
+        ) : (
+          <Typography variant="body2" color="textSecondary" style={{ marginTop: 8 }}>
+            No parts requested.
+          </Typography>
+        )}
+
+        {/* ✅ Final Bill File Viewer */}
+       {selectedRepair.finalBillFile ? (
+      selectedRepair.finalBillFile.includes('pdf') ? (
+        <iframe
+          src={selectedRepair.finalBillFile}
+          title="Final Bill"
+          style={{ width: '100%', height: '400px', marginTop: 10, border: 'none' }}
+        />
+      ) : (
+        <img
+          src={selectedRepair.finalBillFile}
+          alt="Final Bill"
+          style={{ maxWidth: '100%', height: 'auto', marginTop: 10 }}
+        />
+      )
+    ) : (
+      <Typography color="textSecondary" sx={{ mt: 2 }}>
+        No final bill uploaded
+      </Typography>
+    )}
+
+        
+      </>
+    )}
+  </DialogContent>
+</Dialog>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <Dialog
   open={workBillDialogOpen}
   onClose={() => setWorkBillDialogOpen(false)}
@@ -955,11 +994,8 @@ const handleViewVerifiedBill = (row) => {
       >
         Download
       </Button>
-      
     )}
-    
     <Button onClick={() => setWorkBillDialogOpen(false)}>Close</Button>
-
   </DialogActions>
 </Dialog>
 
@@ -1113,4 +1149,4 @@ const handleViewVerifiedBill = (row) => {
   );
 };
 
-export default RepairAdminTable;
+export default AdminRepairTable;
