@@ -674,7 +674,7 @@ const handleViewVerifiedBill = (row) => {
     disabled={
       ![
         'certificate_ready', 'waiting_for_sanction', 'sanctioned_for_work',
-        'ongoing_work', 'Pending User Verification', 'work complete', 'completed'
+        'ongoing_work', 'Pending User Verification', 'work completed', 'completed'
       ].includes(cert.status)
     }
   >
@@ -692,7 +692,7 @@ const handleViewVerifiedBill = (row) => {
     disabled={
       ![
         'certificate_ready', 'waiting_for_sanction', 'sanctioned_for_work',
-        'ongoing_work', 'Pending User Verification', 'work complete', 'completed'
+        'ongoing_work', 'Pending User Verification', 'work completed', 'completed'
       ].includes(cert.status)
     }
   >
