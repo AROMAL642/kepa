@@ -654,7 +654,7 @@ const handleViewVerifiedBill = (row) => {
         </td>
         {/* EC column */}
 <td style={{ padding: 10 }}>
- {/* <Button
+  {/*<Button
     variant="contained"
     color="primary"
     onClick={() => handlePrepareEC(cert._id)}
@@ -662,7 +662,7 @@ const handleViewVerifiedBill = (row) => {
   >
     Prepare EC & TC
   </Button> */}
-  
+
    <Button
     variant="contained"
     style={{
@@ -674,7 +674,7 @@ const handleViewVerifiedBill = (row) => {
     disabled={
       ![
         'certificate_ready', 'waiting_for_sanction', 'sanctioned_for_work',
-        'ongoing_work', 'Pending User Verification', 'work complete', 'completed'
+        'ongoing_work', 'Pending User Verification', 'work completed', 'completed'
       ].includes(cert.status)
     }
   >
@@ -692,7 +692,7 @@ const handleViewVerifiedBill = (row) => {
     disabled={
       ![
         'certificate_ready', 'waiting_for_sanction', 'sanctioned_for_work',
-        'ongoing_work', 'Pending User Verification', 'work complete', 'completed'
+        'ongoing_work', 'Pending User Verification', 'work completed', 'completed'
       ].includes(cert.status)
     }
   >
