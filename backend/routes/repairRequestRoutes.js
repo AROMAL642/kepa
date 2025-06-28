@@ -786,6 +786,7 @@ router.put('/:id/send-to-user', async (req, res) => {
 
 
 
+ // make sure this path is correct
 
 router.get('/:id/view-ec', async (req, res) => {
   try {
@@ -808,14 +809,19 @@ router.get('/:id/view-ec', async (req, res) => {
       await request.save();
     }
 
-    const doc = new PDFDocument({ size: 'A4', margin: 50 });
+    // 🧑‍💼 Fetch the signing officer's user (role: admin or mti)
+    const user = await User.findOne({ role: { $in: ['admin', 'mti'] } });
+    if (!user || !user.signature) {
+      return res.status(404).json({ message: 'Authorized user with signature not found' });
+    }
 
+    // 📄 Setup PDF
+    const doc = new PDFDocument({ size: 'A4', margin: 50 });
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `inline; filename="Essentiality_Certificate_${request.vehicleNo}.pdf"`);
-
     doc.pipe(res);
 
-    // ✅ Header with certificate number
+    // ✅ Header
     doc.fontSize(12).text(
       `No. ${request.certificateSerial} /${currentYear}/AD(T&MTS)/KEPA`,
       { align: 'right' }
@@ -871,6 +877,39 @@ router.get('/:id/view-ec', async (req, res) => {
       startY += 25;
     });
 
+    doc.moveDown(3);
+
+    // === Add Digital Signature ===
+    const base64Data = user.signature.split(';base64,').pop(); // remove data:image/png;base64
+    const signatureBuffer = Buffer.from(base64Data, 'base64');
+
+    const signatureWidth = 120;
+const signatureHeight = 50;
+const paddingRight = 70; // distance from right edge
+
+// Align everything to this X-coordinate
+const signatureX = doc.page.width - signatureWidth - paddingRight;
+let signatureY = doc.y;
+
+// Place signature image
+doc.image(signatureBuffer, signatureX, signatureY, {
+  width: signatureWidth,
+  height: signatureHeight
+});
+
+// Space below image before text
+signatureY += signatureHeight + 5;
+
+// Set font
+doc.fontSize(10).font('Helvetica');
+
+// Add text directly below the image, same X
+doc.text('Signature', signatureX, signatureY);
+doc.text(user.name, signatureX, signatureY + 15);
+doc.text('Kerala Police Academy', signatureX, signatureY + 30);
+
+    //doc.text('Kerala Police Academy', signatureX, signatureY + 100);
+//doc.text('Asst. Director (T & MT Studies)', signatureX, signatureY + 85);
     doc.end();
   } catch (err) {
     console.error('Error generating EC PDF:', err);
