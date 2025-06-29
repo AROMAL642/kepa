@@ -18,8 +18,9 @@ import NotificationPage from './userdashboardcomponents/NotificationPage';
 import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
 import Stocks from './mechanicdashboardcomponents/Stocks';
 import ViewAllStocks from './mechanicdashboardcomponents/ViewAllStocks';
+import UserQuickAccess from './userdashboardcomponents/UserQuickAccess';
 
-
+import DashboardIcon from '@mui/icons-material/Dashboard';
 import PersonIcon from '@mui/icons-material/Person';
 import LocalGasStationIcon from '@mui/icons-material/LocalGasStation';
 import MiscellaneousServicesIcon from '@mui/icons-material/MiscellaneousServices';
@@ -37,7 +38,7 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 
 
 function UserDashboard() {
-  const [activeTab, setActiveTab] = useState('profile');
+  const [activeTab, setActiveTab] = useState('quickaccess');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const navigate = useNavigate();
   const [editMode, setEditMode] = useState(false);
@@ -152,6 +153,7 @@ useEffect(() => {
   };
 
   const tabMap = [
+  { key: 'quickaccess', label: 'Dashboard', icon: <DashboardIcon /> },
   { key: 'profile', label: 'Profile', icon: <PersonIcon /> },
   { key: 'fuel', label: 'Fuel', icon: <LocalGasStationIcon /> },
   { key: 'repair', label: 'Request for Repair', icon: <MiscellaneousServicesIcon /> },
@@ -355,6 +357,11 @@ useEffect(() => {
 
             </div>
           )}
+
+          {activeTab === 'quickaccess' && (
+  <UserQuickAccess onSelectTab={setActiveTab} expiredCertCount={expiredCertCount} />
+)}
+
 
           {activeTab === 'movement' && (
             <div className="movement-section">

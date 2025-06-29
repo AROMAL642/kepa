@@ -40,9 +40,11 @@ function ResponsiveAppBar({
     if (setting === 'Logout') {
       localStorage.clear();
       navigate('/');
-    } else if (onSelectTab && setting.toLowerCase()) {
-      onSelectTab(setting.toLowerCase());
-    }
+    } else if (onSelectTab) {
+  const tabKey = setting === 'Dashboard' ? 'quickaccess' : setting.toLowerCase();
+  onSelectTab(tabKey);
+}
+
   };
 
   return (
