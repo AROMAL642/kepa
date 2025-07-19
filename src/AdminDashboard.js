@@ -96,7 +96,7 @@ function AdminDashboard() {
     fetchPendingAccidentCount();
     fetchRepairPendingCount();
     fetchExpiredCertCount();
-    
+    fetchRepairCombinedCount(); // fetch the new combined count
 
     return () => clearTimeout(timer);
   }, []);
@@ -158,7 +158,15 @@ const fetchRepairPendingCount = async () => {
   }
 };
 
-
+const fetchRepairCombinedCount = async () => {
+  try {
+    const res = await fetch('http://localhost:5000/api/repair/pending/sumcount');
+    const data = await res.json();
+    setRepairCombinedCount(data.count || 0);
+  } catch (error) {
+    console.error('Error fetching repair combined count:', error);
+  }
+};
 
 
   const fetchVerifiedUsers = async () => {
