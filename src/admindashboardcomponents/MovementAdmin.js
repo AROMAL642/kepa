@@ -40,7 +40,7 @@ const MovementAdmin = ({ darkMode }) => {
             movement.endingkm != null && movement.startingkm != null
               ? movement.endingkm - movement.startingkm
               : 'N/A',
-          displayStatus: movement.status === 'Active' ? 'In Trip' : 'Complete'
+          displayStatus: movement.status === 'Active' ? 'On Trip' : 'Complete' // changed here
         }));
 
         setMovements(transformedData);
@@ -68,7 +68,7 @@ const MovementAdmin = ({ darkMode }) => {
       renderCell: (params) => (
         <Chip
           label={params.value}
-          color={params.value === 'In Trip' ? 'primary' : 'success'}
+          color={params.value === 'On Trip' ? 'primary' : 'success'} // changed here
           variant="outlined"
           sx={{ pointerEvents: 'none' }}
         />
@@ -177,7 +177,7 @@ const MovementAdmin = ({ darkMode }) => {
                   <strong>Status:</strong>
                   <Chip
                     label={selectedEntry.displayStatus}
-                    color={selectedEntry.displayStatus === 'In Trip' ? 'primary' : 'success'}
+                    color={selectedEntry.displayStatus === 'On Trip' ? 'primary' : 'success'} // changed here
                     variant="outlined"
                     sx={{ ml: 1, pointerEvents: 'none' }}
                   />

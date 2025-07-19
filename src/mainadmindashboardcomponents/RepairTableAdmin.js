@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useCallback } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import { Badge, Box } from '@mui/material';
@@ -38,8 +37,7 @@ const [editedParts, setEditedParts] = useState([]);
 
 const [billDialogOpen, setBillDialogOpen] = useState(false);
 
-
-
+const certificateGenCount = certificateRequests.filter(r => (r.status || '').toLowerCase() === 'for_generating_certificate').length;
 
   
  
@@ -47,7 +45,7 @@ const [billDialogOpen, setBillDialogOpen] = useState(false);
     try {
       const res = await fetch('http://localhost:5000/api/repair-request');
       const data = await res.json();
-      const formatted = Array.isArray(data)
+      let formatted = Array.isArray(data)
         ? data.map((item, index) => ({
             id: item._id || index,
             slNo: index + 1,
@@ -58,26 +56,24 @@ const [billDialogOpen, setBillDialogOpen] = useState(false);
             description: item.description,
             date: item.date,
             status: item.status || 'pending',
-             partsList: item.partsList || [],
+            partsList: item.partsList || [],
             billFile: item.billFile?.data
               ? `data:${item.billFile.contentType};base64,${item.billFile.data}`
               : '',
-             
-              
-               verifiedWorkBill: item.verifiedWorkBill?.data
-  ? `data:${item.verifiedWorkBill.contentType};base64,${item.verifiedWorkBill.data}`
-  : null,
-
-          
-     expense: item.expense || '',
-workerWage: item.workerWage || '',
-
-      verifiedWorkBillType: item.verifiedWorkBill?.contentType || '',
-        
-
+            verifiedWorkBill: item.verifiedWorkBill?.data
+              ? `data:${item.verifiedWorkBill.contentType};base64,${item.verifiedWorkBill.data}`
+              : null,
+            expense: item.expense || '',
+            workerWage: item.workerWage || '',
+            verifiedWorkBillType: item.verifiedWorkBill?.contentType || '',
           }))
         : [];
-
+      // Sort so that 'pending' status rows are always on top
+      formatted = formatted.sort((a, b) => {
+        if (a.status === 'pending' && b.status !== 'pending') return -1;
+        if (a.status !== 'pending' && b.status === 'pending') return 1;
+        return 0;
+      });
       setRows(formatted);
     } catch (err) {
       console.error('Error fetching repair requests:', err);
@@ -557,15 +553,40 @@ const handleViewVerifiedBill = (row) => {
   <Button
     variant={activeTab === 'mechanic' ? 'contained' : 'outlined'}
     onClick={() => setActiveTab('mechanic')}
-    style={{ marginRight: 10 }}
+    style={{ marginRight: 10, position: 'relative' }}
   >
-    Mechanic Requests
+    <Box display="flex" alignItems="center" position="relative">
+      Mechanic Requests
+      <Badge
+        badgeContent={mechanicRequests.length}
+        color="error"
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        sx={{
+          position: 'absolute',
+          top: -8,
+          right: -12
+        }}
+      />
+    </Box>
   </Button>
   <Button
     variant={activeTab === 'certificates' ? 'contained' : 'outlined'}
     onClick={() => setActiveTab('certificates')}
+    style={{ position: 'relative' }}
   >
-    Certificates
+    <Box display="flex" alignItems="center" position="relative">
+      Certificates
+      <Badge
+        badgeContent={certificateGenCount}
+        color="error"
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        sx={{
+          position: 'absolute',
+          top: -8,
+          right: -12
+        }}
+      />
+    </Box>
   </Button>
 </div>
 
@@ -582,157 +603,163 @@ const handleViewVerifiedBill = (row) => {
     />
   </div>
 ) : activeTab === 'mechanic' ? (
-  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-    <thead>
-      <tr>
-        <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>Sl No</th>
-        <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>Vehicle No</th>
-        <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>PEN</th>
-        <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>Date</th>
-        <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {(mechanicRequests || [])
+  <div style={{ height: 600 }}>
+    <DataGrid
+      rows={(mechanicRequests || [])
         .filter(req => req.forwardedToMechanic)
-        .map((req, index) => (
-          <tr key={req._id}>
-            <td style={{ padding: 10 }}>{index + 1}</td>
-           <td style={{ padding: 10 }}>{req.vehicleNo}</td>
-            <td style={{ padding: 10 }}>{req.pen}</td>
-            <td style={{ padding: 10 }}>{req.date}</td>
-            <td style={{ padding: 10 }}>
-              <Button variant="outlined" onClick={() => handleViewMechanicRequest(req)}>View</Button>
-            </td>
-          </tr>
-        ))}
-    </tbody>
-  </table>
+        .map((req, index) => ({
+          id: req._id || index,
+          slNo: index + 1,
+          vehicleNo: req.vehicleNo,
+          pen: req.pen,
+          date: req.date,
+          _id: req._id,
+          partsList: req.partsList,
+          workDone: req.workDone,
+          subject: req.subject,
+          finalBillFile: req.finalBillFile
+        }))}
+      columns={[
+        { field: 'slNo', headerName: 'Sl No', width: 90 },
+        { field: 'vehicleNo', headerName: 'Vehicle No', width: 130 },
+        { field: 'pen', headerName: 'PEN', width: 100 },
+        { field: 'date', headerName: 'Date', width: 140 },
+        {
+          field: 'actions',
+          headerName: 'Actions',
+          width: 160,
+          renderCell: (params) => (
+            <Button variant="outlined" onClick={() => handleViewMechanicRequest(params.row)}>
+              View
+            </Button>
+          )
+        }
+      ]}
+      pageSize={5}
+      rowsPerPageOptions={[5, 10]}
+      style={{ background: themeStyle?.background, color: themeStyle?.color }}
+      getRowId={(row) => row.id}
+    />
+  </div>
 ) : activeTab === 'certificates' ? (
-  
-
-  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-  <thead>
-    <tr>
-      <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>Sl No</th>
-      <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>Date</th>
-      <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>PEN No</th>
-      <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>Status</th>
-      <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>View Bill</th>
-      <th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>Essentiality & Technical Certificate</th>
-
-<th style={{ padding: 10, borderBottom: '1px solid #ccc' }}>Verify Sanctioned Bill</th>
-
-    </tr>
-  </thead>
-  <tbody>
-    {certificateRequests.map((cert, index) => (
-      <tr key={cert._id}>
-        <td style={{ padding: 10 }}>{cert.slNo}</td>
-        <td style={{ padding: 10 }}>{cert.date}</td>
-        <td style={{ padding: 10 }}>{cert.pen}</td>
-        <td style={{ padding: 10 }}>{statusStyle(cert.status)}</td>
-        
-       <td style={{ padding: 10 }}>
- {cert.finalBillFile ? (
-  <Button
-    variant="outlined"
-    onClick={() => {
-      setSelectedRepair(cert);
-      setDialogOpen(true);
-    }}
-  >
-    View
-  </Button>
-) : (
-  <Typography variant="body2" color="textSecondary">No File</Typography>
-)}
-
-
-
-
-        </td>
-        {/* EC column */}
-<td style={{ padding: 10 }}>
- <Button
-    variant="contained"
-    color="primary"
-    onClick={() => handlePrepareEC(cert._id)}
-    disabled={cert.status !== 'for_generating_certificate'}
-  >
-    Prepare EC & TC
-  </Button> 
-  
-   <Button
-    variant="contained"
-    style={{
-      marginLeft: 8,
-      backgroundColor: '#1CA085',  // Ocean Green
-      color: 'white'
-    }}
-    onClick={() => handleViewEC(cert._id)}
-    disabled={
-      ![
-        'certificate_ready', 'waiting_for_sanction', 'sanctioned_for_work',
-        'ongoing_work', 'Pending User Verification', 'work completed', 'completed'
-      ].includes(cert.status)
-    }
-  >
-    View EC
-  </Button>
-
-  <Button
-    variant="contained"
-    style={{
-      marginLeft: 8,
-      backgroundColor: '#1CA085',  // Ocean Green
-      color: 'white'
-    }}
-    onClick={() => handleViewTC(cert._id)}
-    disabled={
-      ![
-        'certificate_ready', 'waiting_for_sanction', 'sanctioned_for_work',
-        'ongoing_work', 'Pending User Verification', 'work completed', 'completed'
-      ].includes(cert.status)
-    }
-  >
-    View TC
-  </Button>
-</td>
-
-
-
-{/* VERIFY column */}
-<td style={{ padding: 10 }}>
-  {cert.status === 'ongoing_work' || cert.status === 'work_completed' || cert.status === 'completed' ? (
-    <Typography style={{ color: 'green', fontWeight: 'bold' }}>✔ Verified</Typography>
-  ) : cert.status === 'sanctioned_for_work' ? (
-    {/*<Button
-      variant="outlined"
-      onClick={() => {
-        setVerifyEntry(cert);
-        setVerifyDialogOpen(true);
-      }}
-    >
-      Verify
-    </Button> */}
-  ) : (
-    <Typography variant="body2" color="textSecondary">N/A</Typography>
-  )}
-</td>
-
-
-
-
-
-
-
-
-        
-      </tr>
-    ))}
-  </tbody>
-</table>
+  <div style={{ height: 600 }}>
+    <DataGrid
+      rows={certificateRequests
+        .slice() // copy array to avoid mutating state
+        .sort((a, b) => {
+          const aStatus = (a.status || '').toLowerCase();
+          const bStatus = (b.status || '').toLowerCase();
+          if (aStatus === 'for_generating_certificate' && bStatus !== 'for_generating_certificate') return -1;
+          if (aStatus !== 'for_generating_certificate' && bStatus === 'for_generating_certificate') return 1;
+          return 0;
+        })
+        .map((cert, index) => ({
+          id: cert._id || index,
+          slNo: cert.slNo,
+          date: cert.date,
+          pen: cert.pen,
+          status: cert.status,
+          finalBillFile: cert.finalBillFile,
+          vehicleNo: cert.vehicleNo,
+          subject: cert.subject,
+          description: cert.description,
+          additionalBill: cert.additionalBill,
+          _id: cert._id,
+          partsList: cert.partsList,
+          verifiedWorkBill: cert.verifiedWorkBill,
+          verifiedWorkBillType: cert.verifiedWorkBillType,
+          expense: cert.expense,
+          workerWage: cert.workerWage
+        }))}
+      columns={[
+        { field: 'slNo', headerName: 'Sl No', width: 90 },
+        { field: 'date', headerName: 'Date', width: 140 },
+        { field: 'pen', headerName: 'PEN No', width: 120 },
+        {
+          field: 'status',
+          headerName: 'Status',
+          width: 160,
+          renderCell: (params) => statusStyle(params.value)
+        },
+        {
+          field: 'viewBill',
+          headerName: 'View Bill',
+          width: 120,
+          renderCell: (params) =>
+            params.row.finalBillFile ? (
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  setSelectedRepair(params.row);
+                  setDialogOpen(true);
+                }}
+              >
+                View
+              </Button>
+            ) : (
+              <Typography variant="body2" color="textSecondary">No File</Typography>
+            )
+        },
+        {
+          field: 'certificates',
+          headerName: 'Essentiality & Technical Certificate',
+          width: 400,
+          renderCell: (params) => (
+            <>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => handlePrepareEC(params.row._id)}
+                disabled={params.row.status !== 'for_generating_certificate'}
+              >
+                Prepare EC & TC
+              </Button>
+              <Button
+                variant="contained"
+                style={{ marginLeft: 8, backgroundColor: '#1CA085', color: 'white' }}
+                onClick={() => handleViewEC(params.row._id)}
+                disabled={![
+                  'certificate_ready', 'waiting_for_sanction', 'sanctioned_for_work',
+                  'ongoing_work', 'Pending User Verification', 'work completed', 'completed'
+                ].includes(params.row.status)}
+              >
+                View EC
+              </Button>
+              <Button
+                variant="contained"
+                style={{ marginLeft: 8, backgroundColor: '#1CA085', color: 'white' }}
+                onClick={() => handleViewTC(params.row._id)}
+                disabled={![
+                  'certificate_ready', 'waiting_for_sanction', 'sanctioned_for_work',
+                  'ongoing_work', 'Pending User Verification', 'work completed', 'completed'
+                ].includes(params.row.status)}
+              >
+                View TC
+              </Button>
+            </>
+          )
+        },
+        {
+          field: 'verify',
+          headerName: 'Verify Sanctioned Bill',
+          width: 180,
+          renderCell: (params) => (
+            params.row.status === 'ongoing_work' || params.row.status === 'work_completed' || params.row.status === 'completed' ? (
+              <Typography style={{ color: 'green', fontWeight: 'bold' }}>✔ Verified</Typography>
+            ) : params.row.status === 'sanctioned_for_work' ? (
+              <Typography variant="body2" color="textSecondary">N/A</Typography>
+            ) : (
+              <Typography variant="body2" color="textSecondary">N/A</Typography>
+            )
+          )
+        }
+      ]}
+      pageSize={5}
+      rowsPerPageOptions={[5, 10]}
+      style={{ background: themeStyle?.background, color: themeStyle?.color }}
+      getRowId={(row) => row.id}
+    />
+  </div>
 
 ) : null}
 

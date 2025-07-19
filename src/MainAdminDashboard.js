@@ -53,6 +53,7 @@ function AdminDashboard() {
   const [pendingAccidentCount, setPendingAccidentCount] = useState(0);
   const [repairPendingCount, setRepairPendingCount] = useState(0);
   const [expiredCertCount, setExpiredCertCount] = useState(0);
+  const [repairTotalCount, setRepairTotalCount] = useState(0);
 
   const totalNotifications = pendingCount + pendingFuelCount + pendingAccidentCount + repairPendingCount;
 
@@ -91,6 +92,7 @@ function AdminDashboard() {
     fetchPendingFuelCount();
     fetchPendingAccidentCount();
     fetchRepairPendingCount();
+    fetchRepairTotalCount();
     fetchExpiredCertCount();
     
 
@@ -154,7 +156,15 @@ const fetchRepairPendingCount = async () => {
   }
 };
 
-
+const fetchRepairTotalCount = async () => {
+  try {
+    const res = await fetch('http://localhost:5000/api/repair/pending/totalcount');
+    const data = await res.json();
+    setRepairTotalCount(data.count || 0);
+  } catch (error) {
+    console.error('Error fetching repair total count:', error);
+  }
+};
 
 
   const fetchVerifiedUsers = async () => {
@@ -294,7 +304,7 @@ const handleSaveProfile = async () => {
             </button>
 
             <button className={`sidebar-btn notification-btn ${activeTab === 'Repair' ? 'active' : ''}`} onClick={() => setActiveTab('Repair')}>
-              <BuildIcon style={{ marginRight: '8px' }} /> Repair Reports {repairPendingCount > 0 && <span className="notification-badge">{repairPendingCount}</span>}
+              <BuildIcon style={{ marginRight: '8px' }} /> Repair Reports {repairTotalCount > 0 && <span className="notification-badge">{repairTotalCount}</span>}
             </button>
 
             <button className={`sidebar-btn notification-btn ${activeTab === 'Accident' ? 'active' : ''}`} onClick={() => setActiveTab('Accident')}>

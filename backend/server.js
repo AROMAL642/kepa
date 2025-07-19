@@ -341,6 +341,11 @@ app.get('/api/users/:id', async (req, res) => {
 });
 
 
+// Pending Count Route
+const pendingcountRoutes = require('./routes/pendingcountRoutes');
+app.use('/api', pendingcountRoutes);
+
+
 // Start server (only once)
 const PORT = 5000;
 app.listen(PORT, () => {

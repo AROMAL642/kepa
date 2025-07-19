@@ -136,68 +136,94 @@ const removePartRow = (index) => {
 
 
   const handleWorkCompleted = async () => {
-  const currentStatus = selectedRequest.status;
+    const currentStatus = selectedRequest.status;
+    const updatedWorkDone = currentStatus === 'forwarded' ? 'No' : 'Yes';
+    const nextStatus = currentStatus === 'forwarded' ? 'Pending User Verification' : 'completed';
 
-  // ✅ Logic: if status is "forwarded", set workDone to 'No' so user will verify
-  const updatedWorkDone = currentStatus === 'forwarded' ? 'No' : 'Yes';
-  const nextStatus = currentStatus === 'forwarded' ? 'Pending User Verification' : 'completed';
+    try {
+      const res = await fetch(`http://localhost:5000/api/repair-request/${selectedRequest.id}/complete`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          workDone: updatedWorkDone,
+          status: nextStatus
+        })
+      });
 
-  try {
-    const res = await fetch(`http://localhost:5000/api/repair-request/${selectedRequest.id}/complete`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        workDone: updatedWorkDone,
-        status: nextStatus
-      })
-    });
+      if (!res.ok) throw new Error('Failed to update status.');
 
-    if (!res.ok) throw new Error('Failed to update status.');
+      const updated = await res.json();
 
-    const updated = await res.json();
+      setRequests((prev) =>
+        prev.map((r) =>
+          r.id === selectedRequest.id
+            ? {
+                ...r,
+                workDone: updatedWorkDone,
+                repairStatus: nextStatus,
+                status: nextStatus
+              }
+            : r
+        )
+      );
 
-    setRequests((prev) =>
-      prev.map((r) =>
-        r.id === selectedRequest.id
-          ? {
-              ...r,
-              workDone: updatedWorkDone,
-              repairStatus: nextStatus,
-              status: nextStatus
-            }
-          : r
-      )
-    );
+      if (nextStatus === 'Pending User Verification') {
+        await notifyUserForVerification(selectedRequest.id);
+      }
 
-    // ✅ Notify user only if forwarded-to-verification flow
-    if (nextStatus === 'Pending User Verification') {
-      await notifyUserForVerification(selectedRequest.id);
+      alert('✔️ Sent to user for verification.');
+      handleCloseModal();
+    } catch (err) {
+      console.error('Error:', err);
+      alert('❌ Failed to update request.');
     }
+  };
 
-    alert('✔️ Sent to user for verification.');
-    handleCloseModal();
-  } catch (err) {
-    console.error('Error:', err);
-    alert('❌ Failed to update request.');
-  }
-};
+  const sendPartsRequest = async (formData) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/repair-request/${selectedRequest.id}/mechanic-update`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      if (res.ok) {
+        alert('Parts request submitted');
+        // Update the row instantly
+        setRequests((prev) =>
+          prev.map((r) =>
+            r.id === selectedRequest.id
+              ? {
+                  ...r,
+                  status: 'sent_to_MTI',
+                  repairStatus: 'in progress',
+                  workDone: 'No'
+                }
+              : r
+          )
+        );
+        handleCloseModal();
+      } else {
+        alert('Failed to submit parts request');
+      }
+    } catch (err) {
+      console.error('Error submitting parts request:', err);
+      alert('Error submitting parts request');
+    }
+  };
 
+  const notifyUserForVerification = async (id) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/repair-request/${id}/send-to-user`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' }
+      });
 
-const notifyUserForVerification = async (id) => {
-  try {
-    const res = await fetch(`http://localhost:5000/api/repair-request/${id}/send-to-user`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' }
-    });
-
-    if (!res.ok) throw new Error('User notification failed.');
-    console.log('✅ User notified for verification.');
-  } catch (err) {
-    console.error('User notify error:', err);
-  }
-};
-
-
+      if (!res.ok) throw new Error('User notification failed.');
+      console.log('✅ User notified for verification.');
+    } catch (err) {
+      console.error('User notify error:', err);
+    }
+  };
 
   const handleViewFile = (file) => {
     setFileToPreview(file);
@@ -248,51 +274,32 @@ const notifyUserForVerification = async (id) => {
     }
   };
 
-  const sendPartsRequest = async (formData) => {
+  const handleSendToUser = async (id) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/repair-request/${selectedRequest.id}/mechanic-update`, {
+      const res = await fetch(`http://localhost:5000/api/repair-request/${id}/send-to-user`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        headers: { 'Content-Type': 'application/json' }
       });
-      if (res.ok) {
-        alert('Parts request submitted');
-        handleCloseModal();
-      } else {
-        alert('Failed to submit parts request');
-      }
+
+      if (!res.ok) throw new Error('Failed to notify user');
+
+      setRequests((prev) =>
+        prev.map((r) =>
+          r.id === id ? { ...r, status: 'Pending User Verification' } : r
+        )
+      );
+
+      // ✅ Track sent ones (optional, in case you want both logic paths)
+      setSentRequests((prev) => [...prev, id]);
+
+
+      alert('Sent to user for verification');
+      setSentRequests((prev) => [...prev, id]);  // ✅ Track as sent
     } catch (err) {
-      console.error('Error submitting parts request:', err);
-      alert('Error submitting parts request');
+      console.error(err);
+      alert('Error notifying user');
     }
   };
-
-const handleSendToUser = async (id) => {
-  try {
-    const res = await fetch(`http://localhost:5000/api/repair-request/${id}/send-to-user`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' }
-    });
-
-    if (!res.ok) throw new Error('Failed to notify user');
-
-    setRequests((prev) =>
-      prev.map((r) =>
-        r.id === id ? { ...r, status: 'Pending User Verification' } : r
-      )
-    );
-
-    // ✅ Track sent ones (optional, in case you want both logic paths)
-    setSentRequests((prev) => [...prev, id]);
-
-
-    alert('Sent to user for verification');
-    setSentRequests((prev) => [...prev, id]);  // ✅ Track as sent
-  } catch (err) {
-    console.error(err);
-    alert('Error notifying user');
-  }
-};
 
 // from user after workdone =yes
 const handleUserApproved = async (id) => {
